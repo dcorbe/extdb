@@ -1,13 +1,12 @@
-extDB
-=====
+## extDB
 
 Coming Soon....
 Left todo is basic plugin + some intial profile + benchmarking 
 
 Arma3 Extension DB  C++ (windows / linux)
 
-Features:
----------
+#### Features:
+
 
  - Multi-Part Messages (i.e if output > outputsize set by arma)
  - Multi-Threading Sync / ASync Commands
@@ -16,25 +15,21 @@ Features:
    mission. *Only load plugins needed*
 
 
-----------
 
 
-Requirements to Build
----------------------
+#### Requirements to Build
 
 C++ Compiler
 Poco Library http://pocoproject.org/
 Boost Library http://www.boost.org/
 
 
-Windows Binarys Provided are built using
-----------------------------------------
+#### Windows Binarys Provided are built using
 
 Windows sdk 7.1 + VS2010sp1 + libboost 1.55.0 + poco-1.4.6p4
 
 
-Linux Build Notes
------------------
+#### Linux Build Notes
 
 Check your distro version of poco i.e poco-1.4.6p4
 
