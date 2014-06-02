@@ -19,11 +19,9 @@ Arma3 Extension DB  C++ (windows / linux)
 
 #### Requirements to Build
 
-C++ Compiler
-
-Poco Library http://pocoproject.org/
-
-Boost Library http://www.boost.org/
+ - C++ Compiler
+ - Poco Library http://pocoproject.org/
+ - Boost Library http://www.boost.org/
 
 
 #### Windows Binarys Provided are built using
