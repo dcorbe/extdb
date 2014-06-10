@@ -63,8 +63,6 @@ namespace {
     PluginLoader loader;
     boost::asio::io_service io_service;
     boost::asio::io_service::work work(io_service);
-	
-//	boost::shared_ptr<Poco::Data::SessionPool> db_pool;
 };
 
 Ext::Ext(void) {
@@ -160,8 +158,7 @@ std::string Ext::connectDatabase(const std::string &conf_option)
                 std::string port = pConf->getString(conf_option + ".Port");
 
                 connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ",password=" + password + ",dbname=" + db_name;
-                //std::cout << "extDB: Connection String" << connection_str << std::endl;
-                //boost::shared_ptr<Poco::Data::SessionPool> db_pool(new Poco::Data::SessionPool(db_type, connection_str, min_sessions, max_threads, idle_time));
+
                 db_pool.reset(new Poco::Data::SessionPool(db_type, connection_str, min_sessions, max_threads, idle_time));
 
                 if (db_pool->get().isConnected())
@@ -180,9 +177,7 @@ std::string Ext::connectDatabase(const std::string &conf_option)
             {
                 Poco::Data::SQLite::Connector::registerConnector();
                 connection_str = db_name;
-                //std::cout << "extDB: Connection String2" << connection_str << std::endl;
 
-                //boost::scoped_ptr<Poco::Data::SessionPool> db_pool(new Poco::Data::SessionPool(db_type, connection_str, min_sessions, max_threads, idle_time));
                 db_pool.reset(new Poco::Data::SessionPool(db_type, connection_str, min_sessions, max_threads, idle_time));
 
                 if (db_pool->get().isConnected())
@@ -241,30 +236,8 @@ void Ext::freeUniqueID_mutexlock(const int &unique_id)
 Poco::Data::Session Ext::getDBSession_mutexlock()
 // Gets available DB Session (mutex lock)
 {
-
-//	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	try {
-		if (db_pool->get().isConnected())
-		{
-			std::cout << "extDB: Database Connected" << std::endl;
-		}
-		else
-		{
-			std::cout << "extDB: Database Not Connected" << std::endl;
-		}
-
-
-
-		std::cout << "TESTING 123456" << std::endl;
-		Poco::Data::Session db_session = db_pool->get();
-		std::cout << "TESTING 123456" << std::endl;
-		return db_session;
-	}
-    catch (Poco::Exception& e)
-    {
-        std::cout << "extDB: Database Setup Failed: " << e.displayText() << std::endl;
-        std::exit(EXIT_FAILURE);
-	}
+	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
+	return = db_pool->get();
 }
 
 void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &output_size)
@@ -558,7 +531,6 @@ int main(int nNumberofArgs, char* pszArgs[])
     char result[255];
     for (;;) {
         char input_str[100];
-//        std::cin >> input_str;
 	std::cin.getline(input_str, sizeof(input_str));
         if (std::string(input_str) == "quit")
         {
