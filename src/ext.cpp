@@ -275,7 +275,7 @@ void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &out
             std::strcpy(output, msg.c_str());
             if (it->second.length() >= (output_size-8))
             {
-                shared_map_results[unique_id] = it->second.substr(output_size-8);
+                shared_map_results[unique_id] = it->second.substr(output_size-9);
             }
             else
             {
@@ -575,7 +575,7 @@ int main(int nNumberofArgs, char* pszArgs[])
         }
         else
         {
-            extension.callExtenion(result, 50, input_str);
+            extension.callExtenion(result, 20, input_str);
             std::cout << "extDB: " << result << std::endl;
         }
     }

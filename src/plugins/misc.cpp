@@ -104,6 +104,10 @@ std::string MISC::callPlugin(AbstractExt *extension, std::string str_input)
         //msg = connectDatabase(data);
     //    std::strcpy(output, msg.c_str());
     }
+    else if (command == "TEST")
+    {
+		result = data;
+    }
     else
     {
         result = ("[\"ERROR\",\"Error Invalid Command\"]");

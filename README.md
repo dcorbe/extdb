@@ -29,9 +29,7 @@ Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Left Todo
 Finish Raw DB Plugin
 Code a Basic DB Plugin
-Finish Misc Plugin
-
-Double check multi-part messages are getting split up correctly
+Fix streaming Multi-Part Messages
 
 
 ---------------
@@ -68,6 +66,8 @@ So i decided to write up an C++ Extension for Arma3server.
 #### Windows Binarys Provided are built using
 
 Windows sdk 7.1 + VS2010sp1 + libboost 1.55.0 + poco-1.4.6p4
+Using VS2010sp1 due to bug with boost + vs2013 (fix already in dev boost version).
+Didn't feel it was worth time to figure out if bug would effect code
 
 
 #### Linux Build Notes
