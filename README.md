@@ -1,17 +1,29 @@
 ## extDB
 
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Left Todo
@@ -27,21 +39,16 @@ Double check multi-part messages are getting split up correctly
 ---------------
 
 
-Arma3 Extension DB  C++ (windows / linux)
+### Arma3 Extension DB  C++ (windows / linux)
 
 I got bored waiting on 2017 / epoch for Arma3...
 So i decided to write up an C++ Extension for Arma3server.
 
-extDB parse commands + passes onto plugins
-extDB recieves string from plugins +  stores / sends results to server 
-extDB uses Boost ASIO + threads for jobs 
-extDB uses Poco Database for Database Connection
-extDB uses Poco ClassLoader System to load other plugins i.e that do the actual work 
 
-Example plugins provided
-db_raw   -- for raw sql database commands
-db_basic -- for a basic db queries etc (no raw access to db)
-misc     -- generic commands i.e CRC32 / TIME
+#### Example plugins provided
+- db_raw   -- for raw sql database commands
+- db_basic -- for a basic db queries etc (no raw access to db)
+- misc     -- generic commands i.e CRC32 / TIME
 
 #### Features:
 
