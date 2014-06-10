@@ -237,7 +237,7 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	return = db_pool->get();
+	return db_pool->get();
 }
 
 void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &output_size)
@@ -352,7 +352,7 @@ void Ext::addPlugin(const std::string &plugin, const std::string &protocol_name,
 }
 
 
-std::string Ext::callPlugin(const std::string protocol, const std::string data)
+std::string Ext::syncCallPlugin(const std::string protocol, const std::string data)
 // Sync callPlugin
 {
     if (shared_map_plugins.find(protocol) == shared_map_plugins.end())
@@ -365,9 +365,22 @@ std::string Ext::callPlugin(const std::string protocol, const std::string data)
     }
 }
 
-
-void Ext::callPlugin(const std::string protocol, const std::string data, const int unique_id)
+void Ext::onewayCallPlugin(const std::string protocol, const std::string data)
 // ASync callPlugin
+{
+    if (shared_map_plugins.find(protocol) == shared_map_plugins.end())
+    {
+        //return ("[\"ERROR\",\"Error Unknown Protocol\"]");
+    }
+    else
+    {
+        shared_map_plugins[protocol].get()->callPlugin(this, data);
+    }
+}
+
+
+void Ext::asyncCallPlugin(const std::string protocol, const std::string data, const int unique_id)
+// ASync + Save callPlugin
 // We check if Protocol exists here, since its a thread (less time spent blocking arma) and it shouldnt happen anyways
 {
     if (shared_map_plugins.find(protocol) == shared_map_plugins.end())
@@ -394,7 +407,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 
         switch (async)  // TODO Profile using Numberparser versus comparsion of char[0] + if statement checking length of *function
         {
-            case 1: //ASYNC
+            case 2: //ASYNC + SAVE
             {
                 // Protocol
                 const std::string::size_type found = str_input.find(sep_char,2);
@@ -417,7 +430,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                     
                     {
                         boost::lock_guard<boost::mutex> lock2(mutex_io_service);
-                        io_service.post(boost::bind(&Ext::callPlugin, this, protocol, data, unique_id));
+                        io_service.post(boost::bind(&Ext::asyncCallPlugin, this, protocol, data, unique_id));
                     }
                     
                     msg = Poco::cat(std::string("[\"ID\",\""), Poco::NumberFormatter::format(unique_id), std::string("\"]"));
@@ -425,12 +438,36 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                 }
                 break;
             }
-            case 2: // GET
+            case 5: // GET
             {
                 if (str_input.length() >= 2)
                 {
                     const int unique_id = Poco::NumberParser::parse(str_input.substr(2));
                     getResult_mutexlock(unique_id, output, output_size);
+                }
+                break;
+            }
+            case 1: //ASYNC
+            {
+                // Protocol
+                const std::string::size_type found = str_input.find(sep_char,2);
+                const std::string protocol = str_input.substr(2,(found-2));
+                // Data
+                std::string data = str_input.substr(found+1);
+
+                if (found==std::string::npos)  // Check Invalid Format
+                {
+                    std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
+                    //std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Format\"]");
+                }
+                else
+                {
+                    {
+                        boost::lock_guard<boost::mutex> lock3(mutex_io_service);
+                        io_service.post(boost::bind(&Ext::onewayCallPlugin, this, protocol, data));
+                    }
+                    msg = std::string("[\"OK\"]");
+                    std::strcpy(output, msg.c_str());
                 }
                 break;
             }
@@ -449,7 +486,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                 }
                 else
                 {
-                    msg = callPlugin(protocol, data);
+                    msg = syncCallPlugin(protocol, data);
                     sendResult_mutexlock(msg, output, output_size); // Checks Result length (i.e multipart msgs) + sends to Arma
                 }
                 break;

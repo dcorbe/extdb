@@ -89,6 +89,7 @@ class Ext: public AbstractExt
 		// Plugins
 		void addPlugin(const std::string &plugin, const std::string &protocol_name, char *output, const int &output_size);
 
-		std::string callPlugin(std::string protocol, std::string data);
-		void callPlugin(const std::string protocol, const std::string data, const int unique_id);
+		std::string syncCallPlugin(std::string protocol, std::string data);
+		void onewayCallPlugin(const std::string protocol, const std::string data);
+		void asyncCallPlugin(const std::string protocol, const std::string data, const int unique_id);
 };

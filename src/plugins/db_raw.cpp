@@ -33,10 +33,8 @@ std::string DB_RAW::callPlugin(AbstractExt *extension, std::string input_str)
 {
 	std::string result;
 	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-	std::cout << "DEBUG RAW: got db session pool" << std::endl;
-	std::cout << "DEBUG RAW: " << input_str << std::endl;
 	db_session << input_str, Poco::Data::into(result), Poco::Data::now;
-	return "[\"OK\",\"" + result + "\"]";
+	return result;
 }
 
 POCO_BEGIN_MANIFEST(AbstractPlugin)
