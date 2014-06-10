@@ -1,0 +1,125 @@
+This is still a WIP + may be incorrect
+
+
+
+
+
+0 = Sync
+1 = ASync   (Fire Command + Forget i.e if u wanted to save info to database, note u wont get any return info i.e if it failed or not)
+2 = ASync + Save
+5 = Get     (Retrieves Multi-Msg or 2 [Async + Save] Msgs)
+
+9 = System Commands 
+
+
+
+-------------------------------------------------------
+System Commands
+-------------------------------------------------------
+
+VERSION_MAJOR   (used to indicate changes to extDB, that will effect arma sqf sqm code)
+VERSION_MINOR   (used to indicate changes to extDB, that will effect plugins... may get removed)
+
+DATABASE        
+ADD
+LOCK
+
+List of commands more info below,
+All System Commands are Sync in nature i.e will block while beening run.
+
+-------------------------------------------------------
+System Command - ADD
+-------------------------------------------------------
+
+"extDB" callExtension "9:AddPlugin:Name"
+
+Shared Library Name is the filename without the extension i.e foo and not foo.dll / foo.so
+Protocol Name for use down below, its mainly to make life easier for Scriptors.
+
+So for example
+"extDB" callExtension "9:misc:CRAP"
+
+Will load misc.so/misc.dll and save its Protocol name as CRAP.
+So later u call it like
+"extDB" callExtension "0:CRAP:TIME"
+
+
+Return Value
+["OK"]					// Loaded Library
+["ERROR", "Generic Msg"]
+
+-------------------------------------------------------
+System Command - DATABASE
+-------------------------------------------------------
+
+"extDB" callExtension "9:DATABASE:Wasteland"
+
+This will load up the option Wasteland in the config file (conf-main.ini).
+This way u can have multiple settings for different mission files in one config file, 
+and when mission starts it loads the correct option.
+
+U must load an option before using a plugin that uses extDB Database Pool, otherwise it will seg-fault on you.
+
+
+-------------------------------------------------------
+System Command - LOCK
+-------------------------------------------------------
+
+"extDB" callExtension "9:LOCK"
+
+This is a real simple command.
+Once this is called.. it disables all System Commands i.easier
+u will no longer be able to add any more plugins or get version info.
+This is a paranoid option + u should call it after u finished loading all plugins u need.
+
+This is OPTIONAL, but recommended
+
+
+
+-------------------------------------------------------
+Sync/ASync Requesting
+-------------------------------------------------------
+
+0/1/2:Protocol Name:xxxxxxxxxxxxxxxxxxxxxxx
+0=Sync
+1=ASync
+2=ASync+Save
+Protocol Name = Class Name from plugins
+xxxxxxxxxxxxx = Data to send
+
+i.e
+"extDB" callExtension "0:RAW:DELETE ALL";
+
+Return Value
+
+["OK","message_data"]		// Received if msg = SYNC + result fits in 1 message
+["ID","unique id"]			// ID for ASYNC or Multi-Part Message
+
+["ERROR", "Generic Msg"]	// Generic Error Message, more detailed info in log / console output
+							//		This will only be single message.. No Looping required (unlike below)
+
+
+-------------------------------------------------------
+Retrieving ASYNC + Save Message / Multi-Part Message
+-------------------------------------------------------
+
+5:Unique ID
+5         = Retrieve
+Unique ID = ID received when u sent original ASync / Sync message (see Sync/ASync Requesting)
+
+i.e
+
+"extDB" callExtension "5:75824"
+
+Return Value
+
+["WAIT"] 					// Not ready yet, sleep + try again
+
+["OK","message_data"]		// Keep asking for data till u get ["END"]
+["END"]						// Signals end of Multi-Part Message 
+							// U must keep going till you receive this message otherwise unique id wont get freed.
+
+["ERROR", "Generic Msg"]	// Generic Error Message, more detailed info in log / console output
+							// Important, when receiving Error message via (2=Retrieve), u must keep looping till u get ["END"]
+							//		Code Logic will treat message as Multi-Part Message, even if its still only 1 Part
+							//			This only applies when u are retreiving info.(2=Retrieve)
