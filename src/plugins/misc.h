@@ -1,0 +1,50 @@
+/*
+* Copyright (C) 2014 Declan Ireland <http://github.com/torndeco/extDB>
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+*/
+
+
+#pragma once
+
+#include "abstractplugin.h"
+
+#include <boost/thread/thread.hpp>
+
+#include <Poco/Checksum.h>
+#include <Poco/ClassLibrary.h>
+#include <Poco/Data/SessionPool.h>
+
+#include <cstdlib>
+#include <iostream>
+
+class MISC: public AbstractPlugin
+{
+	public:
+		std::string name() const
+		{
+			return "Plugin_MISC";
+		}
+
+		std::string callPlugin(AbstractExt *extension, std::string input_str);
+
+        std::string getDateTime();
+        std::string getDateTime(int hours);
+        std::string getCrc32(std::string &str_input);
+
+    private:
+        Poco::Checksum checksum_crc32;
+		boost::mutex mutex_checksum_crc32;
+};
