@@ -17,6 +17,7 @@
 */
 
 
+
 #include "misc.h"
 
 #include "abstractplugin.h"
@@ -25,28 +26,32 @@
 
 #include <Poco/Checksum.h>
 #include <Poco/ClassLibrary.h>
+#include <Poco/DateTime.h>
 #include <Poco/DateTimeFormatter.h>
 #include <Poco/NumberFormatter.h>
 #include <Poco/NumberParser.h>
-#include <Poco/Timespan.h>
-#include <Poco/Timestamp.h>
-
 
 #include <cstdlib>
 #include <iostream>
 
 std::string MISC::getDateTime()
 {
-    Poco::Timestamp now;
+    Poco::DateTime now;
     return ("[" + Poco::DateTimeFormatter::format(now, "%Y, %n, %d, %H, %M") + "]");
 }
 
 std::string MISC::getDateTime(int hours)
 {
-    Poco::Timespan span(hours*Poco::Timespan::HOURS);
-    Poco::Timestamp now;
-    //now = now + span;
-    return ("[" + Poco::DateTimeFormatter::format(now, "%Y, %n, %d, %H, %M") + "]");
+    Poco::DateTime now;
+	Poco::DateTime newtime(
+		now.year(),
+		now.month(),
+		now.day(),
+		(now.hour() + hours),
+		now.minute(),
+		now.second());
+	
+    return ("[" + Poco::DateTimeFormatter::format(newtime, "%Y, %n, %d, %H, %M") + "]");
 }
 
 std::string MISC::getCrc32(std::string &str_input)
@@ -101,7 +106,7 @@ std::string MISC::callPlugin(AbstractExt *extension, std::string str_input)
     }
     else
     {
-        result = ("[\"ERROR\",\"Error Invalid Misc Command\"]");
+        result = ("[\"ERROR\",\"Error Invalid Command\"]");
     }
     return result;
 }
