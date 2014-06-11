@@ -1,35 +1,12 @@
 ## extDB
 
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Still WIP (not READY) will crash + burn !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Database Plugins still need to be done...
+Due some v.basic benchmark to see if any major performance issue
 
 Left Todo
-Finish Raw DB Plugin
+Fix Raw DB Plugin
 Code a Basic DB Plugin
-Fix streaming Multi-Part Messages
+
 
 
 ---------------
