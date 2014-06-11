@@ -1,16 +1,11 @@
 This is still a WIP + may be incorrect
 
-
-
-
-
 0 = Sync
 1 = ASync   (Fire Command + Forget i.e if u wanted to save info to database, note u wont get any return info i.e if it failed or not)
 2 = ASync + Save
 5 = Get     (Retrieves Multi-Msg or 2 [Async + Save] Msgs)
 
 9 = System Commands 
-
 
 
 -------------------------------------------------------
@@ -116,10 +111,6 @@ Return Value
 ["WAIT"] 					// Not ready yet, sleep + try again
 
 ["OK","message_data"]		// Keep asking for data till u get ["END"]
-["END"]						// Signals end of Multi-Part Message 
+""							// Signals end of Multi-Part Message 
 							// U must keep going till you receive this message otherwise unique id wont get freed.
-
-["ERROR", "Generic Msg"]	// Generic Error Message, more detailed info in log / console output
-							// Important, when receiving Error message via (2=Retrieve), u must keep looping till u get ["END"]
-							//		Code Logic will treat message as Multi-Part Message, even if its still only 1 Part
-							//			This only applies when u are retreiving info.(2=Retrieve)
+								// Note: U will also receive empty string if u use wrong unique id aswell
