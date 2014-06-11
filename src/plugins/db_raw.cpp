@@ -22,8 +22,9 @@
 #include "abstractplugin.h"
 
 #include <Poco/ClassLibrary.h>
-#include "Poco/Data/Common.h"
+#include <Poco/Data/Common.h>
 #include <Poco/Data/Session.h>
+#include <Poco/Data/RecordSet.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -31,10 +32,35 @@
 
 std::string DB_RAW::callPlugin(AbstractExt *extension, std::string input_str)
 {
+
+	//db_session << input_str, Poco::Data::into(result), Poco::Data::now;
+
 	std::string result;
 	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-	db_session << input_str, Poco::Data::into(result), Poco::Data::now;
-	return result;
+	Poco::Data::Statement select(db_session);
+	select << input_str;
+	std::cout << "1" << std::endl;
+	select.execute();
+	std::cout << "2" << std::endl;
+	Poco::Data::RecordSet rs(select);
+	if (rs.columnCount() > 1)
+	{
+		std::cout << "3" << std::endl;
+		std::size_t cols = rs.columnCount();
+		std::cout << "4" << std::endl;
+		bool more = rs.moveFirst();
+		std::cout << "5" << std::endl;
+		while (more)
+		{
+			for (std::size_t col = 0; col < cols; ++col)
+			{
+				result += (rs[col].convert<std::string>() + ", ");
+			}
+			std::cout << std::endl;
+			more = rs.moveNext();
+		}
+	}
+	return ("\"" + result + "\"");
 }
 
 POCO_BEGIN_MANIFEST(AbstractPlugin)
