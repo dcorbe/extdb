@@ -26,6 +26,8 @@
 #include <Poco/Checksum.h>
 #include <Poco/ClassLibrary.h>
 #include <Poco/Data/SessionPool.h>
+#include <Poco/MD4Engine.h>
+#include <Poco/MD5Engine.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -33,6 +35,8 @@
 class MISC: public AbstractPlugin
 {
 	public:
+		//MISC();
+
 		std::string name() const
 		{
 			return "Plugin_MISC";
@@ -40,11 +44,24 @@ class MISC: public AbstractPlugin
 
 		std::string callPlugin(AbstractExt *extension, std::string input_str);
 
-        std::string getDateTime();
-        std::string getDateTime(int hours);
-        std::string getCrc32(std::string &str_input);
+		//Poco::Checksum checksum_adler32;
+		//boost::mutex mutex_checksum_adler32;
 
-    private:
-        Poco::Checksum checksum_crc32;
+		Poco::Checksum checksum_crc32;
 		boost::mutex mutex_checksum_crc32;
+
+private:
+	
+		Poco::MD5Engine md5;
+		boost::mutex mutex_md5;
+		Poco::MD4Engine md4;
+		boost::mutex mutex_md4;
+
+		std::string getDateTime();
+		std::string getDateTime(int hours);
+		//std::string getAdler32(std::string &str_input);
+		std::string getCrc32(std::string &str_input);
+		std::string getMD4(std::string &str_input);
+		std::string getMD5(std::string &str_input);
+
 };

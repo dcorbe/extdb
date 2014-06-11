@@ -45,6 +45,7 @@
 #include <Poco/NumberFormatter.h>
 #include <Poco/NumberParser.h>
 #include <Poco/SharedLibrary.h>
+#include <Poco/String.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
 #include <cstdlib>
@@ -305,7 +306,7 @@ void Ext::sendResult_mutexlock(const std::string &result, char *output, const in
     std::string msg;
     if (result.length() <= (output_size-9))
     {
-        msg = Poco::cat(std::string("[\"OK\",\""), result, std::string("\"]"));
+        msg = Poco::cat(std::string("[\"OK\","), result, std::string("]"));
         std::strcpy(output, msg.c_str());
     }
     else
@@ -574,7 +575,7 @@ int main(int nNumberofArgs, char* pszArgs[])
         }
         else
         {
-            extension.callExtenion(result, 20, input_str);
+            extension.callExtenion(result, 80, input_str);
             std::cout << "extDB: " << result << std::endl;
         }
     }
