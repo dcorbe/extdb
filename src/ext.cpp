@@ -242,7 +242,7 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 
 void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &output_size)
 // Gets Result String from unordered map array
-//   If length of String = 0, sends arma "END", and removes entry from unordered map array
+//   If length of String = 0, sends arma "", and removes entry from unordered map array
 //   If <=, then sends output to arma
 //   If >, then sends 1 part to arma + stores rest.
 {
@@ -254,7 +254,7 @@ void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &out
             if (shared_map_wait.count(unique_id) == 0)
             {
                 //std::snprintf(output, output_size, "[\"ERROR\",\"NO ID FOUND\"]");
-                std::strcpy(output, ("[\"ERROR\",\"NO ID FOUND\"]"));
+                std::strcpy(output, (""));
             }
             else
             {
@@ -266,12 +266,11 @@ void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &out
         {
             shared_map_results.erase(unique_id);
             freeUniqueID_mutexlock(unique_id);
-            //std::snprintf(output, output_size, "[\"END\"]");
-            std::strcpy(output, ("[\"END\"]"));
+            std::strcpy(output, (""));
         }
         else // SEND MSG (Part)
         {
-            std::string msg = Poco::cat(std::string("[\"OK\",\""), it->second.substr(0, output_size-9), std::string("\"]"));
+            std::string msg = it->second.substr(0, output_size-9);
             std::strcpy(output, msg.c_str());
             if (it->second.length() >= (output_size-8))
             {
@@ -292,7 +291,7 @@ void Ext::saveResult_mutexlock(const std::string &result, const int &unique_id)
 {
     {
         boost::lock_guard<boost::mutex> lock(mutex_shared_map);
-        shared_map_results[unique_id] = result;
+        shared_map_results[unique_id] = "[\"OK\"," + result + "]";
         shared_map_wait.erase(unique_id);
     }
 }
