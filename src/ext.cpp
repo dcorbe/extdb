@@ -45,7 +45,6 @@
 #include <Poco/NumberFormatter.h>
 #include <Poco/NumberParser.h>
 #include <Poco/SharedLibrary.h>
-#include <Poco/String.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
 #include <cstdlib>
@@ -306,14 +305,14 @@ void Ext::sendResult_mutexlock(const std::string &result, char *output, const in
     std::string msg;
     if (result.length() <= (output_size-9))
     {
-        msg = Poco::cat(std::string("[\"OK\","), result, std::string("]"));
+        msg = "[\"OK\", " + result + "]";
         std::strcpy(output, msg.c_str());
     }
     else
     {
         const int unique_id = getUniqueID_mutexlock();
         saveResult_mutexlock(result, unique_id);
-        msg = Poco::cat(std::string("[\"ID\",\""), Poco::NumberFormatter::format(unique_id), std::string("\"]"));
+        msg = "[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]";
         std::strcpy(output, msg.c_str());
     }
 }
@@ -433,7 +432,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                         io_service.post(boost::bind(&Ext::asyncCallPlugin, this, protocol, data, unique_id));
                     }
                     
-                    msg = Poco::cat(std::string("[\"ID\",\""), Poco::NumberFormatter::format(unique_id), std::string("\"]"));
+                    msg = "[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]";
                     std::strcpy(output, msg.c_str());
                 }
                 break;
