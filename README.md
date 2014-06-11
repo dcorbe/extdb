@@ -1,5 +1,9 @@
 ## extDB
 
+THIS IS NOT IN A WORKING STATE ATM
+THIS IS NOT IN A WORKING STATE ATM
+THIS IS NOT IN A WORKING STATE ATM
+
 Database Plugins still need to be done...
 Due some v.basic benchmark to see if any major performance issue
 

@@ -48,6 +48,7 @@
 #include <Poco/Util/IniFileConfiguration.h>
 
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 
 #include "plugins/abstractplugin.h"

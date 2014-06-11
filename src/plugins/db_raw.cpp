@@ -23,8 +23,9 @@
 
 #include <Poco/ClassLibrary.h>
 #include <Poco/Data/Common.h>
-#include <Poco/Data/Session.h>
+#include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
+#include <Poco/Data/Session.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -52,15 +53,31 @@ std::string DB_RAW::callPlugin(AbstractExt *extension, std::string input_str)
 		std::cout << "5" << std::endl;
 		while (more)
 		{
+			result += " [";
 			for (std::size_t col = 0; col < cols; ++col)
 			{
-				result += (rs[col].convert<std::string>() + ", ");
+				if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+				{
+					result += "\"" + (rs[col].convert<std::string>() + "\"" + ", ");
+				}
+				else
+				{
+					result += (rs[col].convert<std::string>() + ", ");
+				}
 			}
-			std::cout << std::endl;
+
 			more = rs.moveNext();
+			if (more)
+			{
+				result += "],";
+			}
+			else
+			{
+				result += "]";
+			}
 		}
 	}
-	return ("\"" + result + "\"");
+	return result;
 }
 
 POCO_BEGIN_MANIFEST(AbstractPlugin)
