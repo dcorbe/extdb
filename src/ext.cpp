@@ -62,9 +62,10 @@ typedef Poco::Manifest<AbstractPlugin> PluginManifest;
 namespace {
     IdManager mgr;
     PluginLoader loader;
-    boost::asio::io_service io_service;
-    boost::asio::io_service::work work(io_service);
+//    boost::asio::io_service io_service;
+//    boost::asio::io_service::work work(io_service);
 };
+ 
 
 Ext::Ext(void) {
     extDB_lock = false;
@@ -84,7 +85,8 @@ Ext::Ext(void) {
         {
             max_threads = boost::thread::hardware_concurrency();
         }
-
+		
+		io_work_ptr.reset(new boost::asio::io_service::work(io_service));
         for (std::size_t i = 0; i < max_threads; ++i)
         {
             threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
@@ -120,7 +122,6 @@ std::string Ext::connectDatabase(const std::string &conf_option)
 {
     try
     {
-        boost::asio::io_service::work work(io_service);
         Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration("conf-main.ini"));
         if (pConf->hasOption(conf_option + ".Type"))
         {
@@ -568,7 +569,7 @@ int main(int nNumberofArgs, char* pszArgs[])
     char result[255];
     for (;;) {
         char input_str[100];
-	std::cin.getline(input_str, sizeof(input_str));
+std::cin.getline(input_str, sizeof(input_str));
         if (std::string(input_str) == "quit")
         {
             break;

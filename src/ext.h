@@ -53,6 +53,8 @@ class Ext: public AbstractExt
 	private:
 		bool extDB_lock;
 
+		boost::shared_ptr<boost::asio::io_service::work> io_work_ptr;
+		boost::asio::io_service io_service;
 		boost::mutex mutex_io_service;
 
 		boost::thread_group threads;

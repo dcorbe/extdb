@@ -33,6 +33,7 @@
 #include <Poco/NumberParser.h>
 #include <Poco/MD4Engine.h>
 #include <Poco/MD5Engine.h>
+#include <Poco/Timespan.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -53,6 +54,7 @@ std::string MISC::getDateTime()
 std::string MISC::getDateTime(int hours)
 {
 	Poco::DateTime now;
+	/*
 	Poco::DateTime newtime(
 		now.year(),
 		now.month(),
@@ -60,6 +62,10 @@ std::string MISC::getDateTime(int hours)
 		(now.hour() + hours),
 		now.minute(),
 		now.second());
+	*/
+	Poco::Timespan span(hours*Poco::Timespan::HOURS);
+	Poco::DateTime newtime = now + span;
+
 	return ("[" + Poco::DateTimeFormatter::format(newtime, "%Y, %n, %d, %H, %M") + "]");
 }
 
@@ -97,7 +103,7 @@ std::string MISC::callPlugin(AbstractExt *extension, std::string str_input)
 {
 	// Protocol
 	const std::string sep_char(":");
-	
+
 	std::string command;
 	std::string data;
 	std::string result;
