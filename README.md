@@ -1,16 +1,16 @@
 ## extDB
 
 THIS IS NOT IN A WORKING STATE ATM
-THIS IS NOT IN A WORKING STATE ATM
+
 THIS IS NOT IN A WORKING STATE ATM
 
-Database Plugins still need to be done...
+THIS IS NOT IN A WORKING STATE ATM
+
+Rewrite Namespace Section of code in ext.cpp
+
+Sigh
+
 Due some v.basic benchmark to see if any major performance issue
-
-Left Todo
-Fix Raw DB Plugin
-Code a Basic DB Plugin
-
 
 
 ---------------
