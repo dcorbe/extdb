@@ -34,6 +34,8 @@
 #include <Poco/Manifest.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
+typedef Poco::ClassLoader<AbstractPlugin> PluginLoader;
+
 class Ext: public AbstractExt
 {
 	public:
@@ -53,6 +55,7 @@ class Ext: public AbstractExt
 	private:
 		bool extDB_lock;
 
+		// ASIO Thread Queue
 		boost::shared_ptr<boost::asio::io_service::work> io_work_ptr;
 		boost::asio::io_service io_service;
 		boost::mutex mutex_io_service;
@@ -89,6 +92,7 @@ class Ext: public AbstractExt
 		int getUniqueID_mutexlock();
 
 		// Plugins
+		boost::shared_ptr< PluginLoader > loader;
 		void addPlugin(const std::string &plugin, const std::string &protocol_name, char *output, const int &output_size);
 
 		std::string syncCallPlugin(std::string protocol, std::string data);

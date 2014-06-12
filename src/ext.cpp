@@ -56,18 +56,15 @@
 
 
 typedef Poco::ClassLoader<AbstractPlugin> PluginLoader;
-typedef Poco::Manifest<AbstractPlugin> PluginManifest;
 
 
 namespace {
     IdManager mgr;
-    PluginLoader loader;
-//    boost::asio::io_service io_service;
-//    boost::asio::io_service::work work(io_service);
 };
- 
+
 
 Ext::Ext(void) {
+	loader.reset( new PluginLoader );
     extDB_lock = false;
     if ( !boost::filesystem::exists( "conf-main.ini" ))
     {
@@ -85,7 +82,6 @@ Ext::Ext(void) {
         {
             max_threads = boost::thread::hardware_concurrency();
         }
-		
 		io_work_ptr.reset(new boost::asio::io_service::work(io_service));
         for (std::size_t i = 0; i < max_threads; ++i)
         {
@@ -109,10 +105,10 @@ Ext::~Ext(void)
     else if (boost::iequals(db_type, "SQLite") == 1)
         Poco::Data::SQLite::Connector::unregisterConnector();
     boost::unordered_map<std::string, std::string>::iterator it = shared_map_plugins_path.begin();
-
+//    Poco::ClassLoader<AbstractPlugin> loader;
     for (; it !=shared_map_plugins_path.end(); ++it)
     {
-        loader.unloadLibrary(it->second);
+        loader.get()->unloadLibrary(it->second);
         std::cout  << "extDB: unloading: " << it->second << std::endl;
     }
     std::cout << "extDB: Stopped" << std::endl ;
@@ -322,29 +318,30 @@ void Ext::sendResult_mutexlock(const std::string &result, char *output, const in
 
 void Ext::addPlugin(const std::string &plugin, const std::string &protocol_name, char *output, const int &output_size)
 {
+//    Poco::ClassLoader<AbstractPlugin> loader;
     {
         boost::lock_guard<boost::mutex> lock(mutex_shared_map_plugins_path);
         std::string plugin_path = "./" + plugin + Poco::SharedLibrary::suffix();
         if (shared_map_plugins_path.count(plugin) == 0)
         {
-            loader.loadLibrary(plugin_path);
+            loader.get()->loadLibrary(plugin_path);
             shared_map_plugins_path[plugin] = plugin_path;
         }
     }
 
-    PluginLoader::Iterator it(loader.begin());
-    PluginLoader::Iterator end(loader.end());
+    PluginLoader::Iterator it(loader.get()->begin());
+    PluginLoader::Iterator end(loader.get()->end());
 
     for (; it!=end; ++it)
     {
-        PluginManifest::Iterator itMan(it->second->begin());
+        Poco::Manifest<AbstractPlugin>::Iterator itMan(it->second->begin());
         if (boost::iequals(std::string (itMan->name()), plugin))
         {
             std::cout << "extDB: Protocol Added: " << protocol_name << "." << std::endl;
             std::cout << "extDB: name(): " << itMan->name() << std::endl;
             {
                 boost::lock_guard<boost::mutex> lock(mutex_shared_map_plugins);
-                shared_map_plugins[protocol_name] =  boost::shared_ptr<AbstractPlugin> (loader.create(itMan->name()));
+                shared_map_plugins[protocol_name] =  boost::shared_ptr<AbstractPlugin> (loader.get()->create(itMan->name()));
             }
         }
     }
