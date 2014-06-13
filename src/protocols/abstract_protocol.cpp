@@ -17,22 +17,21 @@
 */
 
 
-#pragma once
+// AbstractPlugin.cpp
+//
+// This is used both by the class library and by the application.
 
-#include "abstractplugin.h"
+#include "abstract_protocol.h"
 
-#include <Poco/ClassLibrary.h>
-#include <Poco/Data/SessionPool.h>
-
-#include <cstdlib>
-#include <iostream>
-
-class DB_RAW: public AbstractPlugin
+AbstractPlugin::AbstractPlugin()
 {
-	public:
-		std::string name() const
-		{
-			return "Plugin_DB_RAW";
-		}
-		std::string callPlugin(AbstractExt *extension, std::string input_str);
-};
+}
+
+AbstractPlugin::~AbstractPlugin()
+{
+}
+
+std::string callPlugin(std::string input_str)
+{
+	return "";
+}

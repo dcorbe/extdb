@@ -19,20 +19,15 @@
 
 #pragma once
 
-#include <Poco/AutoPtr.h>
-#include <Poco/Data/Session.h>
-#include <Poco/Util/IniFileConfiguration.h>
+#include <Poco/Data/SessionPool.h>
 
-class AbstractExt
+#include <cstdlib>
+#include <iostream>
+
+#include "../ext.h"
+
+class DB_RAW: public AbstractPlugin
 {
 	public:
-
-		virtual std::string versionMajorCheck() const=0;
-		virtual std::string versionMinorCheck() const=0;
-
-		virtual Poco::Data::Session getDBSession_mutexlock()=0;
-		//virtual void saveResult_mutexlock(std::string result, int uniqueID)=0;
-
-	protected:
-		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf();
+		std::string callPlugin(AbstractExt *extension, std::string input_str);
 };

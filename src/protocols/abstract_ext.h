@@ -17,21 +17,18 @@
 */
 
 
-// AbstractPlugin.cpp
-//
-// This is used both by the class library and by the application.
+#pragma once
 
-#include "abstractplugin.h"
+#include <Poco/AutoPtr.h>
+#include <Poco/Data/Session.h>
+#include <Poco/Util/IniFileConfiguration.h>
 
-AbstractPlugin::AbstractPlugin()
+class AbstractExt
 {
-}
+	public:
 
-AbstractPlugin::~AbstractPlugin()
-{
-}
+		virtual std::string version() const=0;
 
-std::string callPlugin(std::string input_str)
-{
-	return "";
-}
+		virtual Poco::Data::Session getDBSession_mutexlock()=0;
+		virtual void saveResult_mutexlock(const std::string &result, const int &unique_id)=0;
+};

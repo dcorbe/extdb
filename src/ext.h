@@ -19,9 +19,6 @@
 
 #pragma once
 
-#include "plugins/abstractplugin.h"
-#include "plugins/abstract_ext.h"
-
 #include <boost/asio.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread/thread.hpp>
@@ -34,7 +31,10 @@
 #include <Poco/Manifest.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
-typedef Poco::ClassLoader<AbstractPlugin> PluginLoader;
+#include "uniqueid.h"
+
+#include "protocols/abstract_protocol.h"
+#include "protocols/abstract_ext.h"
 
 class Ext: public AbstractExt
 {
@@ -43,14 +43,10 @@ class Ext: public AbstractExt
 		~Ext();
 
 		void callExtenion(char *output, const int &output_size, const char *function);
-		std::string versionMajorCheck() const;
-		std::string versionMinorCheck() const;
+		std::string version() const;
 
 		Poco::Data::Session getDBSession_mutexlock();
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
-
-	protected:
-		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf();
 
 	private:
 		bool extDB_lock;
@@ -73,27 +69,23 @@ class Ext: public AbstractExt
 		void getResult_mutexlock(const int &unique_id, char *output, const int &output_size);
 		void sendResult_mutexlock(const std::string &result, char *output, const int &output_size);
 
-		// boost::unordered_map + mutex -- for Plugin Name : Plugins Path
-		boost::unordered_map< std::string, std::string > shared_map_plugins_path;
-		boost::mutex mutex_shared_map_plugins_path;
-
 		// boost::unordered_map + mutex -- for Plugin Loaded
-		boost::unordered_map< std::string, boost::shared_ptr<AbstractPlugin> > shared_map_plugins;
-		boost::mutex mutex_shared_map_plugins;
+		boost::unordered_map< std::string, boost::shared_ptr<AbstractPlugin> > unordered_map_protocol;
+		boost::mutex mutex_unordered_map_protocol;
 
 		// boost::unordered_map + mutex -- for Stored Results to long for outputsize
-		boost::unordered_map<int, bool> shared_map_wait;
-		boost::unordered_map<int, std::string> shared_map_results;
-		boost::mutex mutex_shared_map;  // Using Same Lock for Wait / Results / Plugins
+		boost::unordered_map<int, bool> unordered_map_wait;
+		boost::unordered_map<int, std::string> unordered_map_results;
+		boost::mutex mutex_unordered_map_results;  // Using Same Lock for Wait / Results / Plugins
 
 		// Unique ID for key for ^^
+		boost::shared_ptr<IdManager> mgr;
 		boost::mutex mutex_unique_id;
 		void freeUniqueID_mutexlock(const int &unique_id);
 		int getUniqueID_mutexlock();
 
 		// Plugins
-		boost::shared_ptr< PluginLoader > loader;
-		void addPlugin(const std::string &plugin, const std::string &protocol_name, char *output, const int &output_size);
+		std::string addProtocol(const std::string &protocol, const std::string &protocol_name);
 
 		std::string syncCallPlugin(std::string protocol, std::string data);
 		void onewayCallPlugin(const std::string protocol, const std::string data);

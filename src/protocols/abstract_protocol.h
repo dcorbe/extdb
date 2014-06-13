@@ -33,6 +33,5 @@ class AbstractPlugin
 public:
 	AbstractPlugin();
 	virtual ~AbstractPlugin();
-	virtual std::string name() const=0;
 	virtual std::string callPlugin(AbstractExt *extension, std::string input_str)=0;
 };

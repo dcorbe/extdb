@@ -38,33 +38,26 @@
 #include <boost/thread/thread.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include <Poco/ClassLoader.h>
 #include <Poco/Data/SessionPool.h>
 #include <Poco/Exception.h>
-#include <Poco/Manifest.h>
 #include <Poco/NumberFormatter.h>
 #include <Poco/NumberParser.h>
-#include <Poco/SharedLibrary.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 
-#include "plugins/abstractplugin.h"
 #include "uniqueid.h"
 
+#include "protocols/abstract_protocol.h"
+#include "protocols/db_raw.h"
+#include "protocols/misc.h"
 
-typedef Poco::ClassLoader<AbstractPlugin> PluginLoader;
-
-
-namespace {
-    IdManager mgr;
-};
 
 
 Ext::Ext(void) {
-	loader.reset( new PluginLoader );
+	mgr.reset (new IdManager);
     extDB_lock = false;
     if ( !boost::filesystem::exists( "conf-main.ini" ))
     {
@@ -96,7 +89,7 @@ Ext::~Ext(void)
     std::cout << "extDB: Stopping Please Wait.." << std::endl ;
     io_service.stop();
     threads.join_all();
-    shared_map_plugins.clear();
+    unordered_map_protocol.clear();
 
     if (boost::iequals(db_type, std::string("MySQL")) == 1)
         Poco::Data::MySQL::Connector::unregisterConnector();
@@ -104,13 +97,7 @@ Ext::~Ext(void)
         Poco::Data::ODBC::Connector::unregisterConnector();
     else if (boost::iequals(db_type, "SQLite") == 1)
         Poco::Data::SQLite::Connector::unregisterConnector();
-    boost::unordered_map<std::string, std::string>::iterator it = shared_map_plugins_path.begin();
-//    Poco::ClassLoader<AbstractPlugin> loader;
-    for (; it !=shared_map_plugins_path.end(); ++it)
-    {
-        loader.get()->unloadLibrary(it->second);
-        std::cout  << "extDB: unloading: " << it->second << std::endl;
-    }
+
     std::cout << "extDB: Stopped" << std::endl ;
 }
 
@@ -208,12 +195,7 @@ std::string Ext::connectDatabase(const std::string &conf_option)
     }
 }
 
-std::string Ext::versionMajorCheck() const
-{
-    return "0";
-}
-
-std::string Ext::versionMinorCheck() const
+std::string Ext::version() const
 {
     return "0";
 }
@@ -221,14 +203,14 @@ std::string Ext::versionMinorCheck() const
 int Ext::getUniqueID_mutexlock()
 {
     boost::lock_guard<boost::mutex> lock(mutex_unique_id);
-    return mgr.AllocateId();
+    return mgr.get()->AllocateId();
 }
 
 
 void Ext::freeUniqueID_mutexlock(const int &unique_id)
 {
     boost::lock_guard<boost::mutex> lock(mutex_unique_id);
-    mgr.FreeId(unique_id);
+    mgr.get()->FreeId(unique_id);
 }
 
 Poco::Data::Session Ext::getDBSession_mutexlock()
@@ -245,11 +227,11 @@ void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &out
 //   If >, then sends 1 part to arma + stores rest.
 {
     {
-        boost::lock_guard<boost::mutex> lock(mutex_shared_map); // TODO Make Lock Smaller
-        boost::unordered_map<int, std::string>::const_iterator it = shared_map_results.find(unique_id);
-        if (it == shared_map_results.end()) // NO UNIQUE ID or WAIT
+        boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results); // TODO Make Lock Smaller
+        boost::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
+        if (it == unordered_map_results.end()) // NO UNIQUE ID or WAIT
         {
-            if (shared_map_wait.count(unique_id) == 0)
+            if (unordered_map_wait.count(unique_id) == 0)
             {
                 //std::snprintf(output, output_size, "[\"ERROR\",\"NO ID FOUND\"]");
                 std::strcpy(output, (""));
@@ -262,7 +244,7 @@ void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &out
         }
         else if (it->second.length() == 0) // END of MSG
         {
-            shared_map_results.erase(unique_id);
+            unordered_map_results.erase(unique_id);
             freeUniqueID_mutexlock(unique_id);
             std::strcpy(output, (""));
         }
@@ -272,11 +254,11 @@ void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &out
             std::strcpy(output, msg.c_str());
             if (it->second.length() >= (output_size-8))
             {
-                shared_map_results[unique_id] = it->second.substr(output_size-9);
+                unordered_map_results[unique_id] = it->second.substr(output_size-9);
             }
             else
             {
-                shared_map_results[unique_id] = std::string("");
+                unordered_map_results[unique_id] = std::string("");
             }
         }
     }
@@ -288,9 +270,9 @@ void Ext::saveResult_mutexlock(const std::string &result, const int &unique_id)
 //   Used when string > arma output char
 {
     {
-        boost::lock_guard<boost::mutex> lock(mutex_shared_map);
-        shared_map_results[unique_id] = "[\"OK\"," + result + "]";
-        shared_map_wait.erase(unique_id);
+        boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
+        unordered_map_results[unique_id] = "[\"OK\"," + result + "]";
+        unordered_map_wait.erase(unique_id);
     }
 }
 
@@ -316,63 +298,47 @@ void Ext::sendResult_mutexlock(const std::string &result, char *output, const in
 }
 
 
-void Ext::addPlugin(const std::string &plugin, const std::string &protocol_name, char *output, const int &output_size)
+std::string Ext::addProtocol(const std::string &protocol, const std::string &protocol_name)
 {
-//    Poco::ClassLoader<AbstractPlugin> loader;
-    {
-        boost::lock_guard<boost::mutex> lock(mutex_shared_map_plugins_path);
-        std::string plugin_path = "./" + plugin + Poco::SharedLibrary::suffix();
-        if (shared_map_plugins_path.count(plugin) == 0)
-        {
-            loader.get()->loadLibrary(plugin_path);
-            shared_map_plugins_path[plugin] = plugin_path;
-        }
-    }
-
-    PluginLoader::Iterator it(loader.get()->begin());
-    PluginLoader::Iterator end(loader.get()->end());
-
-    for (; it!=end; ++it)
-    {
-        Poco::Manifest<AbstractPlugin>::Iterator itMan(it->second->begin());
-        if (boost::iequals(std::string (itMan->name()), plugin))
-        {
-            std::cout << "extDB: Protocol Added: " << protocol_name << "." << std::endl;
-            std::cout << "extDB: name(): " << itMan->name() << std::endl;
-            {
-                boost::lock_guard<boost::mutex> lock(mutex_shared_map_plugins);
-                shared_map_plugins[protocol_name] =  boost::shared_ptr<AbstractPlugin> (loader.get()->create(itMan->name()));
-            }
-        }
-    }
-    //std::snprintf(output, output_size, "[\"OK\",\"\"]");
-    std::strcpy(output, ("[\"OK\"]"));
+	{
+		boost::lock_guard<boost::mutex> lock(mutex_unordered_map_protocol);
+		if (boost::iequals(protocol, std::string("MISC")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractPlugin> (new MISC());
+			return "[\"OK\"]";
+		}
+		else if (boost::iequals(protocol, std::string("DB_RAW")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractPlugin> (new DB_RAW());
+			return "[\"OK\"]";
+		}
+		else
+		{
+			return ("[\"ERROR\",\"Error Unknown Protocol\"]");
+		}
+	}
 }
 
 
 std::string Ext::syncCallPlugin(const std::string protocol, const std::string data)
 // Sync callPlugin
 {
-    if (shared_map_plugins.find(protocol) == shared_map_plugins.end())
+    if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
     {
         return ("[\"ERROR\",\"Error Unknown Protocol\"]");
     }
     else
     {
-        return (shared_map_plugins[protocol].get()->callPlugin(this, data));
+        return (unordered_map_protocol[protocol].get()->callPlugin(this, data));
     }
 }
 
 void Ext::onewayCallPlugin(const std::string protocol, const std::string data)
 // ASync callPlugin
 {
-    if (shared_map_plugins.find(protocol) == shared_map_plugins.end())
+    if (unordered_map_protocol.find(protocol) != unordered_map_protocol.end())
     {
-        //return ("[\"ERROR\",\"Error Unknown Protocol\"]");
-    }
-    else
-    {
-        shared_map_plugins[protocol].get()->callPlugin(this, data);
+        unordered_map_protocol[protocol].get()->callPlugin(this, data);
     }
 }
 
@@ -381,13 +347,13 @@ void Ext::asyncCallPlugin(const std::string protocol, const std::string data, co
 // ASync + Save callPlugin
 // We check if Protocol exists here, since its a thread (less time spent blocking arma) and it shouldnt happen anyways
 {
-    if (shared_map_plugins.find(protocol) == shared_map_plugins.end())
+    if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
     {
         saveResult_mutexlock(std::string("[\"ERROR\",\"Error Unknown Protocol\"]"), unique_id);
     }
     else
     {
-        saveResult_mutexlock((shared_map_plugins[protocol].get()->callPlugin(this, data)), unique_id);
+        saveResult_mutexlock((unordered_map_protocol[protocol].get()->callPlugin(this, data)), unique_id);
     }
 }
 
@@ -422,8 +388,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                 {
                     int unique_id = getUniqueID_mutexlock();
                     {
-                        boost::lock_guard<boost::mutex> lock(mutex_shared_map);
-                        shared_map_wait[unique_id] = true;
+                        boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
+                        unordered_map_wait[unique_id] = true;
                     }
                     
                     {
@@ -506,20 +472,16 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                         command = str_input.substr(2,(found-2));
                         data = str_input.substr(found+1);
                     }
-                    if (command == "VERSION_MAJOR")
+                    if (command == "VERSION")
                     {
-                        std::strcpy(output, versionMajorCheck().c_str());
-                    }
-                    else if (command == "VERSION_MINOR")
-                    {
-                        std::strcpy(output, versionMinorCheck().c_str());
+                        std::strcpy(output, version().c_str());
                     }
                     else if (command == "DATABASE")
                     {
                         msg = connectDatabase(data);
                         std::strcpy(output, msg.c_str());
                     }
-                    else if (command == "ADD")
+                    else if (command == "PROTOCOL")
                     {
                         found = data.find(sep_char);
                         if (found==std::string::npos)  // Check Invalid Format
@@ -529,7 +491,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                         }
                         else
                         {
-                            addPlugin(data.substr(0,found), data.substr(found+1), output, output_size);
+                            msg = addProtocol(data.substr(0,found), data.substr(found+1));
+							std::strcpy(output, msg.c_str());
                         }
                     }
                     else if (command == "LOCK")
@@ -566,7 +529,7 @@ int main(int nNumberofArgs, char* pszArgs[])
     char result[255];
     for (;;) {
         char input_str[100];
-std::cin.getline(input_str, sizeof(input_str));
+		std::cin.getline(input_str, sizeof(input_str));
         if (std::string(input_str) == "quit")
         {
             break;

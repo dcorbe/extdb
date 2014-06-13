@@ -17,7 +17,10 @@
 */
 
 
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
+
 
 #include "ext.h"
 

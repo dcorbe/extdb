@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include "abstractplugin.h"
-
 #include <boost/thread/thread.hpp>
 
 #include <Poco/Checksum.h>
@@ -32,10 +30,11 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "abstract_protocol.h"
+
 class MISC: public AbstractPlugin
 {
 	public:
-		//MISC();
 
 		std::string name() const
 		{
@@ -63,5 +62,4 @@ private:
 		std::string getCrc32(std::string &str_input);
 		std::string getMD4(std::string &str_input);
 		std::string getMD5(std::string &str_input);
-
 };

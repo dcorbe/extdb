@@ -1,10 +1,6 @@
 # this is a example of Makefile
+main:
+	g++ -shared -m32 -fPIC -pipe -O2 -o extdb.so src/main.cpp src/ext.cpp src/uniqueid.cpp src/protocols/abstract_protocol.cpp src/protocols/misc.cpp src/protocols/db_raw.cpp -lPocoFoundation -lPocoData -lPocoDataODBC -lPocoDataSQLite -lPocoDataMySQL -lPocoUtil -lboost_filesystem -lboost_system -lboost_thread
+
 test:
-	g++ -o extDB src/ext.cpp src/uniqueid.cpp src/plugins/abstractplugin.cpp -lPocoFoundation -lPocoData -lPocoDataODBC -lPocoDataSQLite -lPocoDataMySQL -lPocoUtil -lboost_filesystem -lboost_system -lboost_thread -fPIC -pipe -O2 -DTESTING -g
-
-plugins:
-	g++ -o db_raw.so src/plugins/db_raw.cpp src/plugins/abstractplugin.cpp -lPocoFoundation -lPocoData -lPocoDataODBC -lPocoDataSQLite -lPocoDataMySQL -lPocoUtil -lboost_filesystem -lboost_system -lboost_thread -shared -fPIC -pipe -O2 -g
-	g++ -o misc.so src/plugins/misc.cpp src/plugins/abstractplugin.cpp -lPocoFoundation -lPocoData -lPocoDataODBC -lPocoDataSQLite -lPocoDataMySQL -lPocoUtil -lboost_filesystem -lboost_system -lboost_thread -shared -fPIC -pipe -O2 -g
-
-test2: 
-	g++ -o test ./test.cpp
+	g++ -g -m32 -fPIC -pipe -O2 -o extdb src/ext.cpp src/uniqueid.cpp src/protocols/abstract_protocol.cpp src/protocols/misc.cpp src/protocols/db_raw.cpp -DTESTING -lPocoFoundation -lPocoData -lPocoDataODBC -lPocoDataSQLite -lPocoDataMySQL -lPocoUtil -lboost_filesystem -lboost_system -lboost_thread

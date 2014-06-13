@@ -17,15 +17,11 @@
 */
 
 
-
 #include "misc.h"
-
-#include "abstractplugin.h"
 
 #include <boost/thread/thread.hpp>
 
 #include <Poco/Checksum.h>
-#include <Poco/ClassLibrary.h>
 #include <Poco/DateTime.h>
 #include <Poco/DateTimeFormatter.h>
 #include <Poco/DigestEngine.h>
@@ -37,6 +33,8 @@
 
 #include <cstdlib>
 #include <iostream>
+
+#include "../ext.h"
 
 /*
 MISC::MISC(void)
@@ -158,19 +156,4 @@ std::string MISC::callPlugin(AbstractExt *extension, std::string str_input)
 		result = ("[\"ERROR\",\"Error Invalid Command\"]");
 	}
 	return result;
-}
-
-POCO_BEGIN_MANIFEST(AbstractPlugin)
-	POCO_EXPORT_CLASS(MISC)
-POCO_END_MANIFEST
-
-// optional set up and clean up functions
-void pocoInitializeLibrary()
-{
-	//std::cout << "Plugin DB_RAW Library initializing" << std::endl;
-}
-
-void pocoUninitializeLibrary()
-{
-	//std::cout << "Plugin DB_RAW Library uninitializing" << std::endl;
 }

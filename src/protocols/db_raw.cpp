@@ -19,9 +19,6 @@
 
 #include "db_raw.h"
 
-#include "abstractplugin.h"
-
-#include <Poco/ClassLibrary.h>
 #include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
@@ -40,17 +37,12 @@ std::string DB_RAW::callPlugin(AbstractExt *extension, std::string input_str)
 	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 	Poco::Data::Statement select(db_session);
 	select << input_str;
-	std::cout << "1" << std::endl;
 	select.execute();
-	std::cout << "2" << std::endl;
 	Poco::Data::RecordSet rs(select);
 	if (rs.columnCount() > 1)
 	{
-		std::cout << "3" << std::endl;
 		std::size_t cols = rs.columnCount();
-		std::cout << "4" << std::endl;
 		bool more = rs.moveFirst();
-		std::cout << "5" << std::endl;
 		while (more)
 		{
 			result += " [";
@@ -78,19 +70,4 @@ std::string DB_RAW::callPlugin(AbstractExt *extension, std::string input_str)
 		}
 	}
 	return result;
-}
-
-POCO_BEGIN_MANIFEST(AbstractPlugin)
-	POCO_EXPORT_CLASS(DB_RAW)
-POCO_END_MANIFEST
-
-// optional set up and clean up functions
-void pocoInitializeLibrary()
-{
-	//std::cout << "Plugin DB_RAW Library initializing" << std::endl;
-}
-
-void pocoUninitializeLibrary()
-{
-	//std::cout << "Plugin DB_RAW Library uninitializing" << std::endl;
 }
