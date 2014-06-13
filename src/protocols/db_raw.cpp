@@ -39,7 +39,7 @@ std::string DB_RAW::callPlugin(AbstractExt *extension, std::string input_str)
 	select << input_str;
 	select.execute();
 	Poco::Data::RecordSet rs(select);
-	if (rs.columnCount() > 1)
+	if (rs.columnCount() >= 1)
 	{
 		std::size_t cols = rs.columnCount();
 		bool more = rs.moveFirst();
@@ -65,7 +65,7 @@ std::string DB_RAW::callPlugin(AbstractExt *extension, std::string input_str)
 			}
 			else
 			{
-				result += "]";
+				result = result.substr(0, (result.length() - 2)) + "]";
 			}
 		}
 	}

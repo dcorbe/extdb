@@ -26,10 +26,9 @@ All System Commands are Sync in nature i.e will block while beening run.
 System Command - ADD
 -------------------------------------------------------
 
-"extDB" callExtension "9:AddPlugin:Name"
+"extDB" callExtension "9:AddProtocol:Name"
 
-Shared Library Name is the filename without the extension i.e foo and not foo.dll / foo.so
-Protocol Name for use down below, its mainly to make life easier for Scriptors.
+Protocol Name i.e MISC  // DB_RAW
 
 So for example
 "extDB" callExtension "9:misc:CRAP"

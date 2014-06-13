@@ -1,16 +1,18 @@
 ## extDB
 
-THIS IS NOT IN A WORKING STATE ATM
+This is now in a working state...
 
-THIS IS NOT IN A WORKING STATE ATM
+Work on windows dll, so build using static librarys
+Windows works if u put dll & poco / boost dll into arma3 directory
 
-THIS IS NOT IN A WORKING STATE ATM
+Linux remember arma3 = 32bit, u need 32bit librarys of poco + boost (look @ makefile to see which boost u only need)
 
-Rewrite Namespace Section of code in ext.cpp
 
-Sigh
+This has barely been tested...
+Used mainly console app version to test the string outputsize
 
-Due some v.basic benchmark to see if any major performance issue
+Haven't done any benchmarks yet in comparsion to inidb / arma2mysql yet
+
 
 
 ---------------
@@ -24,18 +26,12 @@ I got bored waiting on 2017 / epoch for Arma3...
 So i decided to write up an C++ Extension for Arma3server.
 
 
-#### Example plugins provided
-- db_raw   -- for raw sql database commands
-- db_basic -- for a basic db queries etc (no raw access to db)
-- misc     -- generic commands i.e CRC32 / TIME
 
 #### Features:
 
  - Multi-Part Messages (i.e if output > outputsize set by arma)
  - Multi-Threading Sync / ASync Commands
  - Supports Mysql / SQlite / ODBC  (via Poco Library)
- - Plugin Support (Poco Class Loader) Dynamic Load Plugins @ startup of
-   mission. *Only load plugins needed*
 
 #### Requirements to Build
 
@@ -57,3 +53,8 @@ Check your distro version of poco i.e poco-1.4.6p4
 
 Ubuntu is using debian stable version of poco (its abit old). 
 Download latest version, compile + build + install into /usr/local etc ... (Readup on checkinstall, will make it easier to remove it in the future)
+
+
+##### Removed Plugin Code...
+Will revisit issue later to see if i can come with solution..
+When i used libpoco classloader, it seems to cause arma3server to not be able to load dll for some reason :(

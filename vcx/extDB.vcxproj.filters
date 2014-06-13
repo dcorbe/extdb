@@ -17,10 +17,16 @@
     <ClInclude Include="..\src\uniqueid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\plugins\abstractplugin.h">
+    <ClInclude Include="..\src\protocols\abstract_ext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\plugins\abstract_ext.h">
+    <ClInclude Include="..\src\protocols\abstract_protocol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\protocols\db_raw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\protocols\misc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -31,7 +37,16 @@
     <ClCompile Include="..\src\uniqueid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\plugins\abstractplugin.cpp">
+    <ClCompile Include="..\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\protocols\abstract_protocol.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\protocols\db_raw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\protocols\misc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

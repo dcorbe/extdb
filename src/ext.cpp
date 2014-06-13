@@ -481,7 +481,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                         msg = connectDatabase(data);
                         std::strcpy(output, msg.c_str());
                     }
-                    else if (command == "PROTOCOL")
+                    else if (command == "ADD")
                     {
                         found = data.find(sep_char);
                         if (found==std::string::npos)  // Check Invalid Format
