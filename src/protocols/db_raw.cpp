@@ -23,6 +23,7 @@
 #include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/Session.h>
+#include <Poco/Exception.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -31,43 +32,49 @@
 std::string DB_RAW::callPlugin(AbstractExt *extension, std::string input_str)
 {
 
-	//db_session << input_str, Poco::Data::into(result), Poco::Data::now;
-
-	std::string result;
-	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-	Poco::Data::Statement select(db_session);
-	select << input_str;
-	select.execute();
-	Poco::Data::RecordSet rs(select);
-	if (rs.columnCount() >= 1)
-	{
-		std::size_t cols = rs.columnCount();
-		bool more = rs.moveFirst();
-		while (more)
+    try
+    {
+		std::string result;
+		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
+		Poco::Data::Statement select(db_session);
+		select << input_str;
+		select.execute();
+		Poco::Data::RecordSet rs(select);
+		if (rs.columnCount() >= 1)
 		{
-			result += " [";
-			for (std::size_t col = 0; col < cols; ++col)
+			std::size_t cols = rs.columnCount();
+			bool more = rs.moveFirst();
+			while (more)
 			{
-				if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+				result += " [";
+				for (std::size_t col = 0; col < cols; ++col)
 				{
-					result += "\"" + (rs[col].convert<std::string>() + "\"" + ", ");
+					if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+					{
+						result += "\"" + (rs[col].convert<std::string>() + "\"" + ", ");
+					}
+					else
+					{
+						result += (rs[col].convert<std::string>() + ", ");
+					}
+				}
+
+				more = rs.moveNext();
+				if (more)
+				{
+					result += "],";
 				}
 				else
 				{
-					result += (rs[col].convert<std::string>() + ", ");
+					result = result.substr(0, (result.length() - 2)) + "]";
 				}
 			}
-
-			more = rs.moveNext();
-			if (more)
-			{
-				result += "],";
-			}
-			else
-			{
-				result = result.substr(0, (result.length() - 2)) + "]";
-			}
 		}
+		return result;
 	}
-	return result;
+    catch (Poco::Exception& e)
+    {
+        return "[\"ERROR\",\"Error\"]";
+        std::cout << "extDB: Error: " << e.displayText() << std::endl;
+    }
 }
