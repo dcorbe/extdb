@@ -32,8 +32,12 @@ So i decided to write up an C++ Extension for Arma3server.
 
  
 #### Setup
-Please note conf-main.ini + sqlite database if u are using one, both need to be in your arma3 directory and not @extdb.
+Please note conf-main.ini + sqlite database if u are using one, 
+
+both need to be in your arma3 directory and not @extdb.
+
 Its my todo list to fix
+
 
 #### Windows Binarys Provided are built using
 
@@ -45,8 +49,8 @@ Didn't feel it was worth time to figure out if bug would effect code
 #### Linux Build Notes
 
 Requirements
-32bit libraries of boost_filesystem boost_system boost_thread
-32bit Poco-1.4.6p4
+ - 32bit libraries of boost_filesystem boost_system boost_thread
+ - 32bit Poco-1.4.6p4
 
 Check your distro version of poco i.e poco-1.4.6p4 
 
