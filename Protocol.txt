@@ -12,8 +12,7 @@ This is still a WIP + may be incorrect
 System Commands
 -------------------------------------------------------
 
-VERSION_MAJOR   (used to indicate changes to extDB, that will effect arma sqf sqm code)
-VERSION_MINOR   (used to indicate changes to extDB, that will effect plugins... may get removed)
+VERSION
 
 DATABASE        
 ADD
@@ -31,11 +30,9 @@ System Command - ADD
 Protocol Name i.e MISC  // DB_RAW
 
 So for example
-"extDB" callExtension "9:misc:CRAP"
+"extDB" callExtension "9:ADD:MISC:this_is_stupid"
 
-Will load misc.so/misc.dll and save its Protocol name as CRAP.
-So later u call it like
-"extDB" callExtension "0:CRAP:TIME"
+"extDB" callExtension "0:this_is_stupid:TIME"
 
 
 Return Value
@@ -110,6 +107,6 @@ Return Value
 ["WAIT"] 					// Not ready yet, sleep + try again
 
 ["OK","message_data"]		// Keep asking for data till u get ["END"]
-""							// Signals end of Multi-Part Message 
+(empty string)				// Signals end of Multi-Part Message 
 							// U must keep going till you receive this message otherwise unique id wont get freed.
 								// Note: U will also receive empty string if u use wrong unique id aswell
