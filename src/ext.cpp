@@ -283,7 +283,13 @@ void Ext::sendResult_mutexlock(const std::string &result, char *output, const in
 //   if >, then sends ID Message arma + stores rest. (mutex locks)
 {
     std::string msg;
-    if (result.length() <= (output_size-9))
+	size_t result_len = result.length();
+	if (result_len == 0)
+	{
+        msg = "[\"OK\"]";
+        std::strcpy(output, msg.c_str());
+	}
+    else if (result_len <= (output_size-9))
     {
         msg = "[\"OK\", " + result + "]";
         std::strcpy(output, msg.c_str());
