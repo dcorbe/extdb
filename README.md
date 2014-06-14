@@ -3,7 +3,8 @@
 WARNING
 
 First time using c++, my main language i used before was python.
-U been warned :Part
+
+U been warned !!!!
 
 ---------------
 ---------------
@@ -50,12 +51,15 @@ Requirements
 Check your distro version of poco i.e poco-1.4.6p4 
 
 Ubuntu is using debian stable version of poco (its abit old). 
+
 Download latest version, compile + build + install into /usr/local etc ... (Readup on checkinstall, will make it easier to remove it in the future)
 
 To compile type 
 make extdb
 
-cp extdb.so over to arma3 (u can put into seperate directory i.e @extdb if u like or dump into arma3 directory
+cp extdb.so over to arma3 (u can put into seperate directory 
+
+i.e @extdb if u like or dump into arma3 directory
 
 
 ##### Removed Plugin Code...
