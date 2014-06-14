@@ -59,11 +59,10 @@ Ubuntu is using debian stable version of poco (its abit old).
 Download latest version, compile + build + install into /usr/local etc ... (Readup on checkinstall, will make it easier to remove it in the future)
 
 To compile type 
-make extdb
+"make extdb"
 
-cp extdb.so over to arma3 (u can put into seperate directory 
-
-i.e @extdb if u like or dump into arma3 directory
+cp extdb.so over to arma3 u can put into seperate directory if u like
+i.e @extdb or just dump it into arma3 directory
 
 
 ##### Removed Plugin Code...
