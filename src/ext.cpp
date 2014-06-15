@@ -283,13 +283,7 @@ void Ext::sendResult_mutexlock(const std::string &result, char *output, const in
 //   if >, then sends ID Message arma + stores rest. (mutex locks)
 {
     std::string msg;
-	size_t result_len = result.length();
-	if (result_len == 0)
-	{
-        msg = "[\"OK\"]";
-        std::strcpy(output, msg.c_str());
-	}
-    else if (result_len <= (output_size-9))
+    if (result.length() <= (output_size-9))
     {
         msg = "[\"OK\", " + result + "]";
         std::strcpy(output, msg.c_str());
@@ -368,150 +362,149 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 {
     try
     {
-        const std::string str_input(function);
+        std::string str_input(function);
         const std::string sep_char (":");  // TODO Make Global Value
         std::string msg;
 
         // Async / Sync
-		const std::string async = str_input.substr(0,1);
-		
-		//ASYNC
-		if (async == "1")
-		{
-			// Protocol
-			const std::string::size_type found = str_input.find(sep_char,2);
-			const std::string protocol = str_input.substr(2,(found-2));
-			// Data
-			const std::string data = str_input.substr(found+1);
+        const int async = Poco::NumberParser::parse(str_input.substr(0,1));
 
-			if (found==std::string::npos)  // Check Invalid Format
-			{
-				std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
-				//std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Format\"]");
-			}
-			else
-			{
-				io_service.post(boost::bind(&Ext::onewayCallPlugin, this, protocol, data));
-				msg = std::string("[\"OK\"]");
-				std::strcpy(output, msg.c_str());
-			}
-		}
-		
-		//ASYNC + SAVE
-		else if (async == "2")
-		{
-			// Protocol
-			const std::string::size_type found = str_input.find(sep_char,2);
-			const std::string protocol = str_input.substr(2,(found-2));
-			// Data
-			const std::string data = str_input.substr(found+1);
+        switch (async)  // TODO Profile using Numberparser versus comparsion of char[0] + if statement checking length of *function
+        {
+            case 2: //ASYNC + SAVE
+            {
+                // Protocol
+                const std::string::size_type found = str_input.find(sep_char,2);
+                const std::string protocol = str_input.substr(2,(found-2));
+                // Data
+                std::string data = str_input.substr(found+1);
 
-			if (found==std::string::npos)  // Check Invalid Format
-			{
-				std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
-				//std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Format\"]");
-			}
-			else
-			{
-				const int unique_id = getUniqueID_mutexlock();
-				{
-					boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
-					unordered_map_wait[unique_id] = true;
-				}
-				io_service.post(boost::bind(&Ext::asyncCallPlugin, this, protocol, data, unique_id));
-				msg = "[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]";
-				std::strcpy(output, msg.c_str());
-			}
-		}
-		
-		// GET
-		else if (async == "5")
-		{
-			if (str_input.length() >= 2)
-			{
-				const int unique_id = Poco::NumberParser::parse(str_input.substr(2));
-				getResult_mutexlock(unique_id, output, output_size);
-			}
-		}
-		
-		//SYNC
-		if (async == "0")
-		{
-			// Protocol
-			const std::string::size_type found = str_input.find(sep_char,2);
-			const std::string protocol = str_input.substr(2,(found-2));
-			// Data
-			const std::string data = str_input.substr(found+1);
+                if (found==std::string::npos)  // Check Invalid Format
+                {
+                    std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
+                    //std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Format\"]");
+                }
+                else
+                {
+                    int unique_id = getUniqueID_mutexlock();
+                    {
+                        boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
+                        unordered_map_wait[unique_id] = true;
+                    }
+					io_service.post(boost::bind(&Ext::asyncCallPlugin, this, protocol, data, unique_id));                   
+                    msg = "[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]";
+                    std::strcpy(output, msg.c_str());
+                }
+                break;
+            }
+            case 5: // GET
+            {
+                if (str_input.length() >= 2)
+                {
+                    const int unique_id = Poco::NumberParser::parse(str_input.substr(2));
+                    getResult_mutexlock(unique_id, output, output_size);
+                }
+                break;
+            }
+            case 1: //ASYNC
+            {
+                // Protocol
+                const std::string::size_type found = str_input.find(sep_char,2);
+                const std::string protocol = str_input.substr(2,(found-2));
+                // Data
+                std::string data = str_input.substr(found+1);
 
-			if (found==std::string::npos)  // Check Invalid Format
-			{
-				std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
-				//std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Format\"]");
-			}
-			else
-			{
-				msg = syncCallPlugin(protocol, data);
-				sendResult_mutexlock(msg, output, output_size); // Checks Result length (i.e multipart msgs) + sends to Arma
-			}
-		}
-		
-		// SYSTEM COMMANDS
-		else if (async == "9")
-		{
-			if (!extDB_lock)
-			{
-				// Protocol
-				std::string::size_type found = str_input.find(sep_char,2);
-				std::string command;
-				std::string data;
-				if (found==std::string::npos)  // Check Invalid Format
-				{
-					command = str_input.substr(2);
-				}
-				else
-				{
-					command = str_input.substr(2,(found-2));
-					data = str_input.substr(found+1);
-				}
-				if (command == "VERSION")
-				{
-					std::strcpy(output, version().c_str());
-				}
-				else if (command == "DATABASE")
-				{
-					msg = connectDatabase(data);
-					std::strcpy(output, msg.c_str());
-				}
-				else if (command == "ADD")
-				{
-					found = data.find(sep_char);
-					if (found==std::string::npos)  // Check Invalid Format
-					{
-						//std::snprintf(output, output_size, "[\"ERROR\",\"Error Missing Protocol Name\"]");
-						std::strcpy(output, ("[\"ERROR\",\"Error Missing Protocol Name\"]"));
-					}
-					else
-					{
-						msg = addProtocol(data.substr(0,found), data.substr(found+1));
-						std::strcpy(output, msg.c_str());
-					}
-				}
-				else if (command == "LOCK")
-				{
-					extDB_lock = true;
-				}
-				else
-				{
-					std::strcpy(output, ("[\"ERROR\",\"Error Invalid extDB Command\"]"));
-					//std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid extDB Command\"]");
-				}
-			}
-		}
-		else
-		{
-			std::strcpy(output, ("[\"ERROR\",\"Error Invalid Message\"]"));
-			//std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Message Type\"]");
-		}
+                if (found==std::string::npos)  // Check Invalid Format
+                {
+                    std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
+                    //std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Format\"]");
+                }
+                else
+                {
+					io_service.post(boost::bind(&Ext::onewayCallPlugin, this, protocol, data));
+                    msg = std::string("[\"OK\"]");
+                    std::strcpy(output, msg.c_str());
+                }
+                break;
+            }
+            case 0: //SYNC
+            {
+                // Protocol
+                const std::string::size_type found = str_input.find(sep_char,2);
+                const std::string protocol = str_input.substr(2,(found-2));
+                // Data
+                std::string data = str_input.substr(found+1);
+
+                if (found==std::string::npos)  // Check Invalid Format
+                {
+                    std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
+                    //std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Format\"]");
+                }
+                else
+                {
+                    msg = syncCallPlugin(protocol, data);
+                    sendResult_mutexlock(msg, output, output_size); // Checks Result length (i.e multipart msgs) + sends to Arma
+                }
+                break;
+            }
+            case 9:
+            {
+                if (!extDB_lock)
+                {
+                    // Protocol
+                    std::string::size_type found = str_input.find(sep_char,2);
+                    std::string command;
+                    std::string data;
+                    if (found==std::string::npos)  // Check Invalid Format
+                    {
+                        command = str_input.substr(2);
+                    }
+                    else
+                    {
+                        command = str_input.substr(2,(found-2));
+                        data = str_input.substr(found+1);
+                    }
+                    if (command == "VERSION")
+                    {
+                        std::strcpy(output, version().c_str());
+                    }
+                    else if (command == "DATABASE")
+                    {
+                        msg = connectDatabase(data);
+                        std::strcpy(output, msg.c_str());
+                    }
+                    else if (command == "ADD")
+                    {
+                        found = data.find(sep_char);
+                        if (found==std::string::npos)  // Check Invalid Format
+                        {
+                            //std::snprintf(output, output_size, "[\"ERROR\",\"Error Missing Protocol Name\"]");
+                            std::strcpy(output, ("[\"ERROR\",\"Error Missing Protocol Name\"]"));
+                        }
+                        else
+                        {
+                            msg = addProtocol(data.substr(0,found), data.substr(found+1));
+							std::strcpy(output, msg.c_str());
+                        }
+                    }
+                    else if (command == "LOCK")
+                    {
+                        extDB_lock = true;
+                    }
+                    else
+                    {
+                        std::strcpy(output, ("[\"ERROR\",\"Error Invalid extDB Command\"]"));
+                        //std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid extDB Command\"]");
+                    }
+                    break;
+                }
+                default:
+                {
+                    std::strcpy(output, ("[\"ERROR\",\"Error Invalid Message\"]"));
+                    //std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Message Type\"]");
+                }
+            }
+        }
     }
     catch (Poco::Exception& e)
     {
