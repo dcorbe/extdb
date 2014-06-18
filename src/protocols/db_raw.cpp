@@ -29,7 +29,7 @@
 #include <iostream>
 
 
-std::string DB_RAW::callPlugin(AbstractExt *extension, std::string input_str)
+std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 {
 
     try

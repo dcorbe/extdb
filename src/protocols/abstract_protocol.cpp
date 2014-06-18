@@ -17,21 +17,17 @@
 */
 
 
-// AbstractPlugin.cpp
-//
-// This is used both by the class library and by the application.
-
 #include "abstract_protocol.h"
 
-AbstractPlugin::AbstractPlugin()
+AbstractProtocol::AbstractProtocol()
 {
 }
 
-AbstractPlugin::~AbstractPlugin()
+AbstractProtocol::~AbstractProtocol()
 {
 }
 
-std::string callPlugin(std::string input_str)
+std::string callProtocol(AbstractExt *extension, std::string input_str)
 {
 	return "";
 }

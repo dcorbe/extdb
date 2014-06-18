@@ -16,7 +16,6 @@
 * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-
 #include "misc.h"
 
 #include <boost/thread/thread.hpp>
@@ -97,7 +96,7 @@ std::string MISC::getMD5(std::string &str_input)
 	return ("\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"");
 }
 
-std::string MISC::callPlugin(AbstractExt *extension, std::string str_input)
+std::string MISC::callProtocol(AbstractExt *extension, std::string str_input)
 {
 	// Protocol
 	const std::string sep_char(":");

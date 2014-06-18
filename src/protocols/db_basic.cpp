@@ -29,82 +29,68 @@
 #include <iostream>
 
 
-std::string DB_BASIC::updatePlayerPos(AbstractExt *extension, std::string steamid, std::string pos)
+std::string DB_BASIC::getPlayerInfo(AbstractProtocol *extension, std::string steamid)
 {
 	// FOO
 	return "";
 }
 
-std::string DB_BASIC::updatePlayerInventory(AbstractExt *extension, std::string steamid, std::string inventory)
+std::string DB_BASIC::newPlayerInfo(AbstractProtocol *extension, std::string steamid)
 {
 	// FOO
 	return "";
 }
 
-std::string DB_BASIC::updatePlayerHealth(AbstractExt *extension, std::string steamid, std::string health)
+std::string DB_BASIC::updatePlayerDeath(AbstractProtocol *extension, std::string steamid)
 {
 	// FOO
 	return "";
 }
 
-std::string DB_BASIC::updatePlayerDied(AbstractExt *extension, std::string steamid)
+std::string DB_BASIC::updatePlayerHealth(AbstractProtocol *extension, std::string steamid, std::string health)
 {
 	// FOO
 	return "";
 }
 
-std::string DB_BASIC::updatePlayerSpawn(AbstractExt *extension, std::string steamid)
+std::string DB_BASIC::updatePlayerInventory(AbstractProtocol *extension, std::string steamid, std::string inventory)
 {
 	// FOO
 	return "";
 }
 
-std::string DB_BASIC::callPlugin(AbstractExt *extension, std::string input_str)
+std::string DB_BASIC::updatePlayerPos(AbstractProtocol *extension, std::string steamid, std::string pos)
 {
+	// FOO
+	return "";
+}
 
-    try
-    {
-		std::string result;
-		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-		Poco::Data::Statement select(db_session);
-		select << input_str;
-		select.execute();
-		Poco::Data::RecordSet rs(select);
-		if (rs.columnCount() >= 1)
-		{
-			std::size_t cols = rs.columnCount();
-			bool more = rs.moveFirst();
-			while (more)
-			{
-				result += " [";
-				for (std::size_t col = 0; col < cols; ++col)
-				{
-					if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
-					{
-						result += "\"" + (rs[col].convert<std::string>() + "\"" + ", ");
-					}
-					else
-					{
-						result += (rs[col].convert<std::string>() + ", ");
-					}
-				}
 
-				more = rs.moveNext();
-				if (more)
-				{
-					result += "],";
-				}
-				else
-				{
-					result = result.substr(0, (result.length() - 2)) + "]";
-				}
-			}
-		}
-		return result;
+std::string DB_BASIC::callPlugin(AbstractProtocol *extension, std::string input_str)
+{
+	const std::string sep_char(":");
+	const std::string::size_type found = str_input.find(sep_char,2);
+
+	// Data
+	std::string command;
+	std::string data;
+
+	if (found==std::string::npos)  // Check Invalid Format
+	{
+		//command = str_input.substr(2);
 	}
-    catch (Poco::Exception& e)
-    {
-        return "[\"ERROR\",\"Error\"]";
-        std::cout << "extDB: Error: " << e.displayText() << std::endl;
-    }
+	else
+	{
+		command = str_input.substr(2,(found-2));
+		data = str_input.substr(found+1);
+	}
+
+	if (command == "VERSION")
+	{
+		std::strcpy(output, version().c_str());
+	}
+	else if (command == "DATABASE")
+	{
+		connectDatabase(output, output_size, data); //TODO optimze return
+	}
 }

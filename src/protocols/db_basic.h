@@ -26,8 +26,8 @@
 
 #include "../ext.h"
 
-class DB_BASIC: public AbstractPlugin
+class DB_BASIC: public AbstractProtocol
 {
 	public:
-		std::string callPlugin(AbstractExt *extension, std::string input_str);
+		std::string callProtocol(AbstractProtocol *extension, std::string input_str);
 };

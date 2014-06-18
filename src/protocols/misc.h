@@ -32,7 +32,7 @@
 
 #include "abstract_protocol.h"
 
-class MISC: public AbstractPlugin
+class MISC: public AbstractProtocol
 {
 	public:
 
@@ -41,7 +41,7 @@ class MISC: public AbstractPlugin
 			return "Plugin_MISC";
 		}
 
-		std::string callPlugin(AbstractExt *extension, std::string input_str);
+		std::string callProtocol(AbstractExt *extension, std::string input_str);
 
 		//Poco::Checksum checksum_adler32;
 		//boost::mutex mutex_checksum_adler32;

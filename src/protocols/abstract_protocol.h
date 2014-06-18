@@ -17,7 +17,6 @@
 */
 
 
-
 #pragma once
 
 #include "abstract_ext.h"
@@ -28,10 +27,10 @@
 #include <iostream>
 #include <cstdlib>
 
-class AbstractPlugin
+class AbstractProtocol
 {
 public:
-	AbstractPlugin();
-	virtual ~AbstractPlugin();
-	virtual std::string callPlugin(AbstractExt *extension, std::string input_str)=0;
+	AbstractProtocol();
+	virtual ~AbstractProtocol();
+	virtual std::string callProtocol(AbstractExt *extension, std::string input_str)=0;
 };

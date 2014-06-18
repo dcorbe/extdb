@@ -91,18 +91,19 @@ Ext::~Ext(void)
     threads.join_all();
     unordered_map_protocol.clear();
 
-    if (boost::iequals(db_type, std::string("MySQL")) == 1)
+    if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
         Poco::Data::MySQL::Connector::unregisterConnector();
-    else if (boost::iequals(db_type, std::string ("ODBC")) == 1)
+    else if (boost::iequals(db_conn_info.db_type, std::string ("ODBC")) == 1)
         Poco::Data::ODBC::Connector::unregisterConnector();
-    else if (boost::iequals(db_type, "SQLite") == 1)
+    else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
         Poco::Data::SQLite::Connector::unregisterConnector();
 
     std::cout << "extDB: Stopped" << std::endl ;
 }
 
-std::string Ext::connectDatabase(const std::string &conf_option)
+void Ext::connectDatabase(char *output, const int &output_size, const std::string &conf_option)
 {
+	// TODO ADD Code to check for database already initialized !!!!!!!!!!!
     try
     {
         Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration("conf-main.ini"));
@@ -111,30 +112,34 @@ std::string Ext::connectDatabase(const std::string &conf_option)
             std::cout << "extDB: Thread Pool Started" << std::endl;
 
             // Database
-            db_type = pConf->getString(conf_option + ".Type");
+            db_conn_info.db_type = pConf->getString(conf_option + ".Type");
             std::string db_name = pConf->getString(conf_option + ".Name");
 
-            int min_sessions = pConf->getInt(conf_option + ".minSessions", 1);
-            if (min_sessions <= 0)
+            db_conn_info.min_sessions = pConf->getInt(conf_option + ".minSessions", 1);
+            if (db_conn_info.min_sessions <= 0)
             {
-                min_sessions = 1;
+                db_conn_info.min_sessions = 1;
             }
-            const int idle_time = pConf->getInt(conf_option + ".idleTime");
-
-            std::cout << "extDB: " << db_type << std::endl;
-
-            std::string connection_str;
-
-            if ( (boost::iequals(db_type, std::string("MySQL")) == 1) || (boost::iequals(db_type, std::string("ODBC")) == 1) )
+            db_conn_info.min_sessions = pConf->getInt(conf_option + ".maxSessions", 1);
+            if (db_conn_info.max_sessions <= 0)
             {
-                if (boost::iequals(db_type, std::string("MySQL")) == 1)
+                db_conn_info.max_sessions = max_threads;
+            }
+			
+            db_conn_info.idle_time = pConf->getInt(conf_option + ".idleTime");
+
+            std::cout << "extDB: " << db_conn_info.db_type << std::endl;
+
+            if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
+            {
+                if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
                 {
                     Poco::Data::MySQL::Connector::registerConnector();
                 }
                 else
                 {
                     Poco::Data::ODBC::Connector::registerConnector();
-	        }
+				}
 
                 std::string username = pConf->getString(conf_option + ".Username");
                 std::string password = pConf->getString(conf_option + ".Password");
@@ -142,50 +147,58 @@ std::string Ext::connectDatabase(const std::string &conf_option)
                 std::string ip = pConf->getString(conf_option + ".IP");
                 std::string port = pConf->getString(conf_option + ".Port");
 
-                connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ",password=" + password + ",dbname=" + db_name;
+                db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ",password=" + password + ",dbname=" + db_name;
 
-                db_pool.reset(new Poco::Data::SessionPool(db_type, connection_str, min_sessions, max_threads, idle_time));
+                db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
+															db_conn_info.connection_str, 
+															db_conn_info.min_sessions, 
+															db_conn_info.max_sessions, 
+															db_conn_info.idle_time));
 
                 if (db_pool->get().isConnected())
                 {
                     std::cout << "extDB: Database Session Pool Started" << std::endl;
-                    return "[\"OK\"]";
+                    std::strcpy(output, "[\"OK\"]");
                 }
                 else
                 {
                     std::cout << "extDB: Database Session Pool Failed" << std::endl;
-                    return "[\"ERROR\",\"Database Session Pool Failed\"]";
+					std::strcpy(output, "[\"ERROR\",\"Database Session Pool Failed\"]");
                 }
 
             }
-            else if (boost::iequals(db_type, "SQLite") == 1)
+            else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
             {
                 Poco::Data::SQLite::Connector::registerConnector();
-                connection_str = db_name;
+                db_conn_info.connection_str = db_name;
 
-                db_pool.reset(new Poco::Data::SessionPool(db_type, connection_str, min_sessions, max_threads, idle_time));
+                db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
+															db_conn_info.connection_str, 
+															db_conn_info.min_sessions, 
+															db_conn_info.max_sessions, 
+															db_conn_info.idle_time));
 
                 if (db_pool->get().isConnected())
                 {
                     std::cout << "extDB: Database Session Pool Started" << std::endl;
-                    return "[\"OK\"]";
+                    std::strcpy(output, "[\"OK\"]");
                 }
                 else
                 {
                     std::cout << "extDB: Database Session Pool Failed" << std::endl;
-                    return "[\"ERROR\",\"Database Session Pool Failed\"]";
+                    std::strcpy(output, "[\"ERROR\",\"Database Session Pool Failed\"]");
                 }
             }
             else
             {
                 std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
-                return "[\"ERROR\",\"Unknown Database Type\"]";
+				std::strcpy(output, "[\"ERROR\",\"Unknown Database Type\"]");
             }
         }
         else
         {
             std::cout << "extDB: No Config Option Found: " << conf_option << "." << std::endl;
-            return "[\"ERROR\",\"No Config Option Found\"]";
+			std::strcpy(output, "[\"ERROR\",\"No Config Option Found\"]");
         }
     }
     catch (Poco::Exception& e)
@@ -217,7 +230,16 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	return db_pool->get();
+	try
+	{
+		return db_pool->get();
+	}
+	catch (Poco::Data::SessionPoolExhaustedException&)
+		//		Exceptiontal Handling in event of scenario if all asio worker threads are busy using all db connections
+		//			And there is SYNC call using db & db_pool = exhausted
+	{
+		return Poco::Data::Session (db_conn_info.db_type, db_conn_info.connection_str);
+	}
 }
 
 void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &output_size)
@@ -242,7 +264,7 @@ void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &out
                 std::strcpy(output, ("[\"WAIT\"]"));
             }
         }
-        else if (it->second.length() == 0) // END of MSG
+        else if (it->second.empty()) // END of MSG
         {
             unordered_map_results.erase(unique_id);
             freeUniqueID_mutexlock(unique_id);
@@ -277,74 +299,66 @@ void Ext::saveResult_mutexlock(const std::string &result, const int &unique_id)
 }
 
 
-void Ext::sendResult_mutexlock(const std::string &result, char *output, const int &output_size)
-// Checks if Result String will fit into arma output char
-//   If <=, then sends output to arma
-//   if >, then sends ID Message arma + stores rest. (mutex locks)
-{
-    std::string msg;
-    if (result.length() <= (output_size-9))
-    {
-        msg = "[\"OK\", " + result + "]";
-        std::strcpy(output, msg.c_str());
-    }
-    else
-    {
-        const int unique_id = getUniqueID_mutexlock();
-        saveResult_mutexlock(result, unique_id);
-        msg = "[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]";
-        std::strcpy(output, msg.c_str());
-    }
-}
-
-
-std::string Ext::addProtocol(const std::string &protocol, const std::string &protocol_name)
+void Ext::addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name)
 {
 	{
 		boost::lock_guard<boost::mutex> lock(mutex_unordered_map_protocol);
 		if (boost::iequals(protocol, std::string("MISC")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractPlugin> (new MISC());
-			return "[\"OK\"]";
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC());
+			std::strcpy(output, "[\"OK\"]");
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractPlugin> (new DB_RAW());
-			return "[\"OK\"]";
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW());
+			std::strcpy(output, "[\"OK\"]");
 		}
 		else
 		{
-			return ("[\"ERROR\",\"Error Unknown Protocol\"]");
+			std::strcpy(output, "[\"ERROR\",\"Error Unknown Protocol\"]");
 		}
 	}
 }
 
 
-std::string Ext::syncCallPlugin(const std::string protocol, const std::string data)
+void Ext::syncCallProtocol(char *output, const int &output_size, const std::string protocol, const std::string data)
 // Sync callPlugin
 {
     if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
     {
-        return ("[\"ERROR\",\"Error Unknown Protocol\"]");
+        std::strcpy(output, ("[\"ERROR\",\"Error Unknown Protocol\"]"));
     }
     else
     {
-        return (unordered_map_protocol[protocol].get()->callPlugin(this, data));
+		// Checks if Result String will fit into arma output char
+		//   If <=, then sends output to arma
+		//   if >, then sends ID Message arma + stores rest. (mutex locks)
+        std::string result = (unordered_map_protocol[protocol].get()->callProtocol(this, data));
+		if (result.length() <= (output_size-9))
+		{
+			std::strcpy(output, ("[\"OK\", " + result + "]").c_str());
+		}
+		else
+		{
+			const int unique_id = getUniqueID_mutexlock();
+			saveResult_mutexlock(result, unique_id);
+			std::strcpy(output, ("[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]").c_str());
+		}
     }
 }
 
-void Ext::onewayCallPlugin(const std::string protocol, const std::string data)
-// ASync callPlugin
+void Ext::onewayCallProtocol(const std::string protocol, const std::string data)
+// ASync callProtocol
 {
     if (unordered_map_protocol.find(protocol) != unordered_map_protocol.end())
     {
-        unordered_map_protocol[protocol].get()->callPlugin(this, data);
+        unordered_map_protocol[protocol].get()->callProtocol(this, data);
     }
 }
 
 
-void Ext::asyncCallPlugin(const std::string protocol, const std::string data, const int unique_id)
-// ASync + Save callPlugin
+void Ext::asyncCallProtocol(const std::string protocol, const std::string data, const int unique_id)
+// ASync + Save callProtocol
 // We check if Protocol exists here, since its a thread (less time spent blocking arma) and it shouldnt happen anyways
 {
     if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
@@ -353,7 +367,7 @@ void Ext::asyncCallPlugin(const std::string protocol, const std::string data, co
     }
     else
     {
-        saveResult_mutexlock((unordered_map_protocol[protocol].get()->callPlugin(this, data)), unique_id);
+        saveResult_mutexlock((unordered_map_protocol[protocol].get()->callProtocol(this, data)), unique_id);
     }
 }
 
@@ -362,9 +376,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 {
     try
     {
-        std::string str_input(function);
-        const std::string sep_char (":");  // TODO Make Global Value
-        std::string msg;
+        const std::string str_input(function);
+		const std::string sep_char(":");
 
         // Async / Sync
         const int async = Poco::NumberParser::parse(str_input.substr(0,1));
@@ -391,9 +404,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                         boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
                         unordered_map_wait[unique_id] = true;
                     }
-					io_service.post(boost::bind(&Ext::asyncCallPlugin, this, protocol, data, unique_id));                   
-                    msg = "[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]";
-                    std::strcpy(output, msg.c_str());
+					io_service.post(boost::bind(&Ext::asyncCallProtocol, this, protocol, data, unique_id));                   
+                    std::strcpy(output, (("[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]")).c_str());
                 }
                 break;
             }
@@ -403,6 +415,11 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                 {
                     const int unique_id = Poco::NumberParser::parse(str_input.substr(2));
                     getResult_mutexlock(unique_id, output, output_size);
+                }
+				else
+                {
+                    std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
+                    //std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Format\"]");
                 }
                 break;
             }
@@ -421,9 +438,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                 }
                 else
                 {
-					io_service.post(boost::bind(&Ext::onewayCallPlugin, this, protocol, data));
-                    msg = std::string("[\"OK\"]");
-                    std::strcpy(output, msg.c_str());
+					io_service.post(boost::bind(&Ext::onewayCallProtocol, this, protocol, data));
+                    std::strcpy(output, "[\"OK\"]");
                 }
                 break;
             }
@@ -442,8 +458,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                 }
                 else
                 {
-                    msg = syncCallPlugin(protocol, data);
-                    sendResult_mutexlock(msg, output, output_size); // Checks Result length (i.e multipart msgs) + sends to Arma
+                    syncCallProtocol(output, output_size, protocol, data);
                 }
                 break;
             }
@@ -470,8 +485,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                     }
                     else if (command == "DATABASE")
                     {
-                        msg = connectDatabase(data);
-                        std::strcpy(output, msg.c_str());
+                        connectDatabase(output, output_size, data); //TODO optimze return
                     }
                     else if (command == "ADD")
                     {
@@ -483,8 +497,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                         }
                         else
                         {
-                            msg = addProtocol(data.substr(0,found), data.substr(found+1));
-							std::strcpy(output, msg.c_str());
+                            addProtocol(output, output_size, data.substr(0,found), data.substr(found+1));
                         }
                     }
                     else if (command == "LOCK")
@@ -498,12 +511,12 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
                     }
                     break;
                 }
-                default:
-                {
-                    std::strcpy(output, ("[\"ERROR\",\"Error Invalid Message\"]"));
-                    //std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Message Type\"]");
-                }
-            }
+			}
+			default:
+			{
+				std::strcpy(output, ("[\"ERROR\",\"Error Invalid Message\"]"));
+				//std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Message Type\"]");
+			}
         }
     }
     catch (Poco::Exception& e)

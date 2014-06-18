@@ -26,9 +26,6 @@
 class AbstractExt
 {
 	public:
-
-		virtual std::string version() const=0;
-
 		virtual Poco::Data::Session getDBSession_mutexlock()=0;
-		virtual void saveResult_mutexlock(const std::string &result, const int &unique_id)=0;
+		//virtual void saveResult_mutexlock(const std::string &result, const int &unique_id)=0;
 };

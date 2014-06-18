@@ -36,6 +36,14 @@
 #include "protocols/abstract_protocol.h"
 #include "protocols/abstract_ext.h"
 
+struct DBConnectionInfo {
+	std::string db_type;
+	std::string connection_str;
+	int min_sessions;
+	int max_sessions;
+	int idle_time;
+} ;
+
 class Ext: public AbstractExt
 {
 	public:
@@ -50,6 +58,7 @@ class Ext: public AbstractExt
 
 	private:
 		bool extDB_lock;
+		int max_threads;
 
 		// ASIO Thread Queue
 		boost::shared_ptr<boost::asio::io_service::work> io_work_ptr;
@@ -57,20 +66,20 @@ class Ext: public AbstractExt
 		boost::mutex mutex_io_service;
 
 		boost::thread_group threads;
-		int max_threads;
+		
+		DBConnectionInfo db_conn_info;
 
 		// Database Session Pool
-		std::string db_type;
 		boost::shared_ptr<Poco::Data::SessionPool> db_pool;
 		boost::mutex mutex_db_pool;
 
-		std::string connectDatabase(const std::string &conf_option);
+		void connectDatabase(char *output, const int &output_size, const std::string &conf_option);
 
 		void getResult_mutexlock(const int &unique_id, char *output, const int &output_size);
 		void sendResult_mutexlock(const std::string &result, char *output, const int &output_size);
 
 		// boost::unordered_map + mutex -- for Plugin Loaded
-		boost::unordered_map< std::string, boost::shared_ptr<AbstractPlugin> > unordered_map_protocol;
+		boost::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> > unordered_map_protocol;
 		boost::mutex mutex_unordered_map_protocol;
 
 		// boost::unordered_map + mutex -- for Stored Results to long for outputsize
@@ -85,9 +94,9 @@ class Ext: public AbstractExt
 		int getUniqueID_mutexlock();
 
 		// Plugins
-		std::string addProtocol(const std::string &protocol, const std::string &protocol_name);
+		void addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name);
 
-		std::string syncCallPlugin(std::string protocol, std::string data);
-		void onewayCallPlugin(const std::string protocol, const std::string data);
-		void asyncCallPlugin(const std::string protocol, const std::string data, const int unique_id);
+		void syncCallProtocol(char *output, const int &output_size, const std::string protocol, const std::string data);
+		void onewayCallProtocol(const std::string protocol, const std::string data);
+		void asyncCallProtocol(const std::string protocol, const std::string data, const int unique_id);
 };
