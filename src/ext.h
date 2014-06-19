@@ -31,6 +31,9 @@
 #include <Poco/Manifest.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
+//#include <Poco/ClassLoader.h>
+//#include <Poco/Manifest.h>
+
 #include "uniqueid.h"
 
 #include "protocols/abstract_protocol.h"

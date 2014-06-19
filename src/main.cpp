@@ -7,7 +7,7 @@
 #include "ext.h"
 
 namespace {
-	Ext extension;
+	Ext *extension;
 };
 
 #ifdef __GNUC__
@@ -15,13 +15,16 @@ namespace {
 	static void __attribute__((constructor))
 	extension_init(void)
 	{
-		//std::cout << "extDB shared library init" << std::endl;
+		std::cout << "extDB initing" << std::endl;
+		extension = (new Ext());
+		std::cout << "extDB shared library init" << std::endl;
 	}
 
 	static void __attribute__((destructor))
 	extension_destroy(void)
 	{
-		//std::cout << "extDB shared library destroy" << std::endl;
+		delete extension;
+		std::cout << "extDB shared library destroy" << std::endl;
 	}
 
 	extern "C"
@@ -32,7 +35,7 @@ namespace {
 	void RVExtension(char *output, int outputSize, const char *function)
 	{
 		outputSize -= 1;
-		extension.callExtenion(output, outputSize, function);
+		extension->callExtenion(output, outputSize, function);
 	};
 
 #elif _MSC_VER
@@ -45,9 +48,14 @@ namespace {
 		switch (ul_reason_for_call)
 		{
 		case DLL_PROCESS_ATTACH:
+			extension = (new Ext());
+			break;
 		case DLL_THREAD_ATTACH:
+			break;
 		case DLL_THREAD_DETACH:
+			break;
 		case DLL_PROCESS_DETACH:
+			delete extension; //TODO: Fix
 			break;
 		}
 		return TRUE;
@@ -61,7 +69,7 @@ namespace {
 	void __stdcall RVExtension(char *output, int outputSize, const char *function)
 	{
 		outputSize -= 1;
-		extension.callExtenion(output,outputSize,function);
+		extension->callExtenion(output,outputSize,function);
 	};
 
 #elif __MINGW32__

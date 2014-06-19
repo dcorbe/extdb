@@ -530,7 +530,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 #ifdef TESTING
 int main(int nNumberofArgs, char* pszArgs[])
 {
-    Ext extension;
+    Ext *extension;
+    extension = (new Ext());
     char result[255];
     for (;;) {
         char input_str[100];
@@ -541,10 +542,11 @@ int main(int nNumberofArgs, char* pszArgs[])
         }
         else
         {
-            extension.callExtenion(result, 80, input_str);
+            extension->callExtenion(result, 80, input_str);
             std::cout << "extDB: " << result << std::endl;
         }
     }
+	delete extension;
     return 0;
 }
 #endif

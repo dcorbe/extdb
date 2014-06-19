@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C++ Express 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "extDB", "extDB.vcxproj", "{60F7F852-3016-4F1E-A8EF-B4B78B271B64}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "extdb", "extdb.vcxproj", "{60F7F852-3016-4F1E-A8EF-B4B78B271B64}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
