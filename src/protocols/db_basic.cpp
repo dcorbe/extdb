@@ -65,7 +65,6 @@ std::string DB_BASIC::updatePlayerPos(AbstractProtocol *extension, std::string s
 	return "";
 }
 
-
 std::string DB_BASIC::callPlugin(AbstractProtocol *extension, std::string input_str)
 {
 	const std::string sep_char(":");

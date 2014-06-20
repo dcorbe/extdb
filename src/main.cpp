@@ -3,7 +3,6 @@
 #include <iostream>
 #include <tbb/scalable_allocator.h>
 
-
 #include "ext.h"
 
 namespace {
@@ -55,7 +54,6 @@ namespace {
 		case DLL_THREAD_DETACH:
 			break;
 		case DLL_PROCESS_DETACH:
-			delete extension; //TODO: Fix
 			break;
 		}
 		return TRUE;
