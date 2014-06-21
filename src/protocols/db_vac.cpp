@@ -21,34 +21,24 @@
 #include <Poco/Exception.h>
 #include <string>
 
-//typedef Poco::Tuple<std::string, std::string, int> VAC_INFO;
-/*
-bool sanitize_steamid
 
+bool DB_VAC::isNumber(std::string input_str)
 {
-    bool bRejected=false; // has strName been rejected?
- 
-    // Step through each character in the string until we either hit
-    // the end of the string, or we rejected a character
-    for (unsigned int nIndex=0; nIndex < strName.length() && !bRejected; nIndex++)
-    {
-        // If the current character is an alpha character, that's fine
-        if (isalpha(strName[nIndex]))
-            continue;
- 
-        // If it's a space, that's fine too
-        if (strName[nIndex]==' ')
-            continue;
- 
-        // Otherwise we're rejecting this input
-        bRejected = true;
-    }
-} 
-*/
+	bool status = true;
+	for (unsigned int index=0; index < steam_id.len(); index++)
+	{
+		if (!std::isdigit(input_str[index]))
+		{
+			status = false;
+			break;
+		}
+	}
+	return status;
+}
 
-bool DB_VAC::querySteam(std::string steam_id, SteamVacInfo &vac_info)
+bool DB_VAC::querySteam(std::string &steam_web_api_key, std::string &steam_id, SteamVacInfo &vac_info)
 {
-	Poco::URI uri("http://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=<api key>&format=json&steamids=" + steam_id);
+	Poco::URI uri("http://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=" + steam_web_api_key + "&format=json&steamids=" + steam_id);
 	Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
 
 	// prepare path
@@ -86,17 +76,17 @@ bool DB_VAC::querySteam(std::string steam_id, SteamVacInfo &vac_info)
 	}
 }
 
-void DB_VAC::updateVAC(Poco::Data::Session &db_session, std::string &steam_id)
+void DB_VAC::updateVAC(std::string steam_web_api_key, Poco::Data::Session &db_session, std::string &steam_id)
 {
 	SteamVacInfo vac_info;
-	bool status = querySteam(steam_id, vac_info);
+	bool status = querySteam(steam_web_api_key, steam_id, vac_info);
 	if (status)
 	{
 		// Save to DB
 		Poco::Data::Statement insert(db_session);
-//		insert << "INSERT INTO 'VAC BANS' (\"SteamID\", \"Number of Vac Bans\", \"Days Since Last Ban\", \"Last Check\") VALUES(:steamid, :number_of_bans, :days_since_last_bans, :last_check)",
-//					Poco::Data::now(vac_info.SteamID), Poco::Data::now(vac_info.NumberOfVACBans), Poco::Data::now(vac_info.DaysSinceLastBan), Poco::DateTime(), Poco::Data::now;
-	//	insert.execute();
+		insert << "INSERT INTO 'VAC BANS' (\"SteamID\", \"Number of Vac Bans\", \"Days Since Last Ban\", \"Last Check\") VALUES(:steamid, :number_of_bans, :days_since_last_bans, :last_check)", 
+					Poco::Data::use(vac_info.SteamID), Poco::Data::use(vac_info.NumberOfVACBans), Poco::Data::use(vac_info.DaysSinceLastBan), Poco::DateTime(), Poco::Data::now;
+		insert.execute();
 		// TODO: Check for VAC BANS
 		// TODO: Add RCON KICK / BAN
 	}
@@ -110,32 +100,36 @@ void DB_VAC::updateVAC(Poco::Data::Session &db_session, std::string &steam_id)
 std::string DB_VAC::callProtocol(AbstractExt *extension, std::string input_str)
 {
 	// TODO Exception Handling ?
-	std::string steam_id = input_str; /// TODO: Santized INPUT
-	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-	Poco::Data::Statement select(db_session);
-	select << ("SELECT \"Number of Vac Bans\" FROM `VAC BANS` where SteamID="  + steam_id);
-	select.execute();
-	Poco::Data::RecordSet rs(select);
-	
-	
-	if (rs.moveFirst())
+	if (isNumber(input_str))
 	{
-		Poco::DateTime last_check;
-		Poco::DateTime now;
-		int tzd;
-		bool last_check_status = Poco::DateTimeParser::tryParse("%e-%n-%Y", rs.value("Last Check").convert<std::string>(), last_check, tzd);
-		//bool last_check_status = Poco::DateTimeParser::tryParse("%e-%n-%Y", std::string(rs.column[std::size_t(0)]), last_check);
-		//if (last_check_status)
-			//last_check = Poco::DateTimeParser::parse("%e-%n-%Y", rs.column["Last Check"], last_check);
-			
-		if (now - last_check >= Poco::Timespan(7*Poco::Timespan::DAYS));
+		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
+		Poco::Data::Statement select(db_session);
+		select << ("SELECT \"Number of Vac Bans\" FROM `VAC BANS` where SteamID="  + input_str);
+		select.execute();
+		Poco::Data::RecordSet rs(select);
+		
+		if (rs.moveFirst())
 		{
-			updateVAC(db_session, steam_id);
+			Poco::DateTime last_check;
+			Poco::DateTime now;
+			int tzd;
+			bool last_check_status = Poco::DateTimeParser::tryParse("%e-%n-%Y", rs.value("Last Check").convert<std::string>(), last_check, tzd);
+			//if (last_check_status)
+				//last_check = Poco::DateTimeParser::parse("%e-%n-%Y", rs.column["Last Check"], last_check);
+				
+			if (now - last_check >= Poco::Timespan(7*Poco::Timespan::DAYS));
+			{
+				updateVAC( extension->getAPIKey(), db_session, input_str);
+			}
+		}
+		else
+		{
+			updateVAC(extension->getAPIKey(), db_session, input_str);
 		}
 	}
 	else
 	{
-		updateVAC(db_session, steam_id);
+		// Error Invalid Input
 	}
 }
 

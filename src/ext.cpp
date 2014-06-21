@@ -71,6 +71,7 @@ Ext::Ext(void) {
         std::cout << "extDB: Read extdb-conf.ini" << std::endl;
 
         max_threads = pConf->getInt("Main.Threads", 0);
+		steam_api_key = pConf->getInt("Main.Steam_WEB_API_KEY", "");
         if (max_threads <= 0)
         {
             max_threads = boost::thread::hardware_concurrency();
@@ -104,6 +105,7 @@ void Ext::stop()
         Poco::Data::SQLite::Connector::unregisterConnector();
     std::cout << "extDB: Stopped" << std::endl;
 }
+
 void Ext::connectDatabase(char *output, const int &output_size, const std::string &conf_option)
 {
 	// TODO ADD Code to check for database already initialized !!!!!!!!!!!
@@ -214,6 +216,11 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 std::string Ext::version() const
 {
     return "0";
+}
+
+void Ext::getAPIKey(std::string &api_key)
+{
+	api_key = steam_api_key;
 }
 
 int Ext::getUniqueID_mutexlock()

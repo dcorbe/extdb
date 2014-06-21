@@ -54,6 +54,8 @@ class Ext: public AbstractExt
 		Poco::Data::Session getDBSession_mutexlock();
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
 		void stop();
+		
+		void getAPIKey(std::string &api_key);
 
 	private:
 		bool extDB_lock;
