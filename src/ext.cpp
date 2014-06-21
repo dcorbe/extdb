@@ -59,16 +59,16 @@
 Ext::Ext(void) {
 	mgr.reset (new IdManager);
     extDB_lock = false;
-    if ( !boost::filesystem::exists( "conf-main.ini" ))
+    if ( !boost::filesystem::exists( "extdb-conf.ini" ))
     {
         std::cout << "extDB: Unable to find conf-main.ini" << std::endl;
         std::exit(EXIT_FAILURE);
     }
     else
     {
-        std::cout << "extDB: Loading conf-main.ini" << std::endl;
+        std::cout << "extDB: Loading extdb-conf.ini" << std::endl;
         Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration("conf-main.ini"));
-        std::cout << "extDB: Read conf-main.ini" << std::endl;
+        std::cout << "extDB: Read extdb-conf.ini" << std::endl;
 
         max_threads = pConf->getInt("Main.Threads", 0);
         if (max_threads <= 0)
@@ -86,8 +86,13 @@ Ext::Ext(void) {
 
 Ext::~Ext(void)
 {
-    std::cout << "extDB: Stopping Please Wait.." << std::endl ;
-    io_service.stop();
+    stop();
+}
+
+void Ext::stop()
+{
+    std::cout << "extDB: Stopping Please Wait.." << std::endl;
+	io_service.stop();
     threads.join_all();
     unordered_map_protocol.clear();
 
@@ -97,16 +102,14 @@ Ext::~Ext(void)
         Poco::Data::ODBC::Connector::unregisterConnector();
     else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
         Poco::Data::SQLite::Connector::unregisterConnector();
-
-    std::cout << "extDB: Stopped" << std::endl ;
+    std::cout << "extDB: Stopped" << std::endl;
 }
-
 void Ext::connectDatabase(char *output, const int &output_size, const std::string &conf_option)
 {
 	// TODO ADD Code to check for database already initialized !!!!!!!!!!!
     try
     {
-        Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration("conf-main.ini"));
+        Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
         if (pConf->hasOption(conf_option + ".Type"))
         {
             std::cout << "extDB: Thread Pool Started" << std::endl;

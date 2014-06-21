@@ -22,7 +22,7 @@ namespace {
 	static void __attribute__((destructor))
 	extension_destroy(void)
 	{
-		delete extension;
+		extension->stop();
 		std::cout << "extDB shared library destroy" << std::endl;
 	}
 
@@ -54,6 +54,7 @@ namespace {
 		case DLL_THREAD_DETACH:
 			break;
 		case DLL_PROCESS_DETACH:
+			extension->stop();
 			break;
 		}
 		return TRUE;

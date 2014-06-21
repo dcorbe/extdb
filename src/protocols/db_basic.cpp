@@ -17,7 +17,7 @@
 */
 
 
-#include "db_raw.h"
+#include "db_basic.h"
 
 #include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>
@@ -28,7 +28,7 @@
 #include <cstdlib>
 #include <iostream>
 
-
+/*
 std::string DB_BASIC::getPlayerInfo(AbstractProtocol *extension, std::string steamid)
 {
 	// FOO
@@ -64,9 +64,10 @@ std::string DB_BASIC::updatePlayerPos(AbstractProtocol *extension, std::string s
 	// FOO
 	return "";
 }
-
-std::string DB_BASIC::callPlugin(AbstractProtocol *extension, std::string input_str)
+*/
+std::string DB_BASIC::callProtocol(AbstractProtocol *extension, std::string input_str)
 {
+	/*
 	const std::string sep_char(":");
 	const std::string::size_type found = str_input.find(sep_char,2);
 
@@ -92,4 +93,5 @@ std::string DB_BASIC::callPlugin(AbstractProtocol *extension, std::string input_
 	{
 		connectDatabase(output, output_size, data); //TODO optimze return
 	}
+	 */
 }

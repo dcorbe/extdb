@@ -40,7 +40,7 @@ struct DBConnectionInfo {
 	int min_sessions;
 	int max_sessions;
 	int idle_time;
-} ;
+};
 
 class Ext: public AbstractExt
 {
@@ -53,6 +53,7 @@ class Ext: public AbstractExt
 
 		Poco::Data::Session getDBSession_mutexlock();
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
+		void stop();
 
 	private:
 		bool extDB_lock;
