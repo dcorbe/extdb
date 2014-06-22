@@ -41,7 +41,7 @@ void Rcon::makePacket(RconPacket rcon, std::string &cmdPacket)
 	Poco::Checksum checksum_crc32;
 
 	std::ostringstream cmdStream;
-	cmdStream.put(0xFF);
+	cmdStream.put(0xFFu);
 	cmdStream.put(rcon.packetCode);
 
 	if (rcon.packetCode == 0x01)
@@ -99,7 +99,7 @@ void Rcon::connect()
 
 	dgs.connect(sa);
 
-	//std::cout << "Password: " << std::string(password) << std::endl;
+	std::cout << "Password: " << std::string(rcon_login.password) << std::endl;
 
 	rcon_packet.cmd = rcon_login.password;
 	rcon_packet.packetCode = 0x00;
@@ -107,12 +107,12 @@ void Rcon::connect()
 	std::string packet;
 	makePacket(rcon_packet, packet);
 
-	//std::cout << "Sending login info" << std::endl;
-	//std::cout << packet << std::endl;
+	std::cout << "Sending login info" << std::endl;
+	std::cout << packet << std::endl;
 
 	dgs.sendBytes(packet.data(), packet.size());
 
-	//std::cout << "Sent login info" << std::endl;
+	std::cout << "Sent login info" << std::endl;
 
 	start_time = std::clock();
 
@@ -121,7 +121,7 @@ void Rcon::connect()
 	cmd_response = false;
 }
 
-void Rcon::extractData(char *buffer, int &size, unsigned int &pos, std::string &data)
+void Rcon::extractData(int pos, std::string &data)
 {
 	std::stringstream ss;
 	for(size_t i = pos; i < size; ++i)
@@ -137,7 +137,7 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 	dgs.setReceiveTimeout(Poco::Timespan(30, 0));
 	while (true)
 	{
-		//std::cout << ".";
+		std::cout << ".";
 		if ((std::clock() - start_time) / CLOCKS_PER_SEC > 10)
 		{
 			std::cout << "Waited more than 10 secs Exiting" << std::endl;
@@ -147,26 +147,30 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 		{
 			size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
 			buffer[size] = '\0';
-			//std::cout << "." << std::endl;
-			//std::cout << sa.toString() << ": " << buffer << std::endl;
-			//std::cout << "size:" << size << std::endl;
+			std::cout << "." << std::endl;
+			std::cout << sa.toString() << ": " << buffer << std::endl;
+			std::cout << "size:" << size << std::endl;
 
 			if (buffer[7] == 0x02)
 			{
 				if (!logged_in)
 				{
 					logged_in = true;
-					//std::cout << "Already logged in" << std::endl;
+					std::cout << "Already logged in" << std::endl;
 				}
 				else
 				{
 					// Respond to Server Msgs i.e chat messages, to prevent timeout
 					rcon_packet.packetCode = 0x02;
 					rcon_packet.cmd_char_workaround = buffer[8];
-					rcon_packet.cmd = &rcon_packet.cmd_char_workaround;
+					rcon_packet.cmd = &rcon_packet.cmd_char_workaround; //	rcon_packet.cmd = buffer[8];
 					std::string packet;
 					makePacket(rcon_packet, packet);
-					dgs.sendBytes(packet.data(), packet.size());
+					//dgs.sendBytes(packet.data(), packet.size()); YEAH I BROKE IT AGAIN FFS
+					
+					std::string data;
+					extractData(9, data);
+					std::cout << data << std::endl;
 				}
 			}
 
@@ -178,7 +182,7 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 				}
 				else if (buffer[8] == 0x00) // Login Failed
 				{
-					//std::cout << "Failed Login" << std::endl;
+					std::cout << "Failed Login" << std::endl;
 					break;
 				}
 			}
@@ -207,7 +211,7 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 				if (cmd_response)
 				{
 					/*We're done! Can exit now*/
-					//std::cout << "Command response received. Exiting" << std::endl;
+					std::cout << "Command response received. Exiting" << std::endl;
 					break;
 				}
 			}
@@ -230,13 +234,13 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 		}
 		catch (Poco::TimeoutException&)
 		{
-			//std::cout << "Sending KeepAlive" << std::endl;
+			std::cout << "Sending KeepAlive" << std::endl;
 			rcon_packet.packetCode = 0x01;
 			rcon_packet.cmd = '\0';
 			std::string packet;
 			makePacket(rcon_packet, packet);
 			dgs.sendBytes(packet.data(), packet.size());
-			//std::cout << "Sent KeepAlive" << std::endl;
+			std::cout << "Sent KeepAlive" << std::endl;
 		}
 	}
 }
@@ -273,23 +277,24 @@ void Rcon::init(int port, std::string password)
 #ifdef TESTING_RCON
 int main(int nNumberofArgs, char* pszArgs[])
 {
-    Rcon *rcon;
-    rcon = (new Rcon());
-    char result[255];
-    for (;;) {
-        char input_str[100];
+	Rcon *rcon;
+	rcon = (new Rcon());
+	char result[255];
+	rcon->init(int(2302), std::string("testing"));
+	for (;;) {
+		char input_str[100];
 		std::cin.getline(input_str, sizeof(input_str));
-        if (std::string(input_str) == "quit")
-        {
-            break;
-        }
-        else
-        {
-            rcon->sendCommand(int(2302), std::string("testing"), std::string(input_str));
-            //std::cout << "extDB: " << result << std::endl;
-        }
-    }
+		if (std::string(input_str) == "quit")
+		{
+			break;
+		}
+		else
+		{
+			rcon->sendCommand(std::string(input_str));
+			//std::cout << "extDB: " << result << std::endl;
+		}
+	}
 	std::cout << "quitting" << std::endl;
-    return 0;
+	return 0;
 }
 #endif

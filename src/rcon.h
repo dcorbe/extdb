@@ -62,5 +62,5 @@ class Rcon
 		void connect();
 		void sendCommand(std::string &command, std::string &response);
 		void makePacket(RconPacket rcon, std::string &cmdPacket);
-		void extractData(char *buffer, int &size, unsigned int &pos, std::string &data);
+		void extractData(int pos, std::string &data);
 };

@@ -85,6 +85,7 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <CallingConvention>Cdecl</CallingConvention>
       <IntrinsicFunctions>false</IntrinsicFunctions>
+      <CompileAsManaged>false</CompileAsManaged>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -107,6 +108,7 @@
     <ClInclude Include="..\src\protocols\abstract_protocol.h" />
     <ClInclude Include="..\src\protocols\db_raw.h" />
     <ClInclude Include="..\src\protocols\misc.h" />
+    <ClInclude Include="..\src\rcon.h" />
     <ClInclude Include="..\src\uniqueid.h" />
   </ItemGroup>
   <ItemGroup>
@@ -115,6 +117,7 @@
     <ClCompile Include="..\src\protocols\abstract_protocol.cpp" />
     <ClCompile Include="..\src\protocols\db_raw.cpp" />
     <ClCompile Include="..\src\protocols\misc.cpp" />
+    <ClCompile Include="..\src\rcon.cpp" />
     <ClCompile Include="..\src\uniqueid.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
