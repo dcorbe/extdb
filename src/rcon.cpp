@@ -97,19 +97,19 @@ void Rcon::connect(int &port, std::string &password)
 
 	dgs.connect(sa);
 
-	std::cout << "Password: " << std::string(password) << std::endl;
+	//std::cout << "Password: " << std::string(password) << std::endl;
 	rcon_packet.cmd = password.c_str();
 	rcon_packet.packetCode = 0x00;
 
 	std::string packet;
 	makePacket(rcon_packet, packet);
 
-	std::cout << "Sending login info" << std::endl;
-	std::cout << packet << std::endl;
+	//std::cout << "Sending login info" << std::endl;
+	//std::cout << packet << std::endl;
 
 	dgs.sendBytes(packet.data(), packet.size());
 
-	std::cout << "Sent login info" << std::endl;
+	//std::cout << "Sent login info" << std::endl;
 
 	start_time = std::clock();
 
@@ -118,12 +118,23 @@ void Rcon::connect(int &port, std::string &password)
 	cmd_response = false;
 }
 
+void Rcon::extractData(char *buffer, int &size, unsigned int &pos, std::string &data)
+{
+	std::stringstream ss;
+	for(size_t i = pos; i < size; ++i)
+	{
+	  ss << buffer[i];
+	}
+	std::string s = ss.str();
+	std::cout << s << std::endl;
+}
+
 void Rcon::sendCommand(std::string &command, std::string &response)
 {
 	dgs.setReceiveTimeout(Poco::Timespan(30, 0));
 	while (true)
 	{
-		std::cout << ".";
+		//std::cout << ".";
 		if ((std::clock() - start_time) / CLOCKS_PER_SEC > 10)
 		{
 			std::cout << "Waited more than 10 secs Exiting" << std::endl;
@@ -132,57 +143,46 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 		try 
 		{
 			size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
-			std::cout << "." << std::endl;
 			buffer[size] = '\0';
-			std::cout << sa.toString() << ": " << buffer << std::endl;
-			std::cout << "size:" << size << std::endl;
+			//std::cout << "." << std::endl;
+			//std::cout << sa.toString() << ": " << buffer << std::endl;
+			//std::cout << "size:" << size << std::endl;
 
 			if (buffer[7] == 0x02)
 			{
 				if (!logged_in)
 				{
 					logged_in = true;
-					std::cout << "Already logged in" << std::endl;
+					//std::cout << "Already logged in" << std::endl;
 				}
 				else 
 				{
-					std::cout << "Server Msg ID:" << buffer [8] << std::endl;
+					// Respond to Server Msgs i.e chat messages, to prevent timeout
 					rcon_packet.packetCode = 0x02;
 					rcon_packet.cmd = buffer[8];
 					std::string packet;
 					makePacket(rcon_packet, packet);
 					dgs.sendBytes(packet.data(), packet.size());
-					std::cout << packet << std::endl;
-					std::cout << std::endl;
-					
-					std::stringstream ss;
-					for(size_t i = 9; i < size; ++i)
-					{
-					  ss << buffer[i];
-					}
-					std::string s = ss.str();
-					std::cout << s << std::endl;
-					
 				}
 			}
 			
 			if (!logged_in)
 			{
-				if (buffer[8] == 0x01)
+				if (buffer[8] == 0x01) // Login Successful
 				{
 					logged_in = true;
-					std::cout << "Login Successful" << std::endl;
 				}
-				else if (buffer[8] == 0x00)
+				else if (buffer[8] == 0x00) // Login Failed
 				{
-					std::cout << "Failed Login" << std::endl;
+					//std::cout << "Failed Login" << std::endl;
+					break;
 				}
 			}
 			else if (cmd_sent)   // FINISH !!!!!
 			{
 				if (buffer[7] == 0x01)
 				{
-					//int sequenceNum = buffer[8]; /*this app only sends 0x00, so only 0x00 is received*/ // TODO: Add recieve Chat from Server  http://www.battleye.com/downloads/BERConProtocol.txt
+					int sequenceNum = buffer[8]; /*this app only sends 0x00, so only 0x00 is received*/ // TODO: Add recieve Chat from Server  http://www.battleye.com/downloads/BERConProtocol.txt
 					if (buffer[9] == 0x00)
 					{
 						int numPackets = buffer[10];
@@ -203,12 +203,13 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 				if (cmd_response)
 				{
 					/*We're done! Can exit now*/
-					std::cout << "Command response received. Exiting" << std::endl;
-					//break;
+					//std::cout << "Command response received. Exiting" << std::endl;
+					break;
 				}
 			}
 			else if (logged_in)
 			{
+				// Sending Command
 				std::cout << "Sending command \"" << command << "\"" << std::endl;
 				rcon_packet.cmd = command.c_str();
 				rcon_packet.packetCode = 0x01;
@@ -221,13 +222,13 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 		}
 		catch (Poco::TimeoutException&)
 		{
-			std::cout << "Sending KeepAlive" << std::endl;
+			//std::cout << "Sending KeepAlive" << std::endl;
 			rcon_packet.packetCode = 0x01;
 			rcon_packet.cmd = "";
 			std::string packet;
 			makePacket(rcon_packet, packet);
 			dgs.sendBytes(packet.data(), packet.size());
-			std::cout << "Sent KeepAlive" << std::endl;
+			//std::cout << "Sent KeepAlive" << std::endl;
 		}
 	}
 }
@@ -241,21 +242,17 @@ void Rcon::sendCommand(int port, std::string password, std::string command)
 		sendCommand(command, response);
 		std::cout << response << std::endl;
 	}
-//	catch (Poco::Net::ConnectionRefusedException& e)
-//	{
-//		std::cout << "extDB: rcon connect Failed: " << e.displayText() << std::endl;
-//	}
+	catch (Poco::Net::ConnectionRefusedException& e)
+	{
+		std::cout << "extDB: rcon connect Failed: " << e.displayText() << std::endl;
+	}
 	catch (Poco::Exception& e)
 	{
 		std::cout << "extDB: rcon Failed: " << e.displayText() << std::endl;
-//		std::exit(EXIT_FAILURE);
 	}
 }
 
-// boost::this_thread::sleep(boost::posix_time::seconds(1));
-
-
-
+#ifdef TESTING_RCON
 int main(int nNumberofArgs, char* pszArgs[])
 {
     Rcon *rcon;
@@ -277,3 +274,4 @@ int main(int nNumberofArgs, char* pszArgs[])
 	std::cout << "quitting" << std::endl;
     return 0;
 }
+#endif

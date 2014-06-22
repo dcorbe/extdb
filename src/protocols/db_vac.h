@@ -41,6 +41,7 @@ class DB_VAC: public AbstractProtocol
 			std::string LastChecked;
 		};
 
-		bool querySteam(std::string steam_web_api_key, std::string steam_id, SteamVacInfo &vac_info);
-		void updateVAC(Poco::Data::Session &db_session, std::string &steam_id);
+		bool querySteam(std::string &steam_web_api_key, std::string &steam_id, SteamVacInfo &vac_info);
+		void updateVAC(std::string steam_web_api_key, Poco::Data::Session &db_session, std::string &steam_id);
+		bool isNumber(std::string input_str);
 };

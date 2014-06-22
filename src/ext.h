@@ -55,7 +55,7 @@ class Ext: public AbstractExt
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
 		void stop();
 		
-		void getAPIKey(std::string &api_key);
+		std::string getAPIKey();
 
 	private:
 		bool extDB_lock;

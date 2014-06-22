@@ -44,7 +44,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 bool DB_VAC::isNumber(std::string input_str)
 {
 	bool status = true;
-	for (unsigned int index=0; index < steam_id.len(); index++)
+	for (unsigned int index=0; index < input_str.length(); index++)
 	{
 		if (!std::isdigit(input_str[index]))
 		{
@@ -138,7 +138,7 @@ std::string DB_VAC::callProtocol(AbstractExt *extension, std::string input_str)
 				
 			if (now - last_check >= Poco::Timespan(7*Poco::Timespan::DAYS));
 			{
-				updateVAC( extension->getAPIKey(), db_session, input_str);
+				updateVAC(extension->getAPIKey(), db_session, input_str);
 			}
 		}
 		else

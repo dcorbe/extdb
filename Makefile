@@ -5,3 +5,6 @@ extdb:
 
 test:
 	g++ -g -march=native -m32 -fPIC -pipe -O2 -o extdb-test src/ext.cpp src/uniqueid.cpp src/protocols/*.cpp -DTESTING -lPocoFoundation -lPocoData -lPocoDataSQLite -lPocoDataMySQL -lPocoDataODBC -lPocoNet -lPocoUtil -lPocoXML -lboost_filesystem -lboost_system -lboost_thread
+
+test-rcon:
+	g++ -fpermissive -Wwrite-strings -g -march=native -m32 -fPIC -pipe -o rcon-test src/rcon.cpp -DTESTING_RCON -lPocoFoundation -lPocoNet 

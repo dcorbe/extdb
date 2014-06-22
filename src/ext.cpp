@@ -60,13 +60,13 @@ Ext::Ext(void) {
     extDB_lock = false;
     if ( !boost::filesystem::exists( "extdb-conf.ini" ))
     {
-        std::cout << "extDB: Unable to find conf-main.ini" << std::endl;
+        std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;
         std::exit(EXIT_FAILURE);
     }
     else
     {
         std::cout << "extDB: Loading extdb-conf.ini" << std::endl;
-        Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration("conf-main.ini"));
+        Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
         std::cout << "extDB: Read extdb-conf.ini" << std::endl;
 
         max_threads = pConf->getInt("Main.Threads", 0);
@@ -217,9 +217,9 @@ std::string Ext::version() const
     return "0";
 }
 
-void Ext::getAPIKey(std::string &api_key)
+std::string Ext::getAPIKey()
 {
-	api_key = steam_api_key;
+	return steam_api_key;
 }
 
 int Ext::getUniqueID_mutexlock()
