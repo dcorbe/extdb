@@ -48,6 +48,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 
 #include "uniqueid.h"
+#include "rcon.h"
 
 #include "protocols/abstract_protocol.h"
 #include "protocols/db_raw.h"
@@ -76,11 +77,13 @@ Ext::Ext(void) {
             max_threads = boost::thread::hardware_concurrency();
         }
 		io_work_ptr.reset(new boost::asio::io_service::work(io_service));
-        for (std::size_t i = 0; i < max_threads; ++i)
+        for (int i = 0; i < max_threads; ++i)
         {
             threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
             std::cout << "+1 Thread" << std::endl ;
         }
+		std::cout << "extdb: Loading Rcon Settings" << std::endl;
+		rcon.init(pConf->getInt("Main.RconPort", 2302), pConf->getString("Main.RconPassword", "password"));
     }
 }
 
@@ -339,20 +342,20 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
     }
     else
     {
-		// Checks if Result String will fit into arma output char
-		//   If <=, then sends output to arma
-		//   if >, then sends ID Message arma + stores rest. (mutex locks)
+	// Checks if Result String will fit into arma output char
+	//   If <=, then sends output to arma
+	//   if >, then sends ID Message arma + stores rest. (mutex locks)
         std::string result = (unordered_map_protocol[protocol].get()->callProtocol(this, data));
-		if (result.length() <= (output_size-9))
-		{
-			std::strcpy(output, ("[\"OK\", " + result + "]").c_str());
-		}
-		else
-		{
-			const int unique_id = getUniqueID_mutexlock();
-			saveResult_mutexlock(result, unique_id);
-			std::strcpy(output, ("[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]").c_str());
-		}
+	if (result.length() <= (output_size-9))
+	{
+		std::strcpy(output, ("[\"OK\", " + result + "]").c_str());
+	}
+	else
+	{
+		const int unique_id = getUniqueID_mutexlock();
+		saveResult_mutexlock(result, unique_id);
+		std::strcpy(output, ("[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]").c_str());
+	}
     }
 }
 

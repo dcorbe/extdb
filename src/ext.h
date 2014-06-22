@@ -30,17 +30,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Util/IniFileConfiguration.h>
 
 #include "uniqueid.h"
+#include "rcon.h"
 
 #include "protocols/abstract_protocol.h"
 #include "protocols/abstract_ext.h"
-
-struct DBConnectionInfo {
-	std::string db_type;
-	std::string connection_str;
-	int min_sessions;
-	int max_sessions;
-	int idle_time;
-};
 
 class Ext: public AbstractExt
 {
@@ -58,8 +51,18 @@ class Ext: public AbstractExt
 		std::string getAPIKey();
 
 	private:
+		struct DBConnectionInfo {
+			std::string db_type;
+			std::string connection_str;
+			int min_sessions;
+			int max_sessions;
+			int idle_time;
+		};
+		
 		bool extDB_lock;
 		int max_threads;
+		
+		Rcon rcon;
 		
 		std::string steam_api_key;
 

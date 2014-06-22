@@ -19,23 +19,37 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
  * Changed Code to use Poco Net Library 
 */
 
+
+#pragma once
+
+#include <Poco/Net/DatagramSocket.h>
+#include <Poco/Net/SocketAddress.h>
+#include <Poco/Net/NetException.h>
+
 class Rcon
 {
 	public:
-		void sendCommand(int port, std::string password, std::string command);
-		void connect(int &port, std::string &password);
-
-	protected:
+		void sendCommand(std::string command);
+		void init(int port, std::string password);
 
 	private:
-		struct RConPacket {
+		struct RconPacket {
+			char cmd_char_workaround;
 			char *cmd;
 			unsigned char packetCode;
 		};
 
+		struct RconLogin {
+			int port;
+			char *password;
+		};
+
+
 		Poco::Net::SocketAddress sa;
 		Poco::Net::DatagramSocket dgs;
-		RConPacket rcon_packet;
+
+		RconLogin rcon_login;
+		RconPacket rcon_packet;
 
 		std::clock_t start_time;
 		char buffer[1024];
@@ -45,7 +59,8 @@ class Rcon
 		bool cmd_response;
 		int size;
 
-		void makePacket(RConPacket rcon, std::string &cmdPacket);
+		void connect();
 		void sendCommand(std::string &command, std::string &response);
+		void makePacket(RconPacket rcon, std::string &cmdPacket);
 		void extractData(char *buffer, int &size, unsigned int &pos, std::string &data);
 };

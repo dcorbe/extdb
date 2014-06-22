@@ -27,6 +27,5 @@ class AbstractExt
 {
 	public:
 		virtual Poco::Data::Session getDBSession_mutexlock()=0;
-
 		virtual std::string getAPIKey()=0;
 };

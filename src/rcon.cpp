@@ -32,10 +32,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <iomanip>
 #include <iostream>
+#include <cstring>
 
 #include "rcon.h"
 
-void Rcon::makePacket(RConPacket rcon, std::string &cmdPacket)
+void Rcon::makePacket(RconPacket rcon, std::string &cmdPacket)
 {
 	Poco::Checksum checksum_crc32;
 
@@ -50,7 +51,8 @@ void Rcon::makePacket(RConPacket rcon, std::string &cmdPacket)
 	}
 	else if (rcon.packetCode == 0x02)
 	{
-		cmdStream.put(rcon.cmd);
+//		cmdStream.put(rcon.cmd);
+		cmdStream << rcon.cmd;
 	}
 	else
 	{
@@ -91,14 +93,15 @@ void Rcon::makePacket(RConPacket rcon, std::string &cmdPacket)
 	cmdPacket = cmdPacketStream.str();
 }
 
-void Rcon::connect(int &port, std::string &password)
+void Rcon::connect()
 {
-	Poco::Net::SocketAddress sa("localhost", port);
+	Poco::Net::SocketAddress sa("localhost", rcon_login.port);
 
 	dgs.connect(sa);
 
 	//std::cout << "Password: " << std::string(password) << std::endl;
-	rcon_packet.cmd = password.c_str();
+
+	rcon_packet.cmd = rcon_login.password;
 	rcon_packet.packetCode = 0x00;
 
 	std::string packet;
@@ -155,17 +158,18 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 					logged_in = true;
 					//std::cout << "Already logged in" << std::endl;
 				}
-				else 
+				else
 				{
 					// Respond to Server Msgs i.e chat messages, to prevent timeout
 					rcon_packet.packetCode = 0x02;
-					rcon_packet.cmd = buffer[8];
+					rcon_packet.cmd_char_workaround = buffer[8];
+					rcon_packet.cmd = &rcon_packet.cmd_char_workaround;
 					std::string packet;
 					makePacket(rcon_packet, packet);
 					dgs.sendBytes(packet.data(), packet.size());
 				}
 			}
-			
+
 			if (!logged_in)
 			{
 				if (buffer[8] == 0x01) // Login Successful
@@ -211,7 +215,11 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 			{
 				// Sending Command
 				std::cout << "Sending command \"" << command << "\"" << std::endl;
-				rcon_packet.cmd = command.c_str();
+
+				char *cmd = new char[command.size()+1] ;
+				std::strcpy(cmd, command.c_str());
+
+				rcon_packet.cmd = cmd;
 				rcon_packet.packetCode = 0x01;
 				std::string packet;
 				makePacket(rcon_packet, packet);
@@ -224,7 +232,7 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 		{
 			//std::cout << "Sending KeepAlive" << std::endl;
 			rcon_packet.packetCode = 0x01;
-			rcon_packet.cmd = "";
+			rcon_packet.cmd = '\0';
 			std::string packet;
 			makePacket(rcon_packet, packet);
 			dgs.sendBytes(packet.data(), packet.size());
@@ -233,12 +241,12 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 	}
 }
 
-void Rcon::sendCommand(int port, std::string password, std::string command)
+void Rcon::sendCommand(std::string command)
 {
 	try
 	{
 		std::string response;
-		connect(port, password);
+		connect();
 		sendCommand(command, response);
 		std::cout << response << std::endl;
 	}
@@ -251,6 +259,16 @@ void Rcon::sendCommand(int port, std::string password, std::string command)
 		std::cout << "extDB: rcon Failed: " << e.displayText() << std::endl;
 	}
 }
+
+void Rcon::init(int port, std::string password)
+{
+	char *passwd = new char[password.size()+1] ;
+	std::strcpy(passwd, password.c_str());
+
+	rcon_login.port = port;
+	rcon_login.password = passwd;
+}
+
 
 #ifdef TESTING_RCON
 int main(int nNumberofArgs, char* pszArgs[])
