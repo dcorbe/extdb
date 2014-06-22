@@ -555,7 +555,7 @@ int main(int nNumberofArgs, char* pszArgs[])
             std::cout << "extDB: " << result << std::endl;
         }
     }
-	delete extension;
+	extension->stop();
     return 0;
 }
 #endif

@@ -18,3 +18,33 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
  * Change Log
  * Changed Code to use Poco Net Library 
 */
+
+class Rcon
+{
+	public:
+		void sendCommand(int port, std::string password, std::string command);
+		void connect(int &port, std::string &password);
+
+	protected:
+
+	private:
+		struct RConPacket {
+			char *cmd;
+			unsigned char packetCode;
+		};
+
+		Poco::Net::SocketAddress sa;
+		Poco::Net::DatagramSocket dgs;
+		RConPacket rcon_packet;
+
+		std::clock_t start_time;
+		char buffer[1024];
+
+		bool logged_in;
+		bool cmd_sent;
+		bool cmd_response;
+		int size;
+
+		void makePacket(RConPacket rcon, std::string &cmdPacket);
+		void sendCommand(std::string &command, std::string &response);
+};
