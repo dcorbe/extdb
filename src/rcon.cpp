@@ -23,9 +23,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Checksum.h>
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketAddress.h>
+#include <Poco/Net/NetException.h>
 #include <Poco/Timestamp.h>
 #include <Poco/DateTimeFormatter.h>
 #include <Poco/Exception.h>
+#include <Poco/Timespan.h>
 
 #include <sstream>
 #include <iomanip>
@@ -118,6 +120,7 @@ void Rcon::connect(int &port, std::string &password)
 
 void Rcon::sendCommand(std::string &command, std::string &response)
 {
+	dgs.setReceiveTimeout(Poco::Timespan(30, 0));
 	while (true)
 	{
 		std::cout << ".";
@@ -126,92 +129,105 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 			std::cout << "Waited more than 10 secs Exiting" << std::endl;
 			break;
 		}
-		size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
-		std::cout << "." << std::endl;
-		buffer[size] = '\0';
-		std::cout << sa.toString() << ": " << buffer << std::endl;
-		std::cout << "size:" << size << std::endl;
-
-		if (buffer[7] == 0x02)
+		try 
 		{
+			size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
+			std::cout << "." << std::endl;
+			buffer[size] = '\0';
+			std::cout << sa.toString() << ": " << buffer << std::endl;
+			std::cout << "size:" << size << std::endl;
+
+			if (buffer[7] == 0x02)
+			{
+				if (!logged_in)
+				{
+					logged_in = true;
+					std::cout << "Already logged in" << std::endl;
+				}
+				else 
+				{
+					std::cout << "Server Msg ID:" << buffer [8] << std::endl;
+					rcon_packet.packetCode = 0x02;
+					rcon_packet.cmd = buffer[8];
+					std::string packet;
+					makePacket(rcon_packet, packet);
+					dgs.sendBytes(packet.data(), packet.size());
+					std::cout << packet << std::endl;
+					std::cout << std::endl;
+					
+					std::stringstream ss;
+					for(size_t i = 9; i < size; ++i)
+					{
+					  ss << buffer[i];
+					}
+					std::string s = ss.str();
+					std::cout << s << std::endl;
+					
+				}
+			}
+			
 			if (!logged_in)
 			{
-				logged_in = true;
-				std::cout << "Already logged in" << std::endl;
+				if (buffer[8] == 0x01)
+				{
+					logged_in = true;
+					std::cout << "Login Successful" << std::endl;
+				}
+				else if (buffer[8] == 0x00)
+				{
+					std::cout << "Failed Login" << std::endl;
+				}
 			}
-			else 
+			else if (cmd_sent)   // FINISH !!!!!
 			{
-				std::cout << "Server Msg ID:" << buffer [8] << std::endl;
-				rcon_packet.packetCode = 0x02;
-				rcon_packet.cmd = buffer[8];
+				if (buffer[7] == 0x01)
+				{
+					//int sequenceNum = buffer[8]; /*this app only sends 0x00, so only 0x00 is received*/ // TODO: Add recieve Chat from Server  http://www.battleye.com/downloads/BERConProtocol.txt
+					if (buffer[9] == 0x00)
+					{
+						int numPackets = buffer[10];
+						int packetsReceived = 0;
+						int packetNum = buffer[11];
+
+						if ((numPackets - packetNum) == 0x01)
+						{
+							cmd_response = true;
+						}
+					}
+					else
+					{
+						/*received command response. nothing left to do now*/
+						cmd_response = true;
+					}
+				}
+				if (cmd_response)
+				{
+					/*We're done! Can exit now*/
+					std::cout << "Command response received. Exiting" << std::endl;
+					//break;
+				}
+			}
+			else if (logged_in)
+			{
+				std::cout << "Sending command \"" << command << "\"" << std::endl;
+				rcon_packet.cmd = command.c_str();
+				rcon_packet.packetCode = 0x01;
 				std::string packet;
 				makePacket(rcon_packet, packet);
 				dgs.sendBytes(packet.data(), packet.size());
 				std::cout << packet << std::endl;
-				std::cout << std::endl;
-				
-				std::stringstream ss;
-				for(size_t i = 9; i < size; ++i)
-				{
-				  ss << buffer[i];
-				}
-				std::string s = ss.str();
-				std::cout << s << std::endl;
-				
+				cmd_sent = true;
 			}
 		}
-		
-		if (!logged_in)
+		catch (Poco::TimeoutException&)
 		{
-			if (buffer[8] == 0x01)
-			{
-				logged_in = true;
-				std::cout << "Login Successful" << std::endl;
-			}
-			else if (buffer[8] == 0x00)
-			{
-				std::cout << "Failed Login" << std::endl;
-			}
-		}
-		else if (cmd_sent)   // FINISH !!!!!
-		{
-			if (buffer[7] == 0x01)
-			{
-				//int sequenceNum = buffer[8]; /*this app only sends 0x00, so only 0x00 is received*/ // TODO: Add recieve Chat from Server  http://www.battleye.com/downloads/BERConProtocol.txt
-				if (buffer[9] == 0x00)
-				{
-					int numPackets = buffer[10];
-					int packetsReceived = 0;
-					int packetNum = buffer[11];
-
-					if ((numPackets - packetNum) == 0x01)
-					{
-						cmd_response = true;
-					}
-				}
-				else
-				{
-					/*received command response. nothing left to do now*/
-					cmd_response = true;
-				}
-			}
-			if (cmd_response)
-			{
-				/*We're done! Can exit now*/
-				std::cout << "Command response received. Exiting" << std::endl;
-				//break;
-			}
-		}
-		else if (logged_in)
-		{
-			std::cout << "Sending command \"" << command << "\"" << std::endl;
-			rcon_packet.cmd = command.c_str();
+			std::cout << "Sending KeepAlive" << std::endl;
 			rcon_packet.packetCode = 0x01;
+			rcon_packet.cmd = "";
 			std::string packet;
 			makePacket(rcon_packet, packet);
 			dgs.sendBytes(packet.data(), packet.size());
-			std::cout << packet << std::endl;
-			cmd_sent = true;
+			std::cout << "Sent KeepAlive" << std::endl;
 		}
 	}
 }
