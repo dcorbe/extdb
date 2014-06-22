@@ -51,8 +51,7 @@ void Rcon::makePacket(RconPacket rcon, std::string &cmdPacket)
 	}
 	else if (rcon.packetCode == 0x02)
 	{
-//		cmdStream.put(rcon.cmd);
-		cmdStream << rcon.cmd;
+		cmdStream.put(rcon.cmd_char_workaround);
 	}
 	else
 	{
@@ -163,11 +162,10 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 					// Respond to Server Msgs i.e chat messages, to prevent timeout
 					rcon_packet.packetCode = 0x02;
 					rcon_packet.cmd_char_workaround = buffer[8];
-					rcon_packet.cmd = &rcon_packet.cmd_char_workaround; //	rcon_packet.cmd = buffer[8];
 					std::string packet;
 					makePacket(rcon_packet, packet);
-					//dgs.sendBytes(packet.data(), packet.size()); YEAH I BROKE IT AGAIN FFS
-					
+					dgs.sendBytes(packet.data(), packet.size());
+
 					std::string data;
 					extractData(9, data);
 					std::cout << data << std::endl;
