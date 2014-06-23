@@ -1,7 +1,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <tbb/scalable_allocator.h>
 
 #include "ext.h"
 

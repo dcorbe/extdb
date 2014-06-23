@@ -92,18 +92,24 @@
   <VirtualDirectory Name="src">
     <File Name="src/ext.cpp"/>
     <File Name="src/main.cpp"/>
-    <File Name="src/main.h"/>
     <File Name="src/uniqueid.cpp"/>
     <File Name="src/uniqueid.h"/>
-    <VirtualDirectory Name="plugins">
-      <File Name="src/plugins/abstractplugin.cpp"/>
-      <File Name="src/plugins/abstractplugin.h"/>
-      <File Name="src/plugins/db_raw.cpp"/>
-      <File Name="src/plugins/db_raw.h"/>
-      <File Name="src/plugins/abstract_ext.h"/>
-      <File Name="src/plugins/misc.cpp"/>
-      <File Name="src/plugins/misc.h"/>
-    </VirtualDirectory>
     <File Name="src/ext.h"/>
+    <VirtualDirectory Name="protocols">
+      <File Name="src/protocols/abstract_ext.h"/>
+      <File Name="src/protocols/abstract_protocol.h"/>
+      <File Name="src/protocols/db_raw.cpp"/>
+      <File Name="src/protocols/db_raw.h"/>
+      <File Name="src/protocols/misc.cpp"/>
+      <File Name="src/protocols/misc.h"/>
+      <File Name="src/protocols/abstract_protocol.cpp"/>
+      <File Name="src/protocols/db_basic.cpp"/>
+      <File Name="src/protocols/db_basic.h"/>
+      <File Name="src/protocols/db_vac.cpp"/>
+      <File Name="src/protocols/db_vac.h"/>
+    </VirtualDirectory>
+    <File Name="src/rcon.cpp"/>
+    <File Name="src/rcon.h"/>
+    <File Name="src/memory_allocator.cpp"/>
   </VirtualDirectory>
 </CodeLite_Project>

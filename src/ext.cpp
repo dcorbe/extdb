@@ -172,7 +172,6 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
                     std::cout << "extDB: Database Session Pool Failed" << std::endl;
 					std::strcpy(output, "[\"ERROR\",\"Database Session Pool Failed\"]");
                 }
-
             }
             else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
             {
@@ -261,18 +260,16 @@ void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &out
 //   If >, then sends 1 part to arma + stores rest.
 {
     {
-        boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results); // TODO Make Lock Smaller
+        boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results); // TODO Try to make Mutex Lock smaller
         boost::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
         if (it == unordered_map_results.end()) // NO UNIQUE ID or WAIT
         {
             if (unordered_map_wait.count(unique_id) == 0)
             {
-                //std::snprintf(output, output_size, "[\"ERROR\",\"NO ID FOUND\"]");
                 std::strcpy(output, (""));
             }
             else
             {
-                //std::snprintf(output, output_size, "[\"WAIT\"]");
                 std::strcpy(output, ("[\"WAIT\"]"));
             }
         }
@@ -416,7 +413,6 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					if (found==std::string::npos)  // Check Invalid Format
 					{
 						std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
-						//std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Format\"]");
 					}
 					else
 					{
@@ -425,7 +421,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 							boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
 							unordered_map_wait[unique_id] = true;
 						}
-						io_service.post(boost::bind(&Ext::asyncCallProtocol, this, protocol, data, unique_id));                   
+						io_service.post(boost::bind(&Ext::asyncCallProtocol, this, protocol, data, unique_id));
 						std::strcpy(output, (("[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]")).c_str());
 					}
 					break;
@@ -447,7 +443,6 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					if (found==std::string::npos)  // Check Invalid Format
 					{
 						std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
-						//std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Format\"]");
 					}
 					else
 					{
@@ -467,7 +462,6 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					if (found==std::string::npos)  // Check Invalid Format
 					{
 						std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
-						//std::snprintf(output, output_size, "[\"ERROR\",\"Error Invalid Format\"]");
 					}
 					else
 					{
@@ -533,7 +527,6 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
     catch (Poco::Exception& e)
     {
         std::strcpy(output, ("[\"ERROR\",\"Error Invalid Message\"]"));
-        //std::snprintf(output, output_size, "[\"ERROR\",\"ERROR\"]");
         std::cout << "extDB: Error: " << e.displayText() << std::endl;
     }
 }

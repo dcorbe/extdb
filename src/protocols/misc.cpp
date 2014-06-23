@@ -51,15 +51,6 @@ std::string MISC::getDateTime()
 std::string MISC::getDateTime(int hours)
 {
 	Poco::DateTime now;
-	/*
-	Poco::DateTime newtime(
-		now.year(),
-		now.month(),
-		now.day(),
-		(now.hour() + hours),
-		now.minute(),
-		now.second());
-	*/
 	Poco::Timespan span(hours*Poco::Timespan::HOURS);
 	Poco::DateTime newtime = now + span;
 
@@ -115,25 +106,25 @@ std::string MISC::callProtocol(AbstractExt *extension, std::string str_input)
 	{
 		command = str_input.substr(0,found);
 		data = str_input.substr(found+1);
-		std::cout << "DEBUG MISC: command: " << command << "." << std::endl;
-		std::cout << "DEBUG MISC: data: " << data << "." << std::endl;
 	}
 
 	if (command == "TIME")
 	{
 		if (data.length() > 0)
 		{
-			result = getDateTime(Poco::NumberParser::parse(data)); //TODO try catch
+			result = getDateTime(Poco::NumberParser::parse(data)); //TODO try catch or insert number checker function
 		}
 		else
 		{
 			result = getDateTime();
 		}
 	}
-//	else if (command == "ADLER32")
-//	{
-//		result = getAdler32(data);
-//	}
+/*
+	else if (command == "ADLER32")
+	{
+		result = getAdler32(data);
+	}
+*/
 	else if (command == "CRC32")
 	{
 		result = getCrc32(data);
