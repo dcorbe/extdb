@@ -63,11 +63,3 @@ To compile type
 
 cp extdb.so over to arma3 u can put into seperate directory if u like
 i.e @extdb or just dump it into arma3 directory
-
-
-##### Removed Plugin Code...
-Will revisit issue later to see if i can come with solution..
-When i used libpoco classloader, it seems to cause arma3server to not be able to load dll for some reason :(
-
-##### Need someone to check if i am using Intel TBB correctly 
-As in like to use thier malloc, system thanks
