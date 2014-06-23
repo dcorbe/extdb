@@ -41,16 +41,23 @@ Its my todo list to fix
 
 #### Windows Binarys Provided are built using
 
-Windows sdk 7.1 + VS2010sp1 + libboost 1.55.0 + poco-1.4.6p4
+Windows sdk 7.1 + VS2010sp1 + libboost 1.55.0 + poco-1.4.6p4 + tbb42_20140601oss
 Using VS2010sp1 due to bug with boost + vs2013 (fix already in dev boost version).
 Didn't feel it was worth time to figure out if bug would effect code
 
 
 #### Linux Build Notes
 
+Arma Server is 32bit, so we need to compile a 32bit extension..
+Unfortantely i used librarys to make my life easier, so u will need to install 32bit libraries..
+Personnally i just made a 32bit chroot enviroment for arma3server + compiled the extension in it..
+Its just easier todo..
+
+
 Requirements
  - 32bit libraries of boost_filesystem boost_system boost_thread
- - 32bit Poco-1.4.6p4
+ - 32bit Poco-1.4.6p4 (libpoco + dev)
+ - 32bit Intel TBB  (libtbb2 + dev)
 
 Check your distro version of poco i.e poco-1.4.6p4 
 
