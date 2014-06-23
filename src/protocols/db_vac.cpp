@@ -40,6 +40,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Exception.h>
 #include <string>
 
+void DB_VAC::init(AbstractExt *extension) {
+	//vac_ban_check.NumberOfVACBans = extension.get().pConf->getInt("VAC.NumberOfVACBans", 1);
+	//vac_ban_check.DaysSinceLastBan = extension.get().pConf->getInt("VAC.DaysSinceLastBan", 0);
+}
+
 
 bool DB_VAC::isNumber(std::string input_str)
 {
@@ -107,7 +112,7 @@ void DB_VAC::updateVAC(std::string steam_web_api_key, Poco::Data::Session &db_se
 					Poco::Data::use(vac_info.SteamID), Poco::Data::use(vac_info.NumberOfVACBans), Poco::Data::use(vac_info.DaysSinceLastBan), Poco::DateTime(), Poco::Data::now;
 		insert.execute();
 		// TODO: Check for VAC BANS
-		// TODO: Add RCON KICK / BAN
+		// TODO: Add RCON BAN
 	}
 	else
 	{
@@ -118,7 +123,6 @@ void DB_VAC::updateVAC(std::string steam_web_api_key, Poco::Data::Session &db_se
 
 std::string DB_VAC::callProtocol(AbstractExt *extension, std::string input_str)
 {
-	// TODO Exception Handling ?
 	if (isNumber(input_str))
 	{
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
@@ -133,9 +137,6 @@ std::string DB_VAC::callProtocol(AbstractExt *extension, std::string input_str)
 			Poco::DateTime now;
 			int tzd;
 			bool last_check_status = Poco::DateTimeParser::tryParse("%e-%n-%Y", rs.value("Last Check").convert<std::string>(), last_check, tzd);
-			//if (last_check_status)
-				//last_check = Poco::DateTimeParser::parse("%e-%n-%Y", rs.column["Last Check"], last_check);
-				
 			if (now - last_check >= Poco::Timespan(7*Poco::Timespan::DAYS));
 			{
 				updateVAC(extension->getAPIKey(), db_session, input_str);
@@ -145,10 +146,11 @@ std::string DB_VAC::callProtocol(AbstractExt *extension, std::string input_str)
 		{
 			updateVAC(extension->getAPIKey(), db_session, input_str);
 		}
+		return ("[\"OK\"]");
 	}
 	else
 	{
-		// Error Invalid Input
+		return ("[\"ERROR\",\"Error Invalid SteamID\"]");
 	}
 }
 

@@ -30,6 +30,7 @@ class DB_VAC: public AbstractProtocol
 {
 	public:
 		std::string callProtocol(AbstractExt *extension, std::string input_str);
+		void init(AbstractExt *extension);
 		
 	private:
 		struct SteamVacInfo {
@@ -40,6 +41,13 @@ class DB_VAC: public AbstractProtocol
 			std::string EconomyBan;
 			std::string LastChecked;
 		};
+		
+		struct VacBanCheck {
+			int NumberOfVACBans;
+			int DaysSinceLastBan;
+		};
+		
+		VacBanCheck vac_ban_check;
 
 		bool querySteam(std::string &steam_web_api_key, std::string &steam_id, SteamVacInfo &vac_info);
 		void updateVAC(std::string steam_web_api_key, Poco::Data::Session &db_session, std::string &steam_id);

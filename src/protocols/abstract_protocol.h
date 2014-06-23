@@ -33,4 +33,5 @@ public:
 	AbstractProtocol();
 	virtual ~AbstractProtocol();
 	virtual std::string callProtocol(AbstractExt *extension, std::string input_str)=0;
+	virtual void init(AbstractExt *extension);
 };
