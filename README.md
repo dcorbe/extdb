@@ -41,7 +41,7 @@ Its my todo list to fix
 
 #### Windows Binarys Provided are built using
 
-Windows sdk 7.1 + VS2010sp1 + libboost 1.55.0 + poco-1.4.6p4 + tbb42_20140601oss
+Windows sdk 7.1 + VS2010sp1 + libboost 1.55.0 + poco-1.4.6p4
 Using VS2010sp1 due to bug with boost + vs2013 (fix already in dev boost version).
 Didn't feel it was worth time to figure out if bug would effect code
 
