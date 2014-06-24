@@ -38,5 +38,5 @@ https://github.com/Torndeco/extdb/wiki/Install
  - Everyone else i forgot, including EPOCH dev's for having an public github for mod atleast on arma2 ;)
 
 ##### Disclaimer
-This is basicly my first time using C++
+This is basicly my first time using C++  
 Other code experience is Python (pygtk + twisted)
