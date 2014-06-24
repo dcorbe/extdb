@@ -11,9 +11,14 @@ So i decided to write up an C++ Extension for Arma3server.
 
 #### Todo
 
- - Finish Off DB_VAC (steam vac check + ban player + with db support to prevent spaming steam servers with queries)
  - Finish Off DB_BASIC (basic database support with general functions)
- - Add Steam Friends Query to MISC
+ - Add Steam Friends Query to MISC  
+ 
+
+#### Needs Testing (not enabled)
+
+ - DB_VAC (Player VAC Ban Check)
+
 
 #### Working
 
