@@ -16,7 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #pragma once
 
 #include <Poco/Data/SessionPool.h>
@@ -25,6 +24,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 
 #include "../ext.h"
+#include "../rcon.h"
+
 
 class DB_VAC: public AbstractProtocol
 {
@@ -45,11 +46,13 @@ class DB_VAC: public AbstractProtocol
 		struct VacBanCheck {
 			int NumberOfVACBans;
 			int DaysSinceLastBan;
+			std::string BanDuration;
+			std::string BanMessage;
 		};
 		
 		VacBanCheck vac_ban_check;
 
 		bool querySteam(std::string &steam_web_api_key, std::string &steam_id, SteamVacInfo &vac_info);
-		void updateVAC(std::string steam_web_api_key, Poco::Data::Session &db_session, std::string &steam_id);
+		void updateVAC(Rcon &rcon, std::string steam_web_api_key, Poco::Data::Session &db_session, std::string &steam_id);
 		bool isNumber(std::string input_str);
 };

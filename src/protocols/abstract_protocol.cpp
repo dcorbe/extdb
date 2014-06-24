@@ -34,4 +34,6 @@ std::string AbstractProtocol::callProtocol(AbstractExt *extension, std::string i
 
 void AbstractProtocol::init(AbstractExt *extension)
 {
+	// Use this function for any initialize, or if u need to read value from extdb-conf.ini i.e
+	//		extension.pConf (Poco::AutoPtr<Poco::Util::IniFileConfiguration>)
 }

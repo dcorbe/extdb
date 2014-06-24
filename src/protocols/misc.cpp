@@ -42,52 +42,52 @@ MISC::MISC(void)
 }*/
 
 
-std::string MISC::getDateTime()
+void MISC::getDateTime(std::string &result)
 {
 	Poco::DateTime now;
-	return ("[" + Poco::DateTimeFormatter::format(now, "%Y, %n, %d, %H, %M") + "]");
+	result = ("[" + Poco::DateTimeFormatter::format(now, "%Y, %n, %d, %H, %M") + "]");
 }
 
-std::string MISC::getDateTime(int hours)
+void MISC::getDateTime(int hours, std::string &result)
 {
 	Poco::DateTime now;
 	Poco::Timespan span(hours*Poco::Timespan::HOURS);
 	Poco::DateTime newtime = now + span;
 
-	return ("[" + Poco::DateTimeFormatter::format(newtime, "%Y, %n, %d, %H, %M") + "]");
+	result = ("[" + Poco::DateTimeFormatter::format(newtime, "%Y, %n, %d, %H, %M") + "]");
 }
 
 /*
-std::string MISC::getAdler32(std::string &str_input)
+std::string MISC::getAdler32(std::string &input_str)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_checksum_adler32);
-	checksum_adler32.update(str_input);
+	checksum_adler32.update(input_str);
 	return Poco::NumberFormatter::format(checksum_adler32.checksum());
 }
 */
 
-std::string MISC::getCrc32(std::string &str_input)
+void MISC::getCrc32(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_checksum_crc32);
-	checksum_crc32.update(str_input);
-	return ("\"" + Poco::NumberFormatter::format(checksum_crc32.checksum()) + "\"");
+	checksum_crc32.update(input_str);
+	result = ("\"" + Poco::NumberFormatter::format(checksum_crc32.checksum()) + "\"");
 }
 
-std::string MISC::getMD4(std::string &str_input)
+void MISC::getMD4(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_md4);
-	md4.update(str_input);
-	return ("\"" + Poco::DigestEngine::digestToHex(md4.digest()) + "\"");
+	md4.update(input_str);
+	result = ("\"" + Poco::DigestEngine::digestToHex(md4.digest()) + "\"");
 }
 
-std::string MISC::getMD5(std::string &str_input)
+void MISC::getMD5(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_md5);
-	md5.update(str_input);
-	return ("\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"");
+	md5.update(input_str);
+	result = ("\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"");
 }
 
-std::string MISC::callProtocol(AbstractExt *extension, std::string str_input)
+std::string MISC::callProtocol(AbstractExt *extension, std::string input_str)
 {
 	// Protocol
 	const std::string sep_char(":");
@@ -96,27 +96,27 @@ std::string MISC::callProtocol(AbstractExt *extension, std::string str_input)
 	std::string data;
 	std::string result;
 
-	const std::string::size_type found = str_input.find(sep_char);
+	const std::string::size_type found = input_str.find(sep_char);
 
 	if (found==std::string::npos)  // Check Invalid Format
 	{
-		command = str_input;
+		command = input_str;
 	}
 	else
 	{
-		command = str_input.substr(0,found);
-		data = str_input.substr(found+1);
+		command = input_str.substr(0,found);
+		data = input_str.substr(found+1);
 	}
 
 	if (command == "TIME")
 	{
 		if (data.length() > 0)
 		{
-			result = getDateTime(Poco::NumberParser::parse(data)); //TODO try catch or insert number checker function
+			getDateTime(Poco::NumberParser::parse(data), result); //TODO try catch or insert number checker function
 		}
 		else
 		{
-			result = getDateTime();
+			getDateTime(result);
 		}
 	}
 /*
@@ -127,15 +127,15 @@ std::string MISC::callProtocol(AbstractExt *extension, std::string str_input)
 */
 	else if (command == "CRC32")
 	{
-		result = getCrc32(data);
+		getCrc32(data, result);
 	}
 	else if (command == "MD4")
 	{
-		result = getMD4(data);;
+		getMD4(data, result);;
 	}
 	else if (command == "MD5")
 	{
-		result = getMD5(data);;
+		getMD5(data, result);;
 	}
 	else if (command == "TEST")
 	{

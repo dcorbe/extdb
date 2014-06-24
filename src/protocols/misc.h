@@ -35,7 +35,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class MISC: public AbstractProtocol
 {
 	public:
-
 		std::string name() const
 		{
 			return "Plugin_MISC";
@@ -50,16 +49,16 @@ class MISC: public AbstractProtocol
 		boost::mutex mutex_checksum_crc32;
 
 private:
-	
 		Poco::MD5Engine md5;
 		boost::mutex mutex_md5;
+
 		Poco::MD4Engine md4;
 		boost::mutex mutex_md4;
 
-		std::string getDateTime();
-		std::string getDateTime(int hours);
-		//std::string getAdler32(std::string &str_input);
-		std::string getCrc32(std::string &str_input);
-		std::string getMD4(std::string &str_input);
-		std::string getMD5(std::string &str_input);
+		void getDateTime(std::string &result);
+		void getDateTime(int hours, std::string &result);
+		//std::string getAdler32(std::string &input_str);
+		void getCrc32(std::string &input_str, std::string &result);
+		void getMD4(std::string &input_str, std::string &result);
+		void getMD5(std::string &input_str, std::string &result);
 };

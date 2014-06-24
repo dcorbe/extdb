@@ -11,6 +11,8 @@
 // We throw std::bad_alloc() when scalable_malloc returns NULL
 //(we return NULL if it is a no-throw implementation)
 
+// Code is from Intel threading building blocks
+
 void* operator new (size_t size) throw (std::bad_alloc)
 {
 	if (size == 0)

@@ -92,44 +92,6 @@ void Rcon::makePacket(RconPacket rcon, std::string &cmdPacket)
 	cmdPacket = cmdPacketStream.str();
 }
 
-void Rcon::connect()
-{
-	Poco::Net::SocketAddress sa("localhost", rcon_login.port);
-
-	dgs.connect(sa);
-
-	std::cout << "Password: " << std::string(rcon_login.password) << std::endl;
-
-	rcon_packet.cmd = rcon_login.password;
-	rcon_packet.packetCode = 0x00;
-
-	std::string packet;
-	makePacket(rcon_packet, packet);
-
-	std::cout << "Sending login info" << std::endl;
-	std::cout << packet << std::endl;
-
-	dgs.sendBytes(packet.data(), packet.size());
-
-	std::cout << "Sent login info" << std::endl;
-
-	start_time = std::clock();
-
-	logged_in = false;
-	cmd_sent = false;
-	cmd_response = false;
-}
-
-void Rcon::extractData(int pos, std::string &data)
-{
-	std::stringstream ss;
-	for(size_t i = pos; i < size; ++i)
-	{
-	  ss << buffer[i];
-	}
-	std::string s = ss.str();
-	std::cout << s << std::endl;
-}
 
 void Rcon::sendCommand(std::string &command, std::string &response)
 {
@@ -243,10 +205,12 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 	}
 }
 
+
 void Rcon::sendCommand(std::string command)
 {
 	try
 	{
+		boost::lock_guard<boost::mutex> lock(mutex_rcon_global);  // TODO:: Look @ changing Rcon Code to avoid this
 		std::string response;
 		connect();
 		sendCommand(command, response);
@@ -261,6 +225,48 @@ void Rcon::sendCommand(std::string command)
 		std::cout << "extDB: rcon Failed: " << e.displayText() << std::endl;
 	}
 }
+
+
+void Rcon::extractData(int pos, std::string &data)
+{
+	std::stringstream ss;
+	for(size_t i = pos; i < size; ++i)
+	{
+	  ss << buffer[i];
+	}
+	std::string s = ss.str();
+	std::cout << s << std::endl;
+}
+
+
+void Rcon::connect()
+{
+	Poco::Net::SocketAddress sa("localhost", rcon_login.port);
+
+	dgs.connect(sa);
+
+	std::cout << "Password: " << std::string(rcon_login.password) << std::endl;
+
+	rcon_packet.cmd = rcon_login.password;
+	rcon_packet.packetCode = 0x00;
+
+	std::string packet;
+	makePacket(rcon_packet, packet);
+
+	std::cout << "Sending login info" << std::endl;
+	std::cout << packet << std::endl;
+
+	dgs.sendBytes(packet.data(), packet.size());
+
+	std::cout << "Sent login info" << std::endl;
+
+	start_time = std::clock();
+
+	logged_in = false;
+	cmd_sent = false;
+	cmd_response = false;
+}
+
 
 void Rcon::init(int port, std::string password)
 {

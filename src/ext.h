@@ -43,12 +43,16 @@ class Ext: public AbstractExt
 
 		void callExtenion(char *output, const int &output_size, const char *function);
 		std::string version() const;
+		
+		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
 
 		Poco::Data::Session getDBSession_mutexlock();
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
 		void stop();
 		
 		std::string getAPIKey();
+		
+		Rcon rcon;
 
 	private:
 		struct DBConnectionInfo {
@@ -61,8 +65,6 @@ class Ext: public AbstractExt
 		
 		bool extDB_lock;
 		int max_threads;
-		
-		Rcon rcon;
 		
 		std::string steam_api_key;
 

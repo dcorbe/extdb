@@ -67,7 +67,7 @@ Ext::Ext(void) {
     else
     {
         std::cout << "extDB: Loading extdb-conf.ini" << std::endl;
-        Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
+		pConf = (new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
         std::cout << "extDB: Read extdb-conf.ini" << std::endl;
 
         max_threads = pConf->getInt("Main.Threads", 0);
@@ -113,7 +113,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 	// TODO ADD Code to check for database already initialized !!!!!!!!!!!
     try
     {
-        Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
+        //Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
         if (pConf->hasOption(conf_option + ".Type"))
         {
             std::cout << "extDB: Thread Pool Started" << std::endl;
