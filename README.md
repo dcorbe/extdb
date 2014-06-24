@@ -38,7 +38,5 @@ https://github.com/Torndeco/extdb/wiki/Install
  - Everyone else i forgot, including EPOCH dev's for having an public github for mod atleast on arma2 ;)
 
 ##### Disclaimer
-This is basicly my first time using C++, its been slow going but its getting there...
-Before this my main language is twinkering with Arma SQF,  
-Python + pygtk + twisted for a lobby gui client,  
-and pyBEScanner a python log parser for battleelogs (kinda obsolete now, since battleye got regrex support)
+This is basicly my first time using C++
+Other code experience is Python (pygtk + twisted)
