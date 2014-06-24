@@ -15,19 +15,19 @@ So i decided to write up an C++ Extension for Arma3server.
  - Finish Off DB_BASIC (basic database support with general functions)
  - Add Steam Friends Query to MISC
 
-#### Working List
+#### Working List:
 
  - MISC (has crc32 md4 md5 time + time offset)
  - DB_RAW (by raw i mean raw sql commands, no santizing input) this really should be used for testing only.
 
-#### Requirements to Build
+#### Requirements
 
  - C++ Compiler
  - Poco Library http://pocoproject.org/  (note some more db features in 1.5 branch)
  - Boost Library http://www.boost.org/
  - Intel TBB https://www.threadingbuildingblocks.org/
 
-#### More info in Wiki (WIP)
+#### Install
 https://github.com/Torndeco/extdb/wiki/Install
 
 
