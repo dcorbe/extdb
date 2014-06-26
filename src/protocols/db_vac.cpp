@@ -114,10 +114,10 @@ void DB_VAC::updateVAC(Rcon &rcon, std::string steam_web_api_key, Poco::Data::Se
 	if (status)
 	{
 		// Save to DB
-		Poco::Data::Statement insert(db_session);
-		insert << "INSERT INTO 'VAC BANS' (\"SteamID\", \"Number of Vac Bans\", \"Days Since Last Ban\", \"Last Check\") VALUES(:steamid, :number_of_bans, :days_since_last_bans, :last_check)", 
+		Poco::Data::Statement sql(db_session);
+		sql << "INSERT INTO 'VAC BANS' (\"SteamID\", \"Number of Vac Bans\", \"Days Since Last Ban\", \"Last Check\") VALUES(:steamid, :number_of_bans, :days_since_last_bans, :last_check)", 
 					Poco::Data::use(vac_info.SteamID), Poco::Data::use(vac_info.NumberOfVACBans), Poco::Data::use(vac_info.DaysSinceLastBan), Poco::DateTime(), Poco::Data::now;
-		insert.execute();
+		sql.execute();
 		if ((Poco::NumberParser::parse(vac_info.NumberOfVACBans) >= vac_ban_check.NumberOfVACBans) && (Poco::NumberParser::parse(vac_info.DaysSinceLastBan) <=vac_ban_check.DaysSinceLastBan ))
 		if (true)
 		{

@@ -36,10 +36,10 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
     {
 		std::string result;
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-		Poco::Data::Statement select(db_session);
-		select << input_str;
-		select.execute();
-		Poco::Data::RecordSet rs(select);
+		Poco::Data::Statement sql(db_session);
+		sql << input_str;
+		sql.execute();
+		Poco::Data::RecordSet rs(sql);
 		
 		std::size_t cols = rs.columnCount();
 		if (cols >= 1)

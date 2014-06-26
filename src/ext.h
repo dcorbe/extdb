@@ -80,7 +80,7 @@ class Ext: public AbstractExt
 		// Database Session Pool
 		boost::shared_ptr<Poco::Data::SessionPool> db_pool;
 		boost::mutex mutex_db_pool;
-
+		
 		void connectDatabase(char *output, const int &output_size, const std::string &conf_option);
 
 		void getResult_mutexlock(const int &unique_id, char *output, const int &output_size);
