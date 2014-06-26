@@ -41,6 +41,7 @@ https://github.com/Torndeco/extdb/wiki/Install
  - bladez- Using modified gplv3 code from https://github.com/bladez-/bercon for RCON
  - killzonekid for his blog + initial code in arma wiki for linux extensions
  - Everyone else i forgot, including EPOCH dev's for having an public github for mod atleast on arma2 ;)
+ - rajkosto for his work on DayZ Hive, that i have looked at & gotten confused.. Using same method for getting Unique Char ID, was gonna use a global lock on inserts beforehand  https://github.com/rajkosto/hive
 
 ##### Disclaimer
 This is basicly my first time using C++  
