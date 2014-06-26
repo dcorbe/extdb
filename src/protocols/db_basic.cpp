@@ -19,6 +19,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "db_basic.h"
 
+#include <Poco/DateTime.h>
+#include <Poco/DateTimeFormatter.h>
+
 #include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
@@ -29,37 +32,38 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 
 
-void DB_BASIC::getCharUID(std::string &steamid, std::string &result)
+void DB_BASIC::getCharUID(Poco::Data::Statement &sql, std::string &steamid, std::string &result)
 {
-	select << ("SELECT \"Char UID\" FROM `PLAYER Info` where SteamID=" + steamid), Poco::Data::into(result), Poco::Data::now;
-	select.execute();
+	Poco::DateTime now;
+	std::string timestamp = Poco::DateTimeFormatter::format(now, "%Y, %n, %d, %H, %M");
+	
+	sql << ("SELECT \"Char UID\" FROM `PLAYER Info` where SteamID=" + steamid), Poco::Data::into(result), Poco::Data::now;
+	sql.execute();
 
-	if (char_uid.empty())
+	if (result.empty())
 	{
+		
 		// TODO: Performance look @ implementing MariaDB + SQLite c library directly so can get last row id directly from database handle.
-		select << ("INSERT INTO \"Player Characters\"(SteamID, `First Updated`) VALUES (" + steamid + ", " + id + ")");
-		select.execute();
-		select << ("SELECT \"UID\" FROM \"Player Characters\" WHERE SteamID=" + steamid + " AND Alive = 1 ORDER BY UID DESC LIMIT 1", Poco::Data::into(result), Poco::Data::now);
-		select.execute();
-		select << ("UPDATE \"Player Info\" SET `Char UID` = " + result + " WHERE SteamID=" + steamid);
-		select.execute();
+		sql << ("INSERT INTO \"Player Characters\"(SteamID, `First Updated`) VALUES (" + steamid + ", " + timestamp + ")");
+		sql.execute();
+		sql << ("SELECT \"UID\" FROM \"Player Characters\" WHERE SteamID=" + steamid + " AND Alive = 1 ORDER BY UID DESC LIMIT 1", Poco::Data::into(result), Poco::Data::now);
+		sql.execute();
+		sql << ("UPDATE \"Player Info\" SET `Char UID` = " + result + " WHERE SteamID=" + steamid);
+		sql.execute();
 	}
 	else
 	{
-		char_uid = rs.value("Char UID").convert<std::string>();
-		select << ("UPDATE \"Player Info\" SET `Last Login` = " + timestamp + " WHERE SteamID=" + steamid);
-		select.execute();
+		sql << ("UPDATE \"Player Info\" SET `Last Login` = " + timestamp + " WHERE SteamID=" + steamid);
+		sql.execute();
 	}
-	return char_uid;
 }
 
 
-void DB_BASIC::getOptionAll(std::string &table)
+void DB_BASIC::getOptionAll(Poco::Data::Statement &sql, std::string &table, std::string &result)
 {
 	sql << ("SELECT * FROM `" + table + "` AND Alive = 1");
 	sql.execute();
 
-	std::string result;
 	Poco::Data::RecordSet rs(sql);
 	
 	std::size_t cols = rs.columnCount();
@@ -92,23 +96,21 @@ void DB_BASIC::getOptionAll(std::string &table)
 			}
 		}
 	}
-	return result;
 }
 
 
-void DB_BASIC::getOption(std::string &table, std::string &uid)
+void DB_BASIC::getOption(Poco::Data::Statement &sql, std::string &table, std::string &uid, std::string &option, std::string &result)
 {
 	sql << ("SELECT \"UID\" FROM \"" + table + "\" WHERE " + option + "UID=" + uid + "", Poco::Data::into(result), Poco::Data::now);
 	sql.execute();
-	return result;
 }
 
 
-void DB_BASIC::setOption(std::string &table, std::string &uid)
+void DB_BASIC::setOption(Poco::Data::Statement &sql, std::string &table, std::string &uid, std::string &option, std::string &value, std::string &result)
 {
 	sql << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid);
 	sql.execute();
-	return result;
+	result = "[\"OK\",\"OK\"]";; // TODO
 }
 
 
@@ -136,121 +138,139 @@ Save		0-		2
 //setValue(table, uid, type, value)
 //getValue(table, uid, type, value)
 
-std::string DB_BASIC::callProtocol(AbstractProtocol *extension, std::string input_str)
+std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str)
 {
 	std::string result;
-	if (str_input.length() <= 4)
+	if (input_str.length() <= 5)
 	{
 		result = "[\"ERROR\",\"Error Invalid Message\"]";
 	}
 	else
 	{
-		const std::string sep_char(":");
-		std::string option;
 		bool option_all;
+		std::string option;
+		std::string value;
 		
-		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
+		const std::string sep_char(":");
+		const std::string::size_type found = input_str.find(sep_char,5);
 		
-		switch (Poco::NumberParser::parse(input_str.substr(2,1)))
+		if (found==std::string::npos)  // Check Invalid Format
 		{
-			case 0:
-				option = "Model";
-				option_all = true;
-				break;
-			case 1:
-				option = "Model";
-				break;
-			case 2:
-				option = "Position";
-				break;
-			case 3:
-				option = "Inventory";
-				break;
-			case 4:
-				option = "Medical";
-				break;
-			case 5:
-				option = "Alive";
-				break;
-			case 6:
-				option = "Other";
-				break;
-			default
-				option = "Model";
+			result = "[\"ERROR\",\"Error\"]"; // TODO
 		}
-		
-		switch (Poco::NumberParser::parse(input_str.substr(1,1)))
+		else
 		{
-			case (0):  // Player Info
+			std::string uid = input_str.substr(4,found-4);
+			std::string value = input_str.substr(found+1);
+			
+			Poco::Data::Session db_session = extension->getDBSession_mutexlock();
+			Poco::Data::Statement sql(db_session);
+			
+			switch (Poco::NumberParser::parse(input_str.substr(2,1)))
 			{
-				if (option =="Other")
+				case 0:
+					option = "Model";
+					option_all = true;
+					break;
+				case 1:
+					option = "Model";
+					break;
+				case 2:
+					option = "Position";
+					break;
+				case 3:
+					option = "Inventory";
+					break;
+				case 4:
+					option = "Medical";
+					break;
+				case 5:
+					option = "Alive";
+					break;
+				case 6:
+					option = "Other";
+					break;
+				default:
+					option = "Model";
+			}
+			
+			switch (Poco::NumberParser::parse(input_str.substr(1,1)))
+			{
+				case (0):  // Player Info
 				{
+					if (option =="Other")
+					{
+						std::string table = "Player Info";
+						if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
+						{
+							getOption(sql, table, uid, option, result);
+						}
+						else
+						{
+							setOption(sql, table, uid, option, value, result);
+						}
+					}
+					else
+					{
+						getCharUID(sql, value, result);
+					}
+				}
+				case (1):  // Player Char  "Player Characters"
+				{
+					std::string table = "Player Characters";
 					if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
 					{
-						getOption("Player Info", uid, option, result);
+						getOption(sql, table, uid, option, result);
 					}
 					else
 					{
-						setOption("Player Info", uid, option, value);
+						setOption(sql, table, uid, option, value, result);
 					}
+					break;
 				}
-				else
+				case (2):  // Vehicles    "Vehicles"
 				{
-					getCharUID(steamid, result);
-				}
-			}
-			case (1):  // Player Char  "Player Characters"
-			{
-				if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
-				{
-					getOption("Player Characters", uid, option, result);
-				}
-				else
-				{
-					setOption("Player Characters", uid, option, value, result);
-				}
-				break;
-			}
-			case (2):  // Vehicles    "Vehicles"
-			{
-				if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
-				{
-					if (option_all)
+					std::string table = "Vehicles";
+					if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
 					{
-						getOptionAll("Vehicles", result);
+						if (option_all)
+						{
+							getOptionAll(sql, table, result);
+						}
+						else
+						{
+							getOption(sql, table, uid, option, result);
+						}
 					}
 					else
 					{
-						getOption("Vehicles", uid, option, result);
+						setOption(sql, table, uid, option, value, result);
 					}
+					break;
 				}
-				else
+				case (3):  // Objects    "Objects"
 				{
-					setOption("Vehicles", uid, option, value, result);
-				}
-				break;
-			}
-			case (3):  // Objects    "Objects"
-			{
-				if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
-				{
-					if (option_all)
+					std::string table = "Objects";
+					if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
 					{
-						getOptionAll("Objects", result);
+						if (option_all)
+						{
+							getOptionAll(sql, table, result);
+						}
+						else
+						{
+							getOption(sql, table, uid, option, result);
+						}
 					}
 					else
 					{
-						getOption("Objects", uid, option, result);
+						setOption(sql, table, uid, option, value, result);
 					}
+					break;
 				}
-				else
-				{
-					setOption("Objects", uid, option, value, result);
-				}
-				break;
+				default:
+					result = "[\"ERROR\",\"Error\"]";
 			}
-			default:
-				result = "[\"ERROR\",\"Error\"]";
 		}
 	}
 	return result;

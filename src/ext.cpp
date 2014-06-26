@@ -388,8 +388,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 {
     try
     {
-		const std::string str_input(function);
-		if (str_input.length() <= 2)
+		const std::string input_str(function);
+		if (input_str.length() <= 2)
 		{
 			std::strcpy(output, ("[\"ERROR\",\"Error Invalid Message\"]"));
 		}
@@ -398,17 +398,14 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 			const std::string sep_char(":");
 
 			// Async / Sync
-			const int async = Poco::NumberParser::parse(str_input.substr(0,1));
+			const int async = Poco::NumberParser::parse(input_str.substr(0,1));
 
 			switch (async)  // TODO Profile using Numberparser versus comparsion of char[0] + if statement checking length of *function
 			{
 				case 2: //ASYNC + SAVE
 				{
 					// Protocol
-					const std::string::size_type found = str_input.find(sep_char,2);
-					const std::string protocol = str_input.substr(2,(found-2));
-					// Data
-					std::string data = str_input.substr(found+1);
+					const std::string::size_type found = input_str.find(sep_char,2);
 
 					if (found==std::string::npos)  // Check Invalid Format
 					{
@@ -416,6 +413,9 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					}
 					else
 					{
+						const std::string protocol = input_str.substr(2,(found-2));
+						// Data
+						std::string data = input_str.substr(found+1);
 						int unique_id = getUniqueID_mutexlock();
 						{
 							boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
@@ -428,17 +428,14 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 				}
 				case 5: // GET
 				{
-					const int unique_id = Poco::NumberParser::parse(str_input.substr(2));
+					const int unique_id = Poco::NumberParser::parse(input_str.substr(2));
 					getResult_mutexlock(unique_id, output, output_size);
 					break;
 				}
 				case 1: //ASYNC
 				{
 					// Protocol
-					const std::string::size_type found = str_input.find(sep_char,2);
-					const std::string protocol = str_input.substr(2,(found-2));
-					// Data
-					std::string data = str_input.substr(found+1);
+					const std::string::size_type found = input_str.find(sep_char,2);
 
 					if (found==std::string::npos)  // Check Invalid Format
 					{
@@ -446,6 +443,9 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					}
 					else
 					{
+						const std::string protocol = input_str.substr(2,(found-2));
+						// Data
+						std::string data = input_str.substr(found+1);
 						io_service.post(boost::bind(&Ext::onewayCallProtocol, this, protocol, data));
 						std::strcpy(output, "[\"OK\"]");
 					}
@@ -454,10 +454,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 				case 0: //SYNC
 				{
 					// Protocol
-					const std::string::size_type found = str_input.find(sep_char,2);
-					const std::string protocol = str_input.substr(2,(found-2));
-					// Data
-					std::string data = str_input.substr(found+1);
+					const std::string::size_type found = input_str.find(sep_char,2);
 
 					if (found==std::string::npos)  // Check Invalid Format
 					{
@@ -465,6 +462,9 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					}
 					else
 					{
+						const std::string protocol = input_str.substr(2,(found-2));
+						// Data
+						std::string data = input_str.substr(found+1);
 						syncCallProtocol(output, output_size, protocol, data);
 					}
 					break;
@@ -474,17 +474,17 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					if (!extDB_lock)
 					{
 						// Protocol
-						std::string::size_type found = str_input.find(sep_char,2);
+						std::string::size_type found = input_str.find(sep_char,2);
 						std::string command;
 						std::string data;
 						if (found==std::string::npos)  // Check Invalid Format
 						{
-							command = str_input.substr(2);
+							command = input_str.substr(2);
 						}
 						else
 						{
-							command = str_input.substr(2,(found-2));
-							data = str_input.substr(found+1);
+							command = input_str.substr(2,(found-2));
+							data = input_str.substr(found+1);
 						}
 						if (command == "VERSION")
 						{

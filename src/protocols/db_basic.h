@@ -19,6 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include <Poco/Data/Common.h>
+#include <Poco/Data/MetaColumn.h>
+#include <Poco/Data/RecordSet.h>
+#include <Poco/Data/Session.h>
 #include <Poco/Data/SessionPool.h>
 
 #include <cstdlib>
@@ -29,5 +33,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class DB_BASIC: public AbstractProtocol
 {
 	public:
-		std::string callProtocol(AbstractProtocol *extension, std::string input_str);
+		std::string callProtocol(AbstractExt *extension, std::string input_str);
+		
+	private:
+		void getCharUID(Poco::Data::Statement &sql, std::string &steamid, std::string &result);
+		void getOptionAll(Poco::Data::Statement &sql, std::string &table, std::string &result);
+		void getOption(Poco::Data::Statement &sql, std::string &table, std::string &uid, std::string &option, std::string &result);
+		void setOption(Poco::Data::Statement &sql, std::string &table, std::string &uid, std::string &option, std::string &value, std::string &result);
 };
