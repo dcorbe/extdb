@@ -51,6 +51,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "rcon.h"
 
 #include "protocols/abstract_protocol.h"
+#include "protocols/db_basic.h"
 #include "protocols/db_raw.h"
 #include "protocols/misc.h"
 
@@ -316,6 +317,12 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		if (boost::iequals(protocol, std::string("MISC")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC());
+			unordered_map_protocol[protocol_name].get()->init(this);
+			std::strcpy(output, "[\"OK\"]");
+		}
+		else if (boost::iequals(protocol, std::string("DB_BASIC")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_BASIC());
 			unordered_map_protocol[protocol_name].get()->init(this);
 			std::strcpy(output, "[\"OK\"]");
 		}

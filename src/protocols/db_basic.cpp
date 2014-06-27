@@ -32,35 +32,47 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 
 
-void DB_BASIC::getCharUID(Poco::Data::Statement &sql, std::string &steamid, std::string &result)
+void DB_BASIC::getCharUID(Poco::Data::Session &db_session, std::string &steamid, std::string &result)
 {
+	std::string name = "deco";
 	Poco::DateTime now;
-	std::string timestamp = Poco::DateTimeFormatter::format(now, "%Y, %n, %d, %H, %M");
+	std::string timestamp = Poco::DateTimeFormatter::format(now, "\"[%Y, %n, %d, %H, %M]\"");
 	
-	sql << ("SELECT \"Char UID\" FROM `PLAYER Info` where SteamID=" + steamid), Poco::Data::into(result), Poco::Data::now;
-	sql.execute();
+	Poco::Data::Statement sql1(db_session);
+	sql1 << ("SELECT \"Char UID\" FROM `Player Info` WHERE SteamID=" + steamid), Poco::Data::into(result), Poco::Data::now;
+	//sql.execute();
 
 	if (result.empty())
 	{
-		
+		std::cout << "NEW PLAYER" << std::endl;
 		// TODO: Performance look @ implementing MariaDB + SQLite c library directly so can get last row id directly from database handle.
-		sql << ("INSERT INTO \"Player Characters\"(SteamID, `First Updated`) VALUES (" + steamid + ", " + timestamp + ")");
-		sql.execute();
-		sql << ("SELECT \"UID\" FROM \"Player Characters\" WHERE SteamID=" + steamid + " AND Alive = 1 ORDER BY UID DESC LIMIT 1", Poco::Data::into(result), Poco::Data::now);
-		sql.execute();
-		sql << ("UPDATE \"Player Info\" SET `Char UID` = " + result + " WHERE SteamID=" + steamid);
-		sql.execute();
+		Poco::Data::Statement sql2(db_session);
+		std::cout << "INSERT INTO \"Player Characters\" (SteamID, `Alive`, `First Updated`, `Last Updated`) VALUES (" + steamid + ", 0, " + timestamp + ", " + timestamp + ")" << std::endl;
+		sql2 << ("INSERT INTO \"Player Characters\" (SteamID, `Alive`, `First Updated`, `Last Updated`) VALUES (" + steamid + ", 0, " + timestamp + ", " + timestamp + ")");
+		sql2.execute();
+		Poco::Data::Statement sql3(db_session);
+		std::cout << "SELECT `UID` FROM `Player Characters` WHERE `SteamID`=" + steamid << std::endl;
+		sql3 << ("SELECT `UID` FROM `Player Characters` WHERE `SteamID`=" + steamid), Poco::Data::into(result), Poco::Data::now;
+		//sql.execute();
+		Poco::Data::Statement sql4(db_session);
+		std::string test = ("INSERT INTO `Player Info` (SteamID, Name, `First Login`, `Last Login`, `Char UID`) VALUES (" + steamid + ", " + name + ", " + timestamp + ", " + timestamp + ", " + result + ")");
+		std::cout << test << std::endl;
+		sql4 << ("INSERT INTO \"Player Info\" (SteamID, Name, `First Login`, `Last Login`, `Char UID`) VALUES (" + steamid + ", \"" + name + "\", " + timestamp + ", " + timestamp + ", " + result + ")");
+		sql4.execute();
 	}
 	else
 	{
-		sql << ("UPDATE \"Player Info\" SET `Last Login` = " + timestamp + " WHERE SteamID=" + steamid);
-		sql.execute();
+		std::cout << "OLD PLAYER" << std::endl;
+		Poco::Data::Statement sql5(db_session);
+		sql5 << ("UPDATE \"Player Info\" SET `Last Login` = " + timestamp + " WHERE SteamID=" + steamid, Poco::Data::now);
+		//sql5.execute();
 	}
 }
 
 
-void DB_BASIC::getOptionAll(Poco::Data::Statement &sql, std::string &table, std::string &result)
+void DB_BASIC::getOptionAll(Poco::Data::Session &db_session, std::string &table, std::string &result)
 {
+	Poco::Data::Statement sql(db_session);
 	sql << ("SELECT * FROM `" + table + "` AND Alive = 1");
 	sql.execute();
 
@@ -99,15 +111,17 @@ void DB_BASIC::getOptionAll(Poco::Data::Statement &sql, std::string &table, std:
 }
 
 
-void DB_BASIC::getOption(Poco::Data::Statement &sql, std::string &table, std::string &uid, std::string &option, std::string &result)
+void DB_BASIC::getOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string &result)
 {
+	Poco::Data::Statement sql(db_session);
 	sql << ("SELECT \"UID\" FROM \"" + table + "\" WHERE " + option + "UID=" + uid + "", Poco::Data::into(result), Poco::Data::now);
 	sql.execute();
 }
 
 
-void DB_BASIC::setOption(Poco::Data::Statement &sql, std::string &table, std::string &uid, std::string &option, std::string &value, std::string &result)
+void DB_BASIC::setOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string &value, std::string &result)
 {
+	Poco::Data::Statement sql(db_session);
 	sql << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid);
 	sql.execute();
 	result = "[\"OK\",\"OK\"]";; // TODO
@@ -140,6 +154,7 @@ Save		0-		2
 
 std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str)
 {
+	std::cout << "DEBUG: " << input_str << std::endl;
 	std::string result;
 	if (input_str.length() <= 5)
 	{
@@ -152,7 +167,7 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 		std::string value;
 		
 		const std::string sep_char(":");
-		const std::string::size_type found = input_str.find(sep_char,5);
+		const std::string::size_type found = input_str.find(sep_char,4);
 		
 		if (found==std::string::npos)  // Check Invalid Format
 		{
@@ -163,8 +178,11 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 			std::string uid = input_str.substr(4,found-4);
 			std::string value = input_str.substr(found+1);
 			
+			std::cout << "DEBUG 1: " << uid << std::endl;
+			std::cout << "DEBUG 2: " << value << std::endl;
+			
 			Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-			Poco::Data::Statement sql(db_session);
+			
 			
 			switch (Poco::NumberParser::parse(input_str.substr(2,1)))
 			{
@@ -203,16 +221,16 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 						std::string table = "Player Info";
 						if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
 						{
-							getOption(sql, table, uid, option, result);
+							getOption(db_session, table, uid, option, result);
 						}
 						else
 						{
-							setOption(sql, table, uid, option, value, result);
+							setOption(db_session, table, uid, option, value, result);
 						}
 					}
 					else
 					{
-						getCharUID(sql, value, result);
+						getCharUID(db_session, value, result);
 					}
 				}
 				case (1):  // Player Char  "Player Characters"
@@ -220,11 +238,11 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 					std::string table = "Player Characters";
 					if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
 					{
-						getOption(sql, table, uid, option, result);
+						getOption(db_session, table, uid, option, result);
 					}
 					else
 					{
-						setOption(sql, table, uid, option, value, result);
+						setOption(db_session, table, uid, option, value, result);
 					}
 					break;
 				}
@@ -235,16 +253,16 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 					{
 						if (option_all)
 						{
-							getOptionAll(sql, table, result);
+							getOptionAll(db_session, table, result);
 						}
 						else
 						{
-							getOption(sql, table, uid, option, result);
+							getOption(db_session, table, uid, option, result);
 						}
 					}
 					else
 					{
-						setOption(sql, table, uid, option, value, result);
+						setOption(db_session, table, uid, option, value, result);
 					}
 					break;
 				}
@@ -255,16 +273,16 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 					{
 						if (option_all)
 						{
-							getOptionAll(sql, table, result);
+							getOptionAll(db_session, table, result);
 						}
 						else
 						{
-							getOption(sql, table, uid, option, result);
+							getOption(db_session, table, uid, option, result);
 						}
 					}
 					else
 					{
-						setOption(sql, table, uid, option, value, result);
+						setOption(db_session, table, uid, option, value, result);
 					}
 					break;
 				}
