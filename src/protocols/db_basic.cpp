@@ -34,38 +34,32 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 void DB_BASIC::getCharUID(Poco::Data::Session &db_session, std::string &steamid, std::string &result)
 {
+	// TODO check user input + grab name
 	std::string name = "deco";
 	Poco::DateTime now;
 	std::string timestamp = Poco::DateTimeFormatter::format(now, "\"[%Y, %n, %d, %H, %M]\"");
 	
 	Poco::Data::Statement sql1(db_session);
 	sql1 << ("SELECT \"Char UID\" FROM `Player Info` WHERE SteamID=" + steamid), Poco::Data::into(result), Poco::Data::now;
-	//sql.execute();
 
 	if (result.empty())
 	{
 		std::cout << "NEW PLAYER" << std::endl;
 		// TODO: Performance look @ implementing MariaDB + SQLite c library directly so can get last row id directly from database handle.
 		Poco::Data::Statement sql2(db_session);
-		std::cout << "INSERT INTO \"Player Characters\" (SteamID, `Alive`, `First Updated`, `Last Updated`) VALUES (" + steamid + ", 0, " + timestamp + ", " + timestamp + ")" << std::endl;
-		sql2 << ("INSERT INTO \"Player Characters\" (SteamID, `Alive`, `First Updated`, `Last Updated`) VALUES (" + steamid + ", 0, " + timestamp + ", " + timestamp + ")");
-		sql2.execute();
+		sql2 << ("INSERT INTO \"Player Characters\" (SteamID, `Alive`, `First Updated`, `Last Updated`) VALUES (" + steamid + ", 0, " + timestamp + ", " + timestamp + ")"), Poco::Data::now;
+		
 		Poco::Data::Statement sql3(db_session);
-		std::cout << "SELECT `UID` FROM `Player Characters` WHERE `SteamID`=" + steamid << std::endl;
 		sql3 << ("SELECT `UID` FROM `Player Characters` WHERE `SteamID`=" + steamid), Poco::Data::into(result), Poco::Data::now;
-		//sql.execute();
+		
 		Poco::Data::Statement sql4(db_session);
-		std::string test = ("INSERT INTO `Player Info` (SteamID, Name, `First Login`, `Last Login`, `Char UID`) VALUES (" + steamid + ", " + name + ", " + timestamp + ", " + timestamp + ", " + result + ")");
-		std::cout << test << std::endl;
-		sql4 << ("INSERT INTO \"Player Info\" (SteamID, Name, `First Login`, `Last Login`, `Char UID`) VALUES (" + steamid + ", \"" + name + "\", " + timestamp + ", " + timestamp + ", " + result + ")");
-		sql4.execute();
+		sql4 << ("INSERT INTO `Player Info` (SteamID, Name, `First Login`, `Last Login`, `Char UID`) VALUES (" + steamid + ", \"" + name + "\", " + timestamp + ", " + timestamp + ", " + result + ")"), Poco::Data::now;
 	}
 	else
 	{
 		std::cout << "OLD PLAYER" << std::endl;
 		Poco::Data::Statement sql5(db_session);
 		sql5 << ("UPDATE \"Player Info\" SET `Last Login` = " + timestamp + " WHERE SteamID=" + steamid, Poco::Data::now);
-		//sql5.execute();
 	}
 }
 
@@ -232,6 +226,7 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 					{
 						getCharUID(db_session, value, result);
 					}
+					break;
 				}
 				case (1):  // Player Char  "Player Characters"
 				{
