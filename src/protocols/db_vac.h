@@ -52,7 +52,7 @@ class DB_VAC: public AbstractProtocol
 		
 		VacBanCheck vac_ban_check;
 
+		bool isNumber(std::string &input_str);
 		bool querySteam(std::string &steam_web_api_key, std::string &steam_id, SteamVacInfo &vac_info);
 		void updateVAC(Rcon &rcon, std::string steam_web_api_key, Poco::Data::Session &db_session, std::string &steam_id);
-		bool isNumber(std::string input_str);
 };

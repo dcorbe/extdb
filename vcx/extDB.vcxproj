@@ -106,6 +106,7 @@
     <ClInclude Include="..\src\ext.h" />
     <ClInclude Include="..\src\protocols\abstract_ext.h" />
     <ClInclude Include="..\src\protocols\abstract_protocol.h" />
+    <ClInclude Include="..\src\protocols\db_basic.h" />
     <ClInclude Include="..\src\protocols\db_raw.h" />
     <ClInclude Include="..\src\protocols\misc.h" />
     <ClInclude Include="..\src\rcon.h" />
@@ -116,9 +117,11 @@
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\memory_allocator.cpp" />
     <ClCompile Include="..\src\protocols\abstract_protocol.cpp" />
+    <ClCompile Include="..\src\protocols\db_basic.cpp" />
     <ClCompile Include="..\src\protocols\db_raw.cpp" />
     <ClCompile Include="..\src\protocols\misc.cpp" />
     <ClCompile Include="..\src\rcon.cpp" />
+    <ClCompile Include="..\src\sanitize.cpp" />
     <ClCompile Include="..\src\uniqueid.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

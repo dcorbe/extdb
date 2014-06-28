@@ -166,12 +166,12 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
                 if (db_pool->get().isConnected())
                 {
                     std::cout << "extDB: Database Session Pool Started" << std::endl;
-                    std::strcpy(output, "[\"OK\"]");
+                    std::strcpy(output, "[1]");
                 }
                 else
                 {
                     std::cout << "extDB: Database Session Pool Failed" << std::endl;
-					std::strcpy(output, "[\"ERROR\",\"Database Session Pool Failed\"]");
+					std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
                 }
             }
             else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
@@ -188,24 +188,24 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
                 if (db_pool->get().isConnected())
                 {
                     std::cout << "extDB: Database Session Pool Started" << std::endl;
-                    std::strcpy(output, "[\"OK\"]");
+                    std::strcpy(output, "[1]");
                 }
                 else
                 {
                     std::cout << "extDB: Database Session Pool Failed" << std::endl;
-                    std::strcpy(output, "[\"ERROR\",\"Database Session Pool Failed\"]");
+                    std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
                 }
             }
             else
             {
                 std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
-				std::strcpy(output, "[\"ERROR\",\"Unknown Database Type\"]");
+				std::strcpy(output, "[0,\"Unknown Database Type\"]");
             }
         }
         else
         {
             std::cout << "extDB: No Config Option Found: " << conf_option << "." << std::endl;
-			std::strcpy(output, "[\"ERROR\",\"No Config Option Found\"]");
+			std::strcpy(output, "[0,\"No Config Option Found\"]");
         }
     }
     catch (Poco::Exception& e)
@@ -215,15 +215,18 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
     }
 }
 
+
 std::string Ext::version() const
 {
     return "0";
 }
 
+
 std::string Ext::getAPIKey()
 {
 	return steam_api_key;
 }
+
 
 int Ext::getUniqueID_mutexlock()
 {
@@ -271,7 +274,7 @@ void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &out
             }
             else
             {
-                std::strcpy(output, ("[\"WAIT\"]"));
+                std::strcpy(output, ("[3]"));
             }
         }
         else if (it->second.empty()) // END of MSG
@@ -303,7 +306,7 @@ void Ext::saveResult_mutexlock(const std::string &result, const int &unique_id)
 {
     {
         boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
-        unordered_map_results[unique_id] = "[\"OK\"," + result + "]";
+        unordered_map_results[unique_id] = "[1," + result + "]";
         unordered_map_wait.erase(unique_id);
     }
 }
@@ -318,23 +321,23 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC());
 			unordered_map_protocol[protocol_name].get()->init(this);
-			std::strcpy(output, "[\"OK\"]");
+			std::strcpy(output, "[1]");
 		}
 		else if (boost::iequals(protocol, std::string("DB_BASIC")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_BASIC());
 			unordered_map_protocol[protocol_name].get()->init(this);
-			std::strcpy(output, "[\"OK\"]");
+			std::strcpy(output, "[1]");
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW());
 			unordered_map_protocol[protocol_name].get()->init(this);
-			std::strcpy(output, "[\"OK\"]");
+			std::strcpy(output, "[1]");
 		}
 		else
 		{
-			std::strcpy(output, "[\"ERROR\",\"Error Unknown Protocol\"]");
+			std::strcpy(output, "[0,\"Error Unknown Protocol\"]");
 		}
 	}
 }
@@ -345,7 +348,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 {
     if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
     {
-        std::strcpy(output, ("[\"ERROR\",\"Error Unknown Protocol\"]"));
+        std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
     }
     else
     {
@@ -355,13 +358,13 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
         std::string result = (unordered_map_protocol[protocol].get()->callProtocol(this, data));
 	if (result.length() <= (output_size-9))
 	{
-		std::strcpy(output, ("[\"OK\", " + result + "]").c_str());
+		std::strcpy(output, ("[1, " + result + "]").c_str());
 	}
 	else
 	{
 		const int unique_id = getUniqueID_mutexlock();
 		saveResult_mutexlock(result, unique_id);
-		std::strcpy(output, ("[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]").c_str());
+		std::strcpy(output, ("[2,\"" + Poco::NumberFormatter::format(unique_id) + "\"]").c_str());
 	}
     }
 }
@@ -382,7 +385,7 @@ void Ext::asyncCallProtocol(const std::string protocol, const std::string data, 
 {
     if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
     {
-        saveResult_mutexlock(std::string("[\"ERROR\",\"Error Unknown Protocol\"]"), unique_id);
+        saveResult_mutexlock(std::string("[0,\"Error Unknown Protocol\"]"), unique_id);
     }
     else
     {
@@ -398,7 +401,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		const std::string input_str(function);
 		if (input_str.length() <= 2)
 		{
-			std::strcpy(output, ("[\"ERROR\",\"Error Invalid Message\"]"));
+			std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
 		}
 		else
 		{
@@ -416,7 +419,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 
 					if (found==std::string::npos)  // Check Invalid Format
 					{
-						std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
+						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
 					}
 					else
 					{
@@ -429,7 +432,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 							unordered_map_wait[unique_id] = true;
 						}
 						io_service.post(boost::bind(&Ext::asyncCallProtocol, this, protocol, data, unique_id));
-						std::strcpy(output, (("[\"ID\",\"" + Poco::NumberFormatter::format(unique_id) + "\"]")).c_str());
+						std::strcpy(output, (("[2,\"" + Poco::NumberFormatter::format(unique_id) + "\"]")).c_str());
 					}
 					break;
 				}
@@ -446,7 +449,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 
 					if (found==std::string::npos)  // Check Invalid Format
 					{
-						std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
+						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
 					}
 					else
 					{
@@ -454,7 +457,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						// Data
 						std::string data = input_str.substr(found+1);
 						io_service.post(boost::bind(&Ext::onewayCallProtocol, this, protocol, data));
-						std::strcpy(output, "[\"OK\"]");
+						std::strcpy(output, "[1]");
 					}
 					break;
 				}
@@ -465,7 +468,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 
 					if (found==std::string::npos)  // Check Invalid Format
 					{
-						std::strcpy(output, ("[\"ERROR\",\"Error Invalid Format\"]"));
+						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
 					}
 					else
 					{
@@ -506,7 +509,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 							found = data.find(sep_char);
 							if (found==std::string::npos)  // Check Invalid Format
 							{
-								std::strcpy(output, ("[\"ERROR\",\"Error Missing Protocol Name\"]"));
+								std::strcpy(output, ("[0,\"Error Missing Protocol Name\"]"));
 							}
 							else
 							{
@@ -519,21 +522,21 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						}
 						else
 						{
-							std::strcpy(output, ("[\"ERROR\",\"Error Invalid extDB Command\"]"));
+							std::strcpy(output, ("[0,\"Error Invalid extDB Command\"]"));
 						}
 						break;
 					}
 				}
 				default:
 				{
-					std::strcpy(output, ("[\"ERROR\",\"Error Invalid Message\"]"));
+					std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
 				}
 			}
         }
     }
     catch (Poco::Exception& e)
     {
-        std::strcpy(output, ("[\"ERROR\",\"Error Invalid Message\"]"));
+        std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
         std::cout << "extDB: Error: " << e.displayText() << std::endl;
     }
 }

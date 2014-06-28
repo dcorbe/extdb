@@ -37,11 +37,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/StreamCopier.h>
 #include <Poco/Path.h>
 #include <Poco/URI.h>
+
 #include <Poco/Exception.h>
 
 #include <Poco/NumberParser.h>
 
 #include <string>
+
+//#include "../sanitize.h"
 
 
 void DB_VAC::init(AbstractExt *extension) {
@@ -49,11 +52,10 @@ void DB_VAC::init(AbstractExt *extension) {
 	vac_ban_check.DaysSinceLastBan = extension->pConf->getInt("VAC.DaysSinceLastBan", 0);
 	vac_ban_check.BanDuration = extension->pConf->getString("VAC.BanDuration", "0");
 	vac_ban_check.BanMessage = extension->pConf->getString("VAC.BanMessage", "VAC BAN FOUND");
-	
-};
+}
 
 
-bool DB_VAC::isNumber(std::string input_str)
+bool DB_VAC::isNumber(std::string &input_str)
 {
 	bool status = true;
 	for (unsigned int index=0; index < input_str.length(); index++)
@@ -66,6 +68,7 @@ bool DB_VAC::isNumber(std::string input_str)
 	}
 	return status;
 }
+
 
 bool DB_VAC::querySteam(std::string &steam_web_api_key, std::string &steam_id, SteamVacInfo &vac_info)
 {
@@ -156,10 +159,10 @@ std::string DB_VAC::callProtocol(AbstractExt *extension, std::string input_str)
 		{
 			updateVAC(extension->rcon, extension->getAPIKey(), db_session, input_str);
 		}
-		return ("[\"OK\"]");
+		return ("[1]");
 	}
 	else
 	{
-		return ("[\"ERROR\",\"Error Invalid SteamID\"]");
+		return ("[0,\"Error Invalid SteamID\"]");
 	}
 }

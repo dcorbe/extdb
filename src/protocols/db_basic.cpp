@@ -32,34 +32,61 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 
 
+//#include "../sanitize.h"
+
+bool DB_BASIC::isNumber(std::string &input_str)
+{
+	bool status = true;
+	for (unsigned int index=0; index < input_str.length(); index++)
+	{
+		if (!std::isdigit(input_str[index]))
+		{
+			status = false;
+			break;
+		}
+	}
+	return status;
+}
+
 void DB_BASIC::getCharUID(Poco::Data::Session &db_session, std::string &steamid, std::string &result)
 {
-	// TODO check user input + grab name
-	std::string name = "deco";
-	Poco::DateTime now;
-	std::string timestamp = Poco::DateTimeFormatter::format(now, "\"[%Y, %n, %d, %H, %M]\"");
-	
-	Poco::Data::Statement sql1(db_session);
-	sql1 << ("SELECT \"Char UID\" FROM `Player Info` WHERE SteamID=" + steamid), Poco::Data::into(result), Poco::Data::now;
-
-	if (result.empty())
+	if (isNumber(steamid))
 	{
-		std::cout << "NEW PLAYER" << std::endl;
-		// TODO: Performance look @ implementing MariaDB + SQLite c library directly so can get last row id directly from database handle.
-		Poco::Data::Statement sql2(db_session);
-		sql2 << ("INSERT INTO \"Player Characters\" (SteamID, `Alive`, `First Updated`, `Last Updated`) VALUES (" + steamid + ", 0, " + timestamp + ", " + timestamp + ")"), Poco::Data::now;
+		// TODO check user input + grab name
+		std::string name = "\"NOT IMPLEMENTED YET\"";
+		Poco::DateTime now;
+		std::string timestamp = Poco::DateTimeFormatter::format(now, "\"[%Y, %n, %d, %H, %M]\"");
 		
-		Poco::Data::Statement sql3(db_session);
-		sql3 << ("SELECT `UID` FROM `Player Characters` WHERE `SteamID`=" + steamid), Poco::Data::into(result), Poco::Data::now;
-		
-		Poco::Data::Statement sql4(db_session);
-		sql4 << ("INSERT INTO `Player Info` (SteamID, Name, `First Login`, `Last Login`, `Char UID`) VALUES (" + steamid + ", \"" + name + "\", " + timestamp + ", " + timestamp + ", " + result + ")"), Poco::Data::now;
+		Poco::Data::Statement sql1(db_session);
+		sql1 << ("SELECT `Char UID` FROM `Player Info` WHERE SteamID=" + steamid), Poco::Data::into(result), Poco::Data::now;
+
+		if (result.empty())
+		{
+			std::cout << "NEW PLAYER" << std::endl;
+			// TODO: Performance look @ implementing MariaDB + SQLite c library directly so can get last row id directly from database handle.
+			Poco::Data::Statement sql2(db_session);
+			sql2 << ("INSERT INTO `Player Characters` (SteamID, `Alive`, `First Updated`, `Last Updated`) VALUES (" + steamid + ", 0, " + timestamp + ", " + timestamp + ")"), Poco::Data::now;
+			
+			Poco::Data::Statement sql3(db_session);
+			sql3 << ("SELECT `UID` FROM `Player Characters` WHERE `SteamID`=" + steamid), Poco::Data::into(result), Poco::Data::now;
+			
+			Poco::Data::Statement sql4(db_session);
+			sql4 << ("INSERT INTO `Player Info` (SteamID, Name, `First Login`, `Last Login`, `Char UID`) VALUES (" + steamid + ", " + name + ", " + timestamp + ", " + timestamp + ", " + result + ")"), Poco::Data::now;
+		}
+		else
+		{
+			std::cout << "OLD PLAYER" << std::endl;
+			Poco::Data::Statement sql5(db_session);
+			sql5 << ("UPDATE `Player Info` SET `Last Login` = " + timestamp + " WHERE SteamID=" + steamid, Poco::Data::now);
+			
+			Poco::Data::Statement sql6(db_session);
+			sql6 << ("UPDATE `Player Info` SET Name = " + name + " WHERE SteamID=" + steamid, Poco::Data::now);
+		}
+		result = "[1, " + result + "]";
 	}
 	else
 	{
-		std::cout << "OLD PLAYER" << std::endl;
-		Poco::Data::Statement sql5(db_session);
-		sql5 << ("UPDATE \"Player Info\" SET `Last Login` = " + timestamp + " WHERE SteamID=" + steamid, Poco::Data::now);
+		result = "[0, \"ERROR UID\"]";
 	}
 }
 
@@ -102,23 +129,41 @@ void DB_BASIC::getOptionAll(Poco::Data::Session &db_session, std::string &table,
 			}
 		}
 	}
+	else
+	{
+		result = "[1, []]";
+	}
 }
 
 
 void DB_BASIC::getOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string &result)
 {
-	Poco::Data::Statement sql(db_session);
-	sql << ("SELECT \"UID\" FROM \"" + table + "\" WHERE " + option + "UID=" + uid + "", Poco::Data::into(result), Poco::Data::now);
-	sql.execute();
+	if (isNumber(uid))
+	{
+		Poco::Data::Statement sql(db_session);
+		sql << ("SELECT \"UID\" FROM \"" + table + "\" WHERE " + option + "UID=" + uid + "", Poco::Data::into(result), Poco::Data::now);
+		result = "[1, " + result + "]";
+	}
+	else
+	{
+		result = "[0, \"ERROR UID\"]";
+	}
 }
 
 
 void DB_BASIC::setOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string &value, std::string &result)
 {
-	Poco::Data::Statement sql(db_session);
-	sql << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid);
-	sql.execute();
-	result = "[\"OK\",\"OK\"]";; // TODO
+	if (isNumber(uid))
+	{
+		Poco::Data::Statement sql(db_session);
+		sql << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid);
+		sql.execute();
+		result = "[1]";
+	}
+	else
+	{
+		result = "[0, \"ERROR UID\"]";
+	}
 }
 
 
@@ -152,7 +197,7 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 	std::string result;
 	if (input_str.length() <= 5)
 	{
-		result = "[\"ERROR\",\"Error Invalid Message\"]";
+		result = "[0,\"Error Message to Short\"]";
 	}
 	else
 	{
@@ -165,7 +210,7 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 		
 		if (found==std::string::npos)  // Check Invalid Format
 		{
-			result = "[\"ERROR\",\"Error\"]"; // TODO
+			result = "[0,\"Error Invalid Format\"]"; // TODO
 		}
 		else
 		{
@@ -282,7 +327,7 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 					break;
 				}
 				default:
-					result = "[\"ERROR\",\"Error\"]";
+					result = "[0,\"Error Unknown Option\"]";
 			}
 		}
 	}

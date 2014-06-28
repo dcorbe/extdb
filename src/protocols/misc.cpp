@@ -143,7 +143,7 @@ std::string MISC::callProtocol(AbstractExt *extension, std::string input_str)
 	}
 	else
 	{
-		result = ("[\"ERROR\",\"Error Invalid Command\"]");
+		result = ("[false,\"Error Invalid Command\"]");
 	}
 	return result;
 }

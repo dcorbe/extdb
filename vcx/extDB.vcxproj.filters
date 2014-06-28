@@ -32,6 +32,9 @@
     <ClInclude Include="..\src\rcon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\protocols\db_basic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ext.cpp">
@@ -56,6 +59,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\memory_allocator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sanitize.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\protocols\db_basic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

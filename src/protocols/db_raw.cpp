@@ -75,7 +75,7 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 	}
     catch (Poco::Exception& e)
     {
-        return "[\"ERROR\",\"Error\"]";
+        return "[0,\"Error\"]";
         std::cout << "extDB: Error: " << e.displayText() << std::endl;
     }
 }
