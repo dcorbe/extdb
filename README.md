@@ -11,8 +11,9 @@ So i decided to write up an C++ Extension for Arma3server.
 
 #### Todo
 
- - Finish Off DB_BASIC (basic database support with general functions)
- - Add Steam Friends Query to MISC  
+ - Add Steam Friends Query to MISC
+ - Sanitize DB Saving = Done, Need to Sanitize DB Reading
+ - Update Documentation
  
 
 #### Needs Testing (not enabled)
@@ -23,7 +24,7 @@ So i decided to write up an C++ Extension for Arma3server.
 #### Working
 
  - MISC (has crc32 md4 md5 time + time offset)
- - DB_RAW (by raw i mean raw sql commands, no santizing input) this really should be used for testing only.
+ - DB_RAW (by raw i mean raw sql commands, no santizing checks at all) this really should be used for testing purposes only.
 
 #### Requirements
 
@@ -41,8 +42,8 @@ https://github.com/Torndeco/extdb/wiki/Install
  - bladez- Using modified gplv3 code from https://github.com/bladez-/bercon for RCON
  - killzonekid for his blog + initial code in arma wiki for linux extensions
  - Everyone else i forgot, including EPOCH dev's for having an public github for mod atleast on arma2 ;)
- - rajkosto for his work on DayZ Hive, that i have looked at & gotten confused.. Using same method for getting Unique Char ID, was gonna use a global lock on inserts beforehand  https://github.com/rajkosto/hive
+ - rajkosto for his work on DayZ Hive, that i have looked at & and still is over my head most of the time..   Using same method for getting Unique Char ID, also using almost the exact same boost parser for checking input/output to database   https://github.com/rajkosto/hive
 
 ##### Disclaimer
 This is basicly my first time using C++  
-Other code experience is Python (pygtk + twisted)
+My main code experience is Python (pygtk + twisted), this is basicly a hobby.
