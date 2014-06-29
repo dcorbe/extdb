@@ -19,6 +19,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <Poco/Data/SessionPool.h>
+#include <Poco/MD5Engine.h>
+#include <Poco/DigestEngine.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -56,4 +58,7 @@ class DB_VAC: public AbstractProtocol
 		bool isNumber(std::string &input_str);
 		bool querySteam(std::string &steam_web_api_key, std::string &steam_id, SteamVacInfo &vac_info);
 		void updateVAC(Rcon &rcon, std::string steam_web_api_key, Poco::Data::Session &db_session, std::string &steam_id);
+		std::string convertSteamIDtoBEGUID(std::string &steamid);
+		
+		Poco::MD5Engine md5;
 };

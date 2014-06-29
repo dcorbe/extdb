@@ -164,6 +164,7 @@ void DB_BASIC::setOption(Poco::Data::Session &db_session, std::string &table, st
 		if (Sqf::check(value))
 		{
 			Poco::Data::Statement sql(db_session);
+			std::cout << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid) << std::endl;
 			sql << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid), Poco::Data::now;
 			result = "[1]";
 		}

@@ -69,24 +69,6 @@ namespace
 
 namespace Sqf
 {
-/*
-    template <typename Iterator>
-    bool check(Iterator first, Iterator last)
-    {
-        using boost::spirit::qi::double_;
-        using boost::spirit::qi::phrase_parse;
-
-        bool r = phrase_parse(
-            first,
-            last,
-			SqfParametersParser<iter_t,boost::spirit::qi::space_type>(),
-            boost::spirit::qi::space_type()
-        );
-        if (first != last) // fail if we did not get a full match
-            return false;
-        return r;
-    };
-*/
 	bool check(std::string input_str)
 	{
         using boost::spirit::qi::double_;
@@ -105,7 +87,6 @@ namespace Sqf
             return false;
         return r;
     };
-
 }
 
 

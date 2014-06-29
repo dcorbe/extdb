@@ -13,6 +13,10 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+Code to Convert SteamID -> BEGUID 
+From Frank https://gist.github.com/Fank/11127158
+
 */
 
 
@@ -42,6 +46,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <Poco/NumberParser.h>
 
+#include <Poco/Types.h>
+#include <Poco/MD5Engine.h>
+#include <Poco/DigestEngine.h>
+
 #include <string>
 
 #include "../sanitize.h"
@@ -67,6 +75,31 @@ bool DB_VAC::isNumber(std::string &input_str)
 		}
 	}
 	return status;
+}
+
+
+std::string DB_VAC::convertSteamIDtoBEGUID(std::string &steamid)
+// From Frank https://gist.github.com/Fank/11127158
+// Modified to use libpoco
+{
+	Poco::Int64 steamID = Poco::NumberParser::parse64(steamid);
+	//long long int steamID = Poco::NumberParser::parse64(steamid);
+	Poco::Int8 i = 0, parts[8] = { 0 };
+	//short int i = 0, parts[8] = { 0 };
+
+	do
+	{
+		parts[i++] = steamID & 0xFFu;
+	} while (steamID >>= 8);
+
+	std::stringstream bestring;
+	bestring << "BE";
+	for (int i = 0; i < sizeof(parts); i++) {
+		bestring << char(parts[i]);
+	}
+
+	md5.update(bestring.str());
+	return Poco::DigestEngine::digestToHex(md5.digest());
 }
 
 
@@ -124,7 +157,7 @@ void DB_VAC::updateVAC(Rcon &rcon, std::string steam_web_api_key, Poco::Data::Se
 		if ((Poco::NumberParser::parse(vac_info.NumberOfVACBans) >= vac_ban_check.NumberOfVACBans) && (Poco::NumberParser::parse(vac_info.DaysSinceLastBan) <=vac_ban_check.DaysSinceLastBan ))
 		if (true)
 		{
-			rcon.sendCommand("ban " + steam_id + " " + vac_ban_check.BanDuration + " " + vac_ban_check.BanMessage);
+			rcon.sendCommand("ban " + convertSteamIDtoBEGUID(steam_id) + " " + vac_ban_check.BanDuration + " " + vac_ban_check.BanMessage);
 		}
 	}
 	else
