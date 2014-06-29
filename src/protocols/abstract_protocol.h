@@ -19,13 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "abstract_ext.h"
-
 #include <Poco/Data/SessionPool.h>
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
 #include <cstdlib>
+
+#include "abstract_ext.h"
 
 class AbstractProtocol
 {

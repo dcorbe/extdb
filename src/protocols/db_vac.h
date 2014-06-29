@@ -23,7 +23,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <cstdlib>
 #include <iostream>
 
-#include "../ext.h"
+#include "abstract_ext.h"
+#include "abstract_protocol.h"
 #include "../rcon.h"
 
 

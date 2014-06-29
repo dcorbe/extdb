@@ -31,8 +31,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <cstdlib>
 #include <iostream>
 
-
-//#include "../sanitize.h"
+#include "../sanitize.h"
 
 bool DB_BASIC::isNumber(std::string &input_str)
 {
@@ -151,14 +150,21 @@ void DB_BASIC::getOption(Poco::Data::Session &db_session, std::string &table, st
 }
 
 
-void DB_BASIC::setOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string &value, std::string &result)
+void DB_BASIC::setOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string value, std::string &result)
 {
 	if (isNumber(uid))
 	{
-		Poco::Data::Statement sql(db_session);
-		sql << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid);
-		sql.execute();
-		result = "[1]";
+		if (Sqf::check(value))
+		{
+			Poco::Data::Statement sql(db_session);
+			sql << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid);
+			sql.execute();
+			result = "[1]";
+		}
+		else
+		{
+			result = "[0, \"ERROR VALUE\"]";
+		}
 	}
 	else
 	{

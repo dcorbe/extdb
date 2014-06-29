@@ -13,5 +13,6 @@ namespace Sqf
 	typedef std::vector<Value> Parameters;
 	typedef std::string::iterator iter_t;
 
-	template <typename Iterator> bool check(Iterator first, Iterator last);
-};
+	//template <typename Iterator> bool check(Iterator first, Iterator last);
+	bool check(std::string input_str);
+}

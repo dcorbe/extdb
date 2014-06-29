@@ -65,11 +65,11 @@ namespace
 			start = *(val_parser);
 		}
 	};
-};
+}
 
 namespace Sqf
 {
-
+/*
     template <typename Iterator>
     bool check(Iterator first, Iterator last)
     {
@@ -77,16 +77,36 @@ namespace Sqf
         using boost::spirit::qi::phrase_parse;
 
         bool r = phrase_parse(
-            first,                          /*< start iterator >*/
-            last,                           /*< end iterator >*/
+            first,
+            last,
 			SqfParametersParser<iter_t,boost::spirit::qi::space_type>(),
-            boost::spirit::qi::space_type()                           /*< the skip-parser >*/
+            boost::spirit::qi::space_type()
         );
         if (first != last) // fail if we did not get a full match
             return false;
         return r;
     };
-};
+*/
+	bool check(std::string input_str)
+	{
+        using boost::spirit::qi::double_;
+        using boost::spirit::qi::phrase_parse;
+		
+		std::string::iterator first = input_str.begin();
+		std::string::iterator last = input_str.end();
+
+        bool r = phrase_parse(
+            first,
+            last,
+			SqfParametersParser<iter_t,boost::spirit::qi::space_type>(),
+            boost::spirit::qi::space_type()
+        );
+        if (first != last) // fail if we did not get a full match
+            return false;
+        return r;
+    };
+
+}
 
 
 #ifdef TESTING3

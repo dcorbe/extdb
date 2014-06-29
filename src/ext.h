@@ -32,8 +32,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "uniqueid.h"
 #include "rcon.h"
 
-#include "protocols/abstract_protocol.h"
 #include "protocols/abstract_ext.h"
+#include "protocols/abstract_protocol.h"
 
 class Ext: public AbstractExt
 {
