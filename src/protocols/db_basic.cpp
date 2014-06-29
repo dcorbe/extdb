@@ -93,8 +93,7 @@ void DB_BASIC::getCharUID(Poco::Data::Session &db_session, std::string &steamid,
 void DB_BASIC::getOptionAll(Poco::Data::Session &db_session, std::string &table, std::string &result)
 {
 	Poco::Data::Statement sql(db_session);
-	sql << ("SELECT * FROM `" + table + "` AND Alive = 1");
-	sql.execute();
+	sql << ("SELECT * FROM `" + table + "` WHERE Alive = 1", Poco::Data::now);
 
 	Poco::Data::RecordSet rs(sql);
 	
@@ -132,6 +131,10 @@ void DB_BASIC::getOptionAll(Poco::Data::Session &db_session, std::string &table,
 	{
 		result = "[1, []]";
 	}
+	if (!Sqf::check(result))
+	{
+		result = "[0, \"ERROR UID\"]";
+	}
 }
 
 
@@ -142,6 +145,10 @@ void DB_BASIC::getOption(Poco::Data::Session &db_session, std::string &table, st
 		Poco::Data::Statement sql(db_session);
 		sql << ("SELECT \"UID\" FROM \"" + table + "\" WHERE " + option + "UID=" + uid + "", Poco::Data::into(result), Poco::Data::now);
 		result = "[1, " + result + "]";
+		if (!Sqf::check(result))
+		{
+			result = "[0, \"ERROR UID\"]";
+		}
 	}
 	else
 	{
@@ -157,8 +164,7 @@ void DB_BASIC::setOption(Poco::Data::Session &db_session, std::string &table, st
 		if (Sqf::check(value))
 		{
 			Poco::Data::Statement sql(db_session);
-			sql << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid);
-			sql.execute();
+			sql << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid), Poco::Data::now;
 			result = "[1]";
 		}
 		else
@@ -201,7 +207,7 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 {
 	std::cout << "DEBUG: " << input_str << std::endl;
 	std::string result;
-	if (input_str.length() <= 5)
+	if (input_str.length() <= 4)
 	{
 		result = "[0,\"Error Message to Short\"]";
 	}
