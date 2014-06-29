@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 Code to Convert SteamID -> BEGUID 
-From Frank https://gist.github.com/Fank/11127158
+	From Fank https://gist.github.com/Fank/11127158
 
 */
 
@@ -79,8 +79,8 @@ bool DB_VAC::isNumber(std::string &input_str)
 
 
 std::string DB_VAC::convertSteamIDtoBEGUID(std::string &steamid)
-// From Frank https://gist.github.com/Fank/11127158
-// Modified to use libpoco
+// From Fank https://gist.github.com/Fank/11127158   thx
+// 		Modified to use libpoco, check link above
 {
 	Poco::Int64 steamID = Poco::NumberParser::parse64(steamid);
 	//long long int steamID = Poco::NumberParser::parse64(steamid);

@@ -43,6 +43,8 @@ https://github.com/Torndeco/extdb/wiki/Install
  - killzonekid for his blog + initial code in arma wiki for linux extensions
  - Everyone else i forgot, including EPOCH dev's for having an public github for mod atleast on arma2 ;)
  - rajkosto for his work on DayZ Hive, that i have looked at & and still is over my head most of the time..   Using same method for getting Unique Char ID, also using almost the exact same boost parser for checking input/output to database   https://github.com/rajkosto/hive
+ - Fank https://gist.github.com/Fank/11127158 for his code to convert SteamID to BEGUID.
+
 
 ##### Disclaimer
 This is basicly my first time using C++  
