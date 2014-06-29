@@ -7,4 +7,7 @@ test:
 	g++ -g -march=native -m32 -fPIC -pipe -O2 -std=c++0x -o extdb-test src/ext.cpp src/uniqueid.cpp src/rcon.cpp src/sanitize.cpp src/protocols/*.cpp -DTESTING -lPocoFoundation -lPocoData -lPocoDataSQLite -lPocoDataMySQL -lPocoDataODBC -lPocoNet -lPocoUtil -lPocoXML -lboost_filesystem -lboost_system -lboost_thread
 
 test-rcon:
-	g++ -fpermissive -Wwrite-strings -g -march=native -m32 -fPIC -pipe -o rcon-test src/rcon.cpp -DTESTING_RCON -lPocoFoundation -lPocoNet 
+	g++ -g -march=native -m32 -fPIC -pipe -o rcon-test src/rcon.cpp -DTESTING_RCON -lPocoFoundation -lPocoNet 
+
+test-sanitize:
+	g++ -g -march=native -m32 -fPIC -pipe -O2 -std=c++0x -o extdb-sanitize src/sanitize.cpp -DTESTING3

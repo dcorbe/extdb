@@ -17,18 +17,24 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <boost/config/warning_disable.hpp>
 #include <boost/spirit/include/qi.hpp>
+
+#include <iostream>
 #include <string>
+#include <vector>
+
+#include "sanitize.h"
 
 namespace 
 {
 	template <typename Iterator, typename Skipper>
-	struct SqfValueParser : boost::spirit::qi::grammar<Iterator, std::string, Skipper>
+		struct SqfValueParser : boost::spirit::qi::grammar<Iterator, Sqf::Value(), Skipper>
 	{
-		SqfValueParser() : SqfValueParser::base_type(start,"Sqf::ValueParser")
+		SqfValueParser() : SqfValueParser::base_type(start,"Sqf::Value")
 		{
 
-			quoted_string = boost::spirit::qi::lexeme['"' >> *(boost::spirit::ascii::char_ - '"') >> '"'] | boost::spirit::qi::lexeme["'" >> *(boost::spirit::ascii::char_ - "'") >> "'"];
+			quoted_string = boost::spirit::qi::lexeme['"' >> *(boost::spirit::ascii::char_("a-zA-Z_0-9") - '"') >> '"'] | boost::spirit::qi::lexeme["'" >> *(boost::spirit::ascii::char_("a-zA-Z_0-9") - "'") >> "'"];
 			quoted_string.name("quoted_string");
 
 			start = strict_double |
@@ -42,6 +48,69 @@ namespace
 
 		boost::spirit::qi::rule<Iterator, std::string()> quoted_string;
 		boost::spirit::qi::real_parser< double, boost::spirit::qi::strict_real_policies<double> > strict_double;
-		boost::spirit::qi::rule<Iterator, std::string(), Skipper> start;
+		boost::spirit::qi::rule<Iterator, Sqf::Value(), Skipper> start;
+	};
+
+	template <typename Iterator, typename Skipper>
+	struct SqfParametersParser : boost::spirit::qi::grammar<Iterator, Sqf::Parameters(), Skipper>
+	{
+		
+		SqfValueParser<Iterator,Skipper> val_parser;
+		boost::spirit::qi::rule<Iterator,  Sqf::Value(), Skipper> one_value;
+		boost::spirit::qi::rule<Iterator, Sqf::Parameters(), Skipper> start;
+		
+		SqfParametersParser() : SqfParametersParser::base_type(start,"Sqf::Parameters")
+		{
+			val_parser.name("one_value");
+			start = *(val_parser);
+		}
 	};
 };
+
+namespace Sqf
+{
+
+    template <typename Iterator>
+    bool check(Iterator first, Iterator last)
+    {
+        using boost::spirit::qi::double_;
+        using boost::spirit::qi::phrase_parse;
+
+        bool r = phrase_parse(
+            first,                          /*< start iterator >*/
+            last,                           /*< end iterator >*/
+			SqfParametersParser<iter_t,boost::spirit::qi::space_type>(),
+            boost::spirit::qi::space_type()                           /*< the skip-parser >*/
+        );
+        if (first != last) // fail if we did not get a full match
+            return false;
+        return r;
+    };
+};
+
+
+#ifdef TESTING3
+int main(int nNumberofArgs, char* pszArgs[])
+{
+	//SqfValueParser test_parser;
+
+    std::string result;
+    for (;;) {
+        char input_str[100];
+		std::cin.getline(input_str, sizeof(input_str));
+        if (std::string(input_str) == "quit")
+        {
+            break;
+        }
+        else
+        {
+			result = input_str;
+			if (Sqf::check(result.begin(), result.end()))
+				std::cout << "extDB: True " << result << std::endl;
+			else
+				std::cout << "extDB: False " << result << std::endl;
+        }
+    }
+    return 0;
+}
+#endif
