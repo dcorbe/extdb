@@ -12,13 +12,13 @@ So i decided to write up an C++ Extension for Arma3server.
 #### Todo
 
  - Add Steam Friends Query to MISC
- - Sanitize DB Saving = Done, Need to Sanitize DB Reading
- - Update Documentation
+ - Finish Update Documentation for DB_RAW / MISC / DB_VAC
  
 
-#### Needs Testing (not enabled)
+#### Working But Need to be Tested
 
  - DB_VAC (Player VAC Ban Check)
+ - DB_BASIC
 
 
 #### Working
