@@ -550,9 +550,9 @@ int main(int nNumberofArgs, char* pszArgs[])
 {
     Ext *extension;
     extension = (new Ext());
-    char result[255];
+    char result[4096];
     for (;;) {
-        char input_str[100];
+        char input_str[4096];
 		std::cin.getline(input_str, sizeof(input_str));
         if (std::string(input_str) == "quit")
         {

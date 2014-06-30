@@ -106,7 +106,7 @@ int main(int nNumberofArgs, char* pszArgs[])
         else
         {
 			result = input_str;
-			if (Sqf::check(result.begin(), result.end()))
+			if (Sqf::check(result))
 				std::cout << "extDB: True " << result << std::endl;
 			else
 				std::cout << "extDB: False " << result << std::endl;
