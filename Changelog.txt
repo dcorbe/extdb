@@ -2,3 +2,5 @@
 
 1 = Fixed get charuid in DB_BASIC,
 	Added missing Other Column to Player Info table
+	
+2 = Fixed MYSQL ODBC Database connection
