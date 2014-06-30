@@ -52,9 +52,9 @@ void DB_BASIC::getCharUID(Poco::Data::Session &db_session, std::string &steamid,
 	if (isNumber(steamid))
 	{
 		// TODO check user input + grab name
-		std::string name = "\"NOT IMPLEMENTED YET\"";
+		std::string name = "NOT IMPLEMENTED YET";
 		Poco::DateTime now;
-		std::string timestamp = Poco::DateTimeFormatter::format(now, "\"[%Y, %n, %d, %H, %M]\"");
+		std::string timestamp = Poco::DateTimeFormatter::format(now, "'[%Y, %n, %d, %H, %M]'");
 		
 		Poco::Data::Statement sql1(db_session);
 		sql1 << ("SELECT `Char UID` FROM `Player Info` WHERE SteamID=" + steamid), Poco::Data::into(result), Poco::Data::now;
@@ -76,10 +76,10 @@ void DB_BASIC::getCharUID(Poco::Data::Session &db_session, std::string &steamid,
 		{
 			std::cout << "OLD PLAYER" << std::endl;
 			Poco::Data::Statement sql5(db_session);
-			sql5 << ("UPDATE `Player Info` SET `Last Login` = " + timestamp + " WHERE SteamID=" + steamid, Poco::Data::now);
+			sql5 << ("UPDATE `Player Info` SET `Last Login` = " + timestamp + " WHERE SteamID=" + steamid), Poco::Data::now;
 			
 			Poco::Data::Statement sql6(db_session);
-			sql6 << ("UPDATE `Player Info` SET Name = " + name + " WHERE SteamID=" + steamid, Poco::Data::now);
+			sql6 << ("UPDATE `Player Info` SET Name = '" + name + "' WHERE SteamID=" + steamid), Poco::Data::now;
 		}
 		result = "[1, " + result + "]";
 	}
@@ -93,7 +93,7 @@ void DB_BASIC::getCharUID(Poco::Data::Session &db_session, std::string &steamid,
 void DB_BASIC::getOptionAll(Poco::Data::Session &db_session, std::string &table, std::string &result)
 {
 	Poco::Data::Statement sql(db_session);
-	sql << ("SELECT * FROM `" + table + "` WHERE Alive = 1", Poco::Data::now);
+	sql << ("SELECT * FROM `" + table + "` WHERE Alive = 1"), Poco::Data::now;
 
 	Poco::Data::RecordSet rs(sql);
 	
@@ -143,11 +143,11 @@ void DB_BASIC::getOption(Poco::Data::Session &db_session, std::string &table, st
 	if (isNumber(uid))
 	{
 		Poco::Data::Statement sql(db_session);
-		sql << ("SELECT \"UID\" FROM \"" + table + "\" WHERE " + option + "UID=" + uid + "", Poco::Data::into(result), Poco::Data::now);
+		sql << ("SELECT `" + option + "` FROM `" + table + "` WHERE UID=" + uid), Poco::Data::into(result), Poco::Data::now;
 		result = "[1, " + result + "]";
 		if (!Sqf::check(result))
 		{
-			result = "[0, \"ERROR UID\"]";
+			result = "[0, \"ERROR VALUE\"]";
 		}
 	}
 	else
@@ -161,11 +161,12 @@ void DB_BASIC::setOption(Poco::Data::Session &db_session, std::string &table, st
 {
 	if (isNumber(uid))
 	{
-		if (Sqf::check(value))
+		//if (Sqf::check(value))
+		if (true)
 		{
 			Poco::Data::Statement sql(db_session);
-			std::cout << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid) << std::endl;
-			sql << ("UPDATE \"" + table + "\" SET `" + option + "` = " + value + " WHERE UID=" + uid), Poco::Data::now;
+			std::cout << ("UPDATE \"" + table + "\" SET `" + option + "` = '" + value + "' WHERE UID=" + uid) << std::endl;
+			sql << ("UPDATE \"" + table + "\" SET `" + option + "` = '" + value + "' WHERE UID=" + uid), Poco::Data::now;
 			result = "[1]";
 		}
 		else
