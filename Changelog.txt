@@ -1,0 +1,4 @@
+0 = Initial Release
+
+1 = Fixed get charuid in DB_BASIC,
+	Added missing Other Column to Player Info table

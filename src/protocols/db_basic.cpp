@@ -70,7 +70,7 @@ void DB_BASIC::getCharUID(Poco::Data::Session &db_session, std::string &steamid,
 			sql3 << ("SELECT `UID` FROM `Player Characters` WHERE `SteamID`=" + steamid), Poco::Data::into(result), Poco::Data::now;
 			
 			Poco::Data::Statement sql4(db_session);
-			sql4 << ("INSERT INTO `Player Info` (SteamID, Name, `First Login`, `Last Login`, `Char UID`) VALUES (" + steamid + ", " + name + ", " + timestamp + ", " + timestamp + ", " + result + ")"), Poco::Data::now;
+			sql4 << ("INSERT INTO `Player Info` (SteamID, Name, `First Login`, `Last Login`, `Char UID`) VALUES (" + steamid + ", '" + name + "', " + timestamp + ", " + timestamp + ", " + result + ")"), Poco::Data::now;
 		}
 		else
 		{
