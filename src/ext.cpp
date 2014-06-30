@@ -142,20 +142,24 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
             {
                 if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
                 {
+					db_conn_info.db_type = "MySQL";
                     Poco::Data::MySQL::Connector::registerConnector();
                 }
                 else
                 {
+					db_conn_info.db_type = "ODBC";
                     Poco::Data::ODBC::Connector::registerConnector();
 				}
 
+				
                 std::string username = pConf->getString(conf_option + ".Username");
                 std::string password = pConf->getString(conf_option + ".Password");
 
                 std::string ip = pConf->getString(conf_option + ".IP");
                 std::string port = pConf->getString(conf_option + ".Port");
 
-                db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ",password=" + password + ",dbname=" + db_name;
+                //db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ",password=" + password + ",dbname=" + db_name;
+				db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name;
 
                 db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
 															db_conn_info.connection_str, 
@@ -218,7 +222,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "0";
+    return "2";
 }
 
 

@@ -34,6 +34,7 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 
     try
     {
+		std::cout << input_str << std::endl;
 		std::string result;
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 		Poco::Data::Statement sql(db_session);
