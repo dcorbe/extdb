@@ -1,6 +1,6 @@
-0 = Initial Release
-
-1 = Fixed get charuid in DB_BASIC,
-	Added missing Other Column to Player Info table
-	
+3 = Fixed DB_RAW support for multiple Rows
+	Enabled Auto-Reconnect for MYSQL
 2 = Fixed MYSQL ODBC Database connection
+1 = Fixed get charuid in DB_BASIC,
+	Added missing Other Column to Player Info table	
+0 = Initial Release

@@ -136,7 +136,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			
             db_conn_info.idle_time = pConf->getInt(conf_option + ".idleTime");
 
-            std::cout << "extDB: " << db_conn_info.db_type << std::endl;
+            std::cout << "extDB: Database Type: " << db_conn_info.db_type << std::endl;
 
             if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
             {
@@ -158,8 +158,8 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
                 std::string ip = pConf->getString(conf_option + ".IP");
                 std::string port = pConf->getString(conf_option + ".Port");
 
-                //db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ",password=" + password + ",dbname=" + db_name;
-				db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name;
+				db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
+				// TODO Add compress option via config file 
 
                 db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
 															db_conn_info.connection_str, 
@@ -222,7 +222,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "2";
+    return "3";
 }
 
 
@@ -564,9 +564,8 @@ int main(int nNumberofArgs, char* pszArgs[])
             std::cout << "extDB: " << result << std::endl;
         }
     }
-	std::cout << "extDB: wtf1" << std::endl;
+	std::cout << "extDB: Quiting Please Wait" << std::endl;
 	extension->stop();
-	std::cout << "extDB: wtf2" << std::endl;
 	//delete extension;
     return 0;
 }

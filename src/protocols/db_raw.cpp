@@ -34,8 +34,8 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 
     try
     {
-		std::cout << input_str << std::endl;
-		std::string result;
+		std::cout << "extdb DEBUG INFO: " + input_str << std::endl;
+		std::string result = "[";
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 		Poco::Data::Statement sql(db_session);
 		sql << input_str;
@@ -53,11 +53,15 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 				{
 					if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
 					{
-						result += "\"" + (rs[col].convert<std::string>() + "\"" + ", ");
+						result += "\"" + (rs[col].convert<std::string>() + "\"");
 					}
 					else
 					{
-						result += (rs[col].convert<std::string>() + ", ");
+						result += rs[col].convert<std::string>();
+					}
+					if (col < (cols - 1))
+					{
+						result += ", ";
 					}
 				}
 
@@ -68,10 +72,12 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 				}
 				else
 				{
-					result = result.substr(0, (result.length() - 2)) + "]";
+					//result = result.substr(0, (result.length() - 2)) + "]";
+					result += "]";
 				}
 			}
 		}
+		result += "]";
 		return result;
 	}
     catch (Poco::Exception& e)

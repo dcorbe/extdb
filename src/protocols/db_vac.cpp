@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 Code to Convert SteamID -> BEGUID 
-	From Fank https://gist.github.com/Fank/11127158
+From Frank https://gist.github.com/Fank/11127158
 
 */
 
@@ -79,8 +79,8 @@ bool DB_VAC::isNumber(std::string &input_str)
 
 
 std::string DB_VAC::convertSteamIDtoBEGUID(std::string &steamid)
-// From Fank https://gist.github.com/Fank/11127158   thx
-// 		Modified to use libpoco, check link above
+// From Frank https://gist.github.com/Fank/11127158
+// Modified to use libpoco
 {
 	Poco::Int64 steamID = Poco::NumberParser::parse64(steamid);
 	//long long int steamID = Poco::NumberParser::parse64(steamid);
@@ -183,7 +183,7 @@ std::string DB_VAC::callProtocol(AbstractExt *extension, std::string input_str)
 			Poco::DateTime now;
 			int tzd;
 			bool last_check_status = Poco::DateTimeParser::tryParse("%e-%n-%Y", rs.value("Last Check").convert<std::string>(), last_check, tzd);
-			if (now - last_check >= Poco::Timespan(7*Poco::Timespan::DAYS));
+			if (now - last_check >= Poco::Timespan(7*Poco::Timespan::DAYS))
 			{
 				updateVAC(extension->rcon, extension->getAPIKey(), db_session, input_str);
 			}
