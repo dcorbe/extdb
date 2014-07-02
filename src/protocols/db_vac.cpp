@@ -26,7 +26,6 @@ From Frank https://gist.github.com/Fank/11127158
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
-#include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/Session.h>
@@ -53,6 +52,9 @@ From Frank https://gist.github.com/Fank/11127158
 #include <string>
 
 #include "../sanitize.h"
+
+
+using namespace Poco::Data::Keywords;
 
 
 void DB_VAC::init(AbstractExt *extension) {
@@ -119,7 +121,9 @@ bool DB_VAC::querySteam(std::string &steam_web_api_key, std::string &steam_id, S
 	// get response
 	Poco::Net::HTTPResponse res;
 	//http://www.appinf.com/docs/poco/Poco.Net.HTTPResponse.html#17176
+	#ifdef TESTING
 	std::cout << res.getStatus() << " " << res.getReason() << std::endl;
+	#endif
 
 	// print response
 	std::istream &is = session.receiveResponse(res);
@@ -152,8 +156,7 @@ void DB_VAC::updateVAC(Rcon &rcon, std::string steam_web_api_key, Poco::Data::Se
 		// Save to DB
 		Poco::Data::Statement sql(db_session);
 		sql << "INSERT INTO 'VAC BANS' (\"SteamID\", \"Number of Vac Bans\", \"Days Since Last Ban\", \"Last Check\") VALUES(:steamid, :number_of_bans, :days_since_last_bans, :last_check)", 
-					Poco::Data::use(vac_info.SteamID), Poco::Data::use(vac_info.NumberOfVACBans), Poco::Data::use(vac_info.DaysSinceLastBan), Poco::DateTime(), Poco::Data::now;
-		sql.execute();
+				use(vac_info.SteamID), use(vac_info.NumberOfVACBans), use(vac_info.DaysSinceLastBan), Poco::DateTime(), now;
 		if ((Poco::NumberParser::parse(vac_info.NumberOfVACBans) >= vac_ban_check.NumberOfVACBans) && (Poco::NumberParser::parse(vac_info.DaysSinceLastBan) <=vac_ban_check.DaysSinceLastBan ))
 		if (true)
 		{
@@ -163,7 +166,9 @@ void DB_VAC::updateVAC(Rcon &rcon, std::string steam_web_api_key, Poco::Data::Se
 	else
 	{
 		// FAILED STEAM QUERY
+		#ifdef TESTING
 		std::cout << "extdb: Steam VAC Query Failed: " + steam_id << std::endl;
+		#endif
 	}
 }
 
@@ -173,8 +178,7 @@ std::string DB_VAC::callProtocol(AbstractExt *extension, std::string input_str)
 	{
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 		Poco::Data::Statement select(db_session);
-		select << ("SELECT \"Number of Vac Bans\" FROM `VAC BANS` where SteamID="  + input_str);
-		select.execute();
+		select << ("SELECT \"Number of Vac Bans\" FROM `VAC BANS` where SteamID="  + input_str), now;
 		Poco::Data::RecordSet rs(select);
 		
 		if (rs.moveFirst())

@@ -19,28 +19,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include <Poco/AutoPtr.h>
-#include <Poco/Data/Session.h>
-#include <Poco/Logger.h>
-#include <Poco/SimpleFileChannel.h>
-#include <Poco/Util/IniFileConfiguration.h>
+#include <Poco/Data/SessionPool.h>
 
-#include "../rcon.h"
+#include <cstdlib>
+#include <iostream>
 
-class AbstractExt
+#include "abstract_ext.h"
+#include "abstract_protocol.h"
+
+class DB_PROCEDURE: public AbstractProtocol
 {
 	public:
-		virtual Poco::Data::Session getDBSession_mutexlock()=0;
-		virtual std::string getAPIKey()=0;
-		
-		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
-		
-		virtual void freeUniqueID_mutexlock(const int &unique_id)=0;
-		virtual int getUniqueID_mutexlock()=0;
-		
-		#ifdef TESTING
-			Rcon rcon;
-		#endif
-		#ifdef LOGGING
-		#endif
+		std::string callProtocol(AbstractExt *extension, std::string input_str);
 };

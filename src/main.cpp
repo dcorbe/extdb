@@ -13,16 +13,13 @@ namespace {
 	static void __attribute__((constructor))
 	extension_init(void)
 	{
-		std::cout << "extDB initing" << std::endl;
 		extension = (new Ext());
-		std::cout << "extDB shared library init" << std::endl;
 	}
 
 	static void __attribute__((destructor))
 	extension_destroy(void)
 	{
 		extension->stop();
-		std::cout << "extDB shared library destroy" << std::endl;
 	}
 
 	extern "C"

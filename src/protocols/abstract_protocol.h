@@ -22,6 +22,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/SessionPool.h>
 #include <boost/shared_ptr.hpp>
 
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/sources/record_ostream.hpp>
+
 #include <iostream>
 #include <cstdlib>
 
@@ -29,9 +35,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 class AbstractProtocol
 {
-public:
-	AbstractProtocol();
-	virtual ~AbstractProtocol();
-	virtual std::string callProtocol(AbstractExt *extension, std::string input_str)=0;
-	virtual void init(AbstractExt *extension);
+	public:
+		AbstractProtocol();
+		virtual ~AbstractProtocol();
+		virtual std::string callProtocol(AbstractExt *extension, std::string input_str)=0;
+		virtual void init(AbstractExt *extension);
+	
+	protected:
+		boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
 };

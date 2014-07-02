@@ -71,13 +71,10 @@ namespace Sqf
 {
 	bool check(std::string input_str)
 	{
-        using boost::spirit::qi::double_;
-        using boost::spirit::qi::phrase_parse;
-		
 		std::string::iterator first = input_str.begin();
 		std::string::iterator last = input_str.end();
 
-        bool r = phrase_parse(
+        bool r = boost::spirit::qi::phrase_parse(
             first,
             last,
 			SqfParametersParser<iter_t,boost::spirit::qi::space_type>(),
@@ -107,9 +104,13 @@ int main(int nNumberofArgs, char* pszArgs[])
         {
 			result = input_str;
 			if (Sqf::check(result))
+			{
 				std::cout << "extDB: True " << result << std::endl;
+			}
 			else
+			{
 				std::cout << "extDB: False " << result << std::endl;
+			}
         }
     }
     return 0;

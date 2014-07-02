@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "db_raw.h"
 
-#include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/Session.h>
@@ -34,7 +33,12 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 
     try
     {
-		std::cout << "extdb DEBUG INFO: " + input_str << std::endl;
+		#ifdef TESTING
+			std::cout << "extDB: DEBUG INFO: " + input_str << std::endl;
+		#endif
+		#ifdef LOGGING
+			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << " DB_RAW: " + input_str;
+		#endif
 		std::string result = "[";
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 		Poco::Data::Statement sql(db_session);
@@ -72,7 +76,6 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 				}
 				else
 				{
-					//result = result.substr(0, (result.length() - 2)) + "]";
 					result += "]";
 				}
 			}
@@ -82,7 +85,12 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 	}
     catch (Poco::Exception& e)
     {
+		#ifdef TESTING
+			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+		#endif 
+		#ifdef LOGGING
+			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Error: " + e.displayText();
+		#endif
         return "[0,\"Error\"]";
-        std::cout << "extDB: Error: " << e.displayText() << std::endl;
     }
 }
