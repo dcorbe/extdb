@@ -24,11 +24,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/thread/thread.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sources/record_ostream.hpp>
+#ifdef LOGGING
+	#include <boost/log/core.hpp>
+	#include <boost/log/trivial.hpp>
+	#include <boost/log/utility/setup/file.hpp>
+	#include <boost/log/sources/severity_logger.hpp>
+	#include <boost/log/sources/record_ostream.hpp>
+#endif
 
 #include <Poco/AutoPtr.h>
 #include <Poco/Data/Session.h>
@@ -59,10 +61,10 @@ class Ext: public AbstractExt
 		std::string getAPIKey();
 		
 		#ifdef TESTING
-		Rcon rcon;
+			Rcon rcon;
 		#endif 
 		#ifdef LOGGING
-
+			boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
 		#endif
 		
 		void freeUniqueID_mutexlock(const int &unique_id);
@@ -119,6 +121,4 @@ class Ext: public AbstractExt
 		void syncCallProtocol(char *output, const int &output_size, const std::string protocol, const std::string data);
 		void onewayCallProtocol(const std::string protocol, const std::string data);
 		void asyncCallProtocol(const std::string protocol, const std::string data, const int unique_id);
-		
-		boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
 };

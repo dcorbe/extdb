@@ -1,3 +1,5 @@
+5 = Basic Logging Added
+4 = Changed to Poco 1.5, Procedure Support now available via DB_RAW
 3 = Fixed DB_RAW support for multiple Rows
 	Enabled Auto-Reconnect for MYSQL
 2 = Fixed MYSQL ODBC Database connection

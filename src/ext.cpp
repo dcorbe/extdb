@@ -70,7 +70,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 Ext::Ext(void) {
 	#ifdef LOGGING
 		Poco::DateTime now;
-		std::string log_file_name = boost::filesystem::path("extDB/logs/" + Poco::DateTimeFormatter::format(now, "%Y/%B%/%d-%H:%M:%S.log")).make_preferred().string();
+		std::string log_file_name = boost::filesystem::path("extDB/logs/" + Poco::DateTimeFormatter::format(now, "%Y/%n%/%d-Time-%H-%M-%S.log")).make_preferred().string();
 
 		boost::log::add_common_attributes();
 
@@ -330,7 +330,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "4";
+    return "5";
 }
 
 
