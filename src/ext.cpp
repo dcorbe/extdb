@@ -77,10 +77,10 @@ Ext::Ext(void) {
 		std::cout << "extDB: Logging Enabled" << std::endl;
 		boost::log::add_file_log
 		(
+			boost::log::keywords::auto_flush = true, 
 			boost::log::keywords::file_name = log_file_name,
 			boost::log::keywords::format = "[%TimeStamp%]: extdb: %Message%"
 		);
-
 		boost::log::core::get()->set_filter
 		(
 			boost::log::trivial::severity >= boost::log::trivial::info
@@ -134,6 +134,20 @@ Ext::Ext(void) {
 				BOOST_LOG_SEV(logger, boost::log::trivial::info) << "+1 Thread";
 			#endif
         }
+		
+		#ifdef LOGGING
+			#ifdef TESTING
+				std::cout << "extDB: Loading Log Settings" << std::endl;
+			#endif
+			
+			boost::log::core::get()->set_filter
+			(
+				boost::log::trivial::severity >= (pConf->getInt("Logging.Filter", 2))
+			);
+			
+			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Loading Rcon Settings";
+		#endif
+		
 		#ifdef TESTING
 			std::cout << "extDB: Loading Rcon Settings" << std::endl;
 			rcon.init(pConf->getInt("Main.RconPort", 2302), pConf->getString("Main.RconPassword", "password"));
@@ -330,7 +344,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "5";
+    return "6";
 }
 
 
@@ -664,7 +678,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
     }
 }
 
-#ifdef TESTING
+#ifdef TESTING2
 int main(int nNumberofArgs, char* pszArgs[])
 {
 	std::cout << std::endl << "Welcome to extDB Test Application : " << std::endl;
