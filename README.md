@@ -41,12 +41,12 @@ https://github.com/TAWTonic/Altis-Life/tree/master/extDB-Build
 
 
 #### Extdb Known Issues
-   ExtDB is incompatiable with https://github.com/fred41/tbbmalloc_arma
-       As temp workaround rename Fred's malloc & change arma startup to the new filename.
-       I will look into renaming the extdb intel mallocs dlls to prevent this issue in the the next update.
+   ExtDB is incompatiable with https://github.com/fred41/tbbmalloc_arma.  
+       As temp workaround rename Fred's malloc & change arma startup to the new filename.  
+       I will look into renaming the extdb intel mallocs dlls to prevent this issue in the the next update.  
        
-   If u still having issues try check u have http://www.microsoft.com/en-ie/download/details.aspx?id=5555 installed.
-       Haven't confirmed if i need it... but i be surprised if u dont have it.
+   If u still having issues try check u have http://www.microsoft.com/en-ie/download/details.aspx?id=5555 installed.  
+       Haven't confirmed if i need it... but i be surprised if u dont have it.  
 
 #### Thanks to
 
