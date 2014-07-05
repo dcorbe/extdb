@@ -26,12 +26,10 @@ So i decided to write up an C++ Extension for Arma3server.
  - DB_VAC (Player VAC Ban Check)  (DEV BRANCH ONLY ATM)
  - DB_BASIC
 
-#### Requirements
+#### Requirements for Windows
 
- - C++ Compiler
- - Poco Library http://pocoproject.org/  (note some more db features in 1.5 branch)
- - Boost Library http://www.boost.org/
- - Intel TBB https://www.threadingbuildingblocks.org/
+ - Windows XP or greater
+ - Windows 2003 or greater
 
 #### Install
 https://github.com/Torndeco/extdb/wiki/Install
