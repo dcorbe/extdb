@@ -111,5 +111,7 @@
     <File Name="src/rcon.cpp"/>
     <File Name="src/rcon.h"/>
     <File Name="src/memory_allocator.cpp"/>
+    <File Name="src/sanitize.cpp"/>
+    <File Name="src/sanitize.h"/>
   </VirtualDirectory>
 </CodeLite_Project>

@@ -15,20 +15,19 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "ext.h"
 
 #include "Poco/Data/MySQL/Connector.h"
-//#include "Poco/Data/MySQL/MySQLException.h"
+#include "Poco/Data/MySQL/MySQLException.h"
 
 #include "Poco/Data/SQLite/Connector.h"
-//#include "Poco/Data/SQLite/SQLiteException.h"
+#include "Poco/Data/SQLite/SQLiteException.h"
 
 #include "Poco/Data/SQLite/Connector.h"
-//#include "Poco/Data/SQLite/SQLiteException.h"
+#include "Poco/Data/SQLite/SQLiteException.h"
 
 #include "Poco/Data/ODBC/Connector.h"
-//#include "Poco/Data/ODBC/ODBCException.h"
-
-#include "ext.h"
+#include "Poco/Data/ODBC/ODBCException.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -52,16 +51,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/NumberParser.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
+#include <Poco/DateTime.h>
+#include <Poco/DateTimeFormatter.h>
+
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 
 #include "uniqueid.h"
-#include "rcon.h"
 
 #include "protocols/abstract_protocol.h"
 #include "protocols/db_basic.h"
-#include "protocols/db_procedure.h"
 #include "protocols/db_raw.h"
 #include "protocols/misc.h"
 
@@ -89,7 +89,7 @@ Ext::Ext(void) {
 
 	mgr.reset (new IdManager);
     extDB_lock = false;
-    if ( !boost::filesystem::exists( "extdb-conf.ini" )) // TODO add check for is_regular_file
+    if ( !boost::filesystem::exists( "extdb-conf.ini" ))
     {
 		#ifdef TESTING
 			std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;
@@ -134,28 +134,27 @@ Ext::Ext(void) {
 				BOOST_LOG_SEV(logger, boost::log::trivial::info) << "+1 Thread";
 			#endif
         }
-		
+
 		#ifdef LOGGING
 			#ifdef TESTING
 				std::cout << "extDB: Loading Log Settings" << std::endl;
 			#endif
-			
+
 			boost::log::core::get()->set_filter
 			(
 				boost::log::trivial::severity >= (pConf->getInt("Logging.Filter", 2))
 			);
-			
+
 			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Loading Rcon Settings";
 		#endif
-		
+
 		#ifdef TESTING
-			std::cout << "extDB: Loading Rcon Settings" << std::endl;
-			rcon.init(pConf->getInt("Main.RconPort", 2302), pConf->getString("Main.RconPassword", "password"));
+//			std::cout << "extDB: Loading Rcon Settings" << std::endl;
+//			rcon.init(pConf->getInt("Main.RconPort", 2302), pConf->getString("Main.RconPassword", "password"));
 		#endif
 		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Loading Rcon Settings";
+//			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Loading Rcon Settings";
 		#endif
-		//rcon.init(pConf->getInt("Main.RconPort", 2302), pConf->getString("Main.RconPassword", "password"));
     }
 }
 
@@ -172,7 +171,6 @@ void Ext::stop()
 	#ifdef LOGGING
 		BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Stopping Please Wait...";
 	#endif
-
 	io_service.stop();
     threads.join_all();
     unordered_map_protocol.clear();
@@ -344,7 +342,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "6";
+    return "7";
 }
 
 
@@ -461,12 +459,6 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			unordered_map_protocol[protocol_name].get()->init(this);
 			std::strcpy(output, "[1]");
 		}
-		else if (boost::iequals(protocol, std::string("DB_PROCEDURE")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE());
-			unordered_map_protocol[protocol_name].get()->init(this);
-			std::strcpy(output, "[1]");
-		}
 		else
 		{
 			std::strcpy(output, "[0,\"Error Unknown Protocol\"]");
@@ -487,7 +479,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 		// Checks if Result String will fit into arma output char
 		//   If <=, then sends output to arma
 		//   if >, then sends ID Message arma + stores rest. (mutex locks)
-			std::string result = (unordered_map_protocol[protocol].get()->callProtocol(this, data));
+        std::string result = (unordered_map_protocol[protocol].get()->callProtocol(this, data));
 		if (result.length() <= (output_size-9))
 		{
 			std::strcpy(output, ("[1, " + result + "]").c_str());
@@ -678,7 +670,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
     }
 }
 
-#ifdef TESTING2
+#ifdef TESTAPP
 int main(int nNumberofArgs, char* pszArgs[])
 {
 	std::cout << std::endl << "Welcome to extDB Test Application : " << std::endl;

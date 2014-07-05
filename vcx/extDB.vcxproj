@@ -1,20 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Release - Poco 1.5 - Logging|Win32">
-      <Configuration>Release - Poco 1.5 - Logging</Configuration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release - Poco 1.5 - Logging|x64">
-      <Configuration>Release - Poco 1.5 - Logging</Configuration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release - Poco 1.5|Win32">
-      <Configuration>Release - Poco 1.5</Configuration>
+    <ProjectConfiguration Include="Release-Logging|Win32">
+      <Configuration>Release-Logging</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Release - Poco 1.5|x64">
-      <Configuration>Release - Poco 1.5</Configuration>
+    <ProjectConfiguration Include="Release-Logging|x64">
+      <Configuration>Release-Logging</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
@@ -33,6 +33,12 @@
     <RootNamespace>extdb</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CLRSupport>false</CLRSupport>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -40,14 +46,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release - Poco 1.5|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <CLRSupport>false</CLRSupport>
-    <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>false</UseOfMfc>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release - Poco 1.5 - Logging|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Logging|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CLRSupport>false</CLRSupport>
@@ -57,16 +56,22 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release - Poco 1.5|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release - Poco 1.5 - Logging|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-Logging|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;C:\local\boost_1_55_0;C:\local\poco-1.4.6p4-all\include</IncludePath>
+    <ReferencePath>$(VCInstallDir)atlmfc\lib;$(VCInstallDir)lib;C:\local\poco-1.4.6p4-all\lib;C:\local\boost_1_55_0\libs</ReferencePath>
+    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;C:\local\poco-1.4.6p4-all\lib;C:\local\boost_1_55_0\libs</LibraryPath>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;C:\local\boost_1_55_0;C:\local\poco-1.4.6p4-all\include;C:\MySQL\include;C:\local\tbb42_20140601oss\include</IncludePath>
@@ -74,20 +79,27 @@
     <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;C:\local\poco-1.4.6p4-all\lib;C:\local\boost_1_55_0\lib32-msvc-10.0;C:\MySQL\lib;C:\local\tbb42_20140601oss\lib\ia32\vc10</LibraryPath>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release - Poco 1.5|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-Logging|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;C:\local\boost_1_55_0;C:\local\poco-1.5.3-all\include;C:\MySQL\include;C:\local\tbb42_20140601oss\include</IncludePath>
-    <ReferencePath>$(VCInstallDir)atlmfc\lib;$(VCInstallDir)lib;C:\local\poco-1.5.3-all\lib;C:\local\boost_1_55_0\lib32-msvc-10.0;C:\MySQL\lib;C:\local\tbb42_20140601oss\lib\ia32\vc10;C:\local\tbb42_20140601oss\bin\ia32\vc10</ReferencePath>
-    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;C:\local\poco-1.5.3-all\lib;C:\local\boost_1_55_0\lib32-msvc-10.0;C:\MySQL\lib;C:\local\tbb42_20140601oss\lib\ia32\vc10</LibraryPath>
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;C:\local\boost_1_55_0;C:\local\poco-1.4.6p4-all\include;C:\MySQL\include;C:\local\tbb42_20140601oss\include</IncludePath>
+    <ReferencePath>$(VCInstallDir)atlmfc\lib;$(VCInstallDir)lib;C:\local\poco-1.4.6p4-all\lib;C:\local\boost_1_55_0\lib32-msvc-10.0;C:\MySQL\lib;C:\local\tbb42_20140601oss\lib\ia32\vc10;C:\local\tbb42_20140601oss\bin\ia32\vc10</ReferencePath>
+    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;C:\local\poco-1.4.6p4-all\lib;C:\local\boost_1_55_0\lib32-msvc-10.0;C:\MySQL\lib;C:\local\tbb42_20140601oss\lib\ia32\vc10</LibraryPath>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release - Poco 1.5 - Logging|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;C:\local\boost_1_55_0;C:\local\poco-1.5.3-all\include;C:\MySQL\include;C:\local\tbb42_20140601oss\include</IncludePath>
-    <ReferencePath>$(VCInstallDir)atlmfc\lib;$(VCInstallDir)lib;C:\local\poco-1.5.3-all\lib;C:\local\boost_1_55_0\lib32-msvc-10.0;C:\MySQL\lib;C:\local\tbb42_20140601oss\lib\ia32\vc10;C:\local\tbb42_20140601oss\bin\ia32\vc10</ReferencePath>
-    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;C:\local\poco-1.5.3-all\lib;C:\local\boost_1_55_0\lib32-msvc-10.0;C:\MySQL\lib;C:\local\tbb42_20140601oss\lib\ia32\vc10</LibraryPath>
-    <GenerateManifest>false</GenerateManifest>
-  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalOptions>/D "_WIN32_WINNT=0x0501" /D POCO_NO_UNWINDOWS %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -110,29 +122,7 @@
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release - Poco 1.5|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalOptions>/D "_WIN32_WINNT=0x0501" /D POCO_NO_UNWINDOWS %(AdditionalOptions)</AdditionalOptions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <CallingConvention>Cdecl</CallingConvention>
-      <IntrinsicFunctions>false</IntrinsicFunctions>
-      <CompileAsManaged>false</CompileAsManaged>
-    </ClCompile>
-    <Link>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>mysqlclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <Version>0</Version>
-      <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
-    </Link>
-    <ProjectReference>
-      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
-    </ProjectReference>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release - Poco 1.5 - Logging|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-Logging|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -164,10 +154,9 @@
     <ClInclude Include="..\src\protocols\abstract_ext.h" />
     <ClInclude Include="..\src\protocols\abstract_protocol.h" />
     <ClInclude Include="..\src\protocols\db_basic.h" />
-    <ClInclude Include="..\src\protocols\db_procedure.h" />
     <ClInclude Include="..\src\protocols\db_raw.h" />
     <ClInclude Include="..\src\protocols\misc.h" />
-    <ClInclude Include="..\src\rcon.h" />
+    <ClInclude Include="..\src\sanitize.h" />
     <ClInclude Include="..\src\uniqueid.h" />
   </ItemGroup>
   <ItemGroup>
@@ -176,10 +165,8 @@
     <ClCompile Include="..\src\memory_allocator.cpp" />
     <ClCompile Include="..\src\protocols\abstract_protocol.cpp" />
     <ClCompile Include="..\src\protocols\db_basic.cpp" />
-    <ClCompile Include="..\src\protocols\db_procedure.cpp" />
     <ClCompile Include="..\src\protocols\db_raw.cpp" />
     <ClCompile Include="..\src\protocols\misc.cpp" />
-    <ClCompile Include="..\src\rcon.cpp" />
     <ClCompile Include="..\src\sanitize.cpp" />
     <ClCompile Include="..\src\uniqueid.cpp" />
   </ItemGroup>

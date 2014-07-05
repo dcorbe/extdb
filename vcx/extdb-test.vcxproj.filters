@@ -17,16 +17,10 @@
     <ClInclude Include="..\src\ext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\rcon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\sanitize.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\protocols\abstract_ext.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\protocols\abstract_protocol.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\protocols\db_basic.h">
@@ -35,13 +29,10 @@
     <ClInclude Include="..\src\protocols\db_raw.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\protocols\db_vac.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\protocols\misc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\protocols\db_procedure.h">
+    <ClInclude Include="..\src\protocols\abstract_protocol.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -55,31 +46,19 @@
     <ClCompile Include="..\src\protocols\db_raw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\protocols\db_vac.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\protocols\misc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\memory_allocator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\rcon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\sanitize.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\uniqueid.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\protocols\db_procedure.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

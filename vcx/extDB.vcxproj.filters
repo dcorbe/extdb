@@ -29,13 +29,10 @@
     <ClInclude Include="..\src\protocols\misc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\rcon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\protocols\db_basic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\protocols\db_procedure.h">
+    <ClInclude Include="..\src\sanitize.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -58,9 +55,6 @@
     <ClCompile Include="..\src\protocols\misc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\rcon.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\memory_allocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -68,9 +62,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\protocols\db_basic.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\protocols\db_procedure.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

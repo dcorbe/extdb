@@ -15,8 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-
 #pragma once
 
 #include <boost/asio.hpp>
@@ -38,7 +36,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Util/IniFileConfiguration.h>
 
 #include "uniqueid.h"
-#include "rcon.h"
 
 #include "protocols/abstract_ext.h"
 #include "protocols/abstract_protocol.h"
@@ -51,24 +48,22 @@ class Ext: public AbstractExt
 
 		void callExtenion(char *output, const int &output_size, const char *function);
 		std::string version() const;
-		
+
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
 
 		Poco::Data::Session getDBSession_mutexlock();
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
 		void stop();
-		
+
 		std::string getAPIKey();
-		
-		#ifdef TESTING
-			Rcon rcon;
-		#endif 
+
+		void freeUniqueID_mutexlock(const int &unique_id);
+		int getUniqueID_mutexlock();
+
 		#ifdef LOGGING
 			boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
 		#endif
-		
-		void freeUniqueID_mutexlock(const int &unique_id);
-		int getUniqueID_mutexlock();
+
 
 	private:
 		struct DBConnectionInfo {
@@ -78,10 +73,10 @@ class Ext: public AbstractExt
 			int max_sessions;
 			int idle_time;
 		};
-		
+
 		bool extDB_lock;
 		int max_threads;
-		
+
 		std::string steam_api_key;
 
 		// ASIO Thread Queue
@@ -90,13 +85,13 @@ class Ext: public AbstractExt
 		boost::mutex mutex_io_service;
 
 		boost::thread_group threads;
-		
+
 		DBConnectionInfo db_conn_info;
 
 		// Database Session Pool
 		boost::shared_ptr<Poco::Data::SessionPool> db_pool;
 		boost::mutex mutex_db_pool;
-		
+
 		void connectDatabase(char *output, const int &output_size, const std::string &conf_option);
 
 		void getResult_mutexlock(const int &unique_id, char *output, const int &output_size);
