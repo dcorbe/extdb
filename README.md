@@ -14,17 +14,17 @@ So i decided to write up an C++ Extension for Arma3server.
  - Add Steam Friends Query to MISC
  - Finish Update Documentation for DB_RAW / MISC / DB_VAC
  
-
-#### Working But Need to be Tested
-
- - DB_VAC (Player VAC Ban Check)
- - DB_BASIC
-
-
 #### Working
 
  - MISC (has crc32 md4 md5 time + time offset)
- - DB_RAW (by raw i mean raw sql commands, no santizing checks at all) this really should be used for testing purposes only.
+ - DB_RAW (by raw i mean raw sql commands, no santizing input / output checks at all)
+
+
+
+#### Working But Need to be Tested
+
+ - DB_VAC (Player VAC Ban Check)  (DEV BRANCH ONLY ATM)
+ - DB_BASIC
 
 #### Requirements
 
@@ -35,6 +35,11 @@ So i decided to write up an C++ Extension for Arma3server.
 
 #### Install
 https://github.com/Torndeco/extdb/wiki/Install
+https://github.com/Torndeco/extdb/wiki/Install-Linux---Chroot-Guide-%28WIP%29
+
+
+#### Missions / Mods using extDB
+https://github.com/TAWTonic/Altis-Life/tree/master/extDB-Build
 
 
 #### Thanks to
