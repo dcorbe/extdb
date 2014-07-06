@@ -28,13 +28,14 @@ http://www.altisliferpg.com
  - DB_PROCEDURE (DEV BRANCH ONLY ATM)
  - DB_BASIC
 
-#### Requirements for Windows
 
- - Windows XP or greater
- - Windows 2003 or greater
+#### Install Windows
+Look in windows_release/, pick a version i.e latest one.  
+I recommend a logging version till u have a server up and running.  
+Non-Logging is just a dll with no logging to help with performance.  
+Edit the extdb-conf.ini. 
 
- 
-#### Extdb Known Issues
+#### Extdb Known Issues with Windows
    ExtDB is incompatiable with https://github.com/fred41/tbbmalloc_arma.  
        As temp workaround rename Fred's malloc & change arma startup to the new filename.  
        I will look into renaming the extdb intel mallocs dlls to prevent this issue in the the next update.  
@@ -42,9 +43,25 @@ http://www.altisliferpg.com
    If u still having issues try check u have http://www.microsoft.com/en-ie/download/details.aspx?id=5555 installed.  
        Haven't confirmed if i need it... but i be surprised if u dont have it installed.  
 
-#### Install
+#### Requirements for Windows
+
+ - Windows XP or greater
+ - Windows 2003 or greater
+
+
+#### Install from Source - Windows
+Note new CMake Build System in the works atm.
+
 https://github.com/Torndeco/extdb/wiki/Install
+
+#### Install from Source - Linux
 https://github.com/Torndeco/extdb/wiki/Install-Linux---Chroot-Guide-%28WIP%29
+
+#### Extdb Known Issues with Linux
+
+   None ? :) 
+   Its annoying to have to setup a 32bit chroot enviroment.  
+   But its alot easier than trying to install 32bit libraries on 64bit system without breaking something
 
 
 #### Thanks to
@@ -54,7 +71,7 @@ https://github.com/Torndeco/extdb/wiki/Install-Linux---Chroot-Guide-%28WIP%29
  - Everyone else i forgot, including EPOCH dev's for having an public github for mod atleast on arma2 ;)
  - rajkosto for his work on DayZ Hive, that i have looked at & and still is over my head most of the time..   Using same method for getting Unique Char ID, also using almost the exact same boost parser for checking input/output to database   https://github.com/rajkosto/hive
  - Fank https://gist.github.com/Fank/11127158 for his code to convert SteamID to BEGUID.
- - Tonic & Atlis RPG Admins for beening literally bleeding edge testers. And good sports when i messed up, wasn't out a week and multiple servers were testing out extDB.
+ - Tonic & Atlis RPG Admins for beening literally beening bleeding edge testers. And good sports when i messed up, wasn't out a week and multiple servers were testing out extDB.
  - firefly2442 https://github.com/firefly2442 for work on new CMake Build System
 
 
