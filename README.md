@@ -37,7 +37,7 @@ https://github.com/Torndeco/extdb/wiki/Install-Linux---Chroot-Guide-%28WIP%29
 
 
 #### Missions / Mods using extDB
-https://github.com/TAWTonic/Altis-Life/tree/master/extDB-Build
+http://www.altisliferpg.com/
 
 
 #### Extdb Known Issues
