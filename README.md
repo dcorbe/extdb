@@ -1,7 +1,12 @@
 ## Arma3 Extension DB  C++ (windows / linux)
 
-I got bored waiting on 2017 / epoch for Arma3...  
+I got bored waiting on 2017 / Epoch for Arma3.
 So i decided to write up an C++ Extension for Arma3server.
+
+
+#### Missions / Mods using extDB
+http://www.altisliferpg.com  
+
 
 ### Features
 
@@ -9,16 +14,12 @@ So i decided to write up an C++ Extension for Arma3server.
  - Multi-Threading Sync / ASync Commands
  - Supports Mysql / SQlite / ODBC  (via Poco Library)
 
-#### Todo
 
- - Add Steam Friends Query to MISC
- - Finish Update Documentation for DB_RAW / MISC / DB_VAC
- 
 #### Working
 
  - MISC (has crc32 md4 md5 time + time offset)
- - DB_RAW (by raw i mean raw sql commands, no santizing input / output checks at all)
-
+ - DB_RAW (by raw i mean raw sql commands, no santizing input or output checks at all)
+ - Support for Arma2 i.e randomize config file (DEV BRANCH ONLY ATM)
 
 
 #### Working But Need to be Tested
@@ -32,15 +33,7 @@ So i decided to write up an C++ Extension for Arma3server.
  - Windows XP or greater
  - Windows 2003 or greater
 
-#### Install
-https://github.com/Torndeco/extdb/wiki/Install
-https://github.com/Torndeco/extdb/wiki/Install-Linux---Chroot-Guide-%28WIP%29
-
-
-#### Missions / Mods using extDB
-http://www.altisliferpg.com/
-
-
+ 
 #### Extdb Known Issues
    ExtDB is incompatiable with https://github.com/fred41/tbbmalloc_arma.  
        As temp workaround rename Fred's malloc & change arma startup to the new filename.  
@@ -49,6 +42,11 @@ http://www.altisliferpg.com/
    If u still having issues try check u have http://www.microsoft.com/en-ie/download/details.aspx?id=5555 installed.  
        Haven't confirmed if i need it... but i be surprised if u dont have it installed.  
 
+#### Install
+https://github.com/Torndeco/extdb/wiki/Install
+https://github.com/Torndeco/extdb/wiki/Install-Linux---Chroot-Guide-%28WIP%29
+
+
 #### Thanks to
 
  - bladez- Using modified gplv3 code from https://github.com/bladez-/bercon for RCON
@@ -56,6 +54,8 @@ http://www.altisliferpg.com/
  - Everyone else i forgot, including EPOCH dev's for having an public github for mod atleast on arma2 ;)
  - rajkosto for his work on DayZ Hive, that i have looked at & and still is over my head most of the time..   Using same method for getting Unique Char ID, also using almost the exact same boost parser for checking input/output to database   https://github.com/rajkosto/hive
  - Fank https://gist.github.com/Fank/11127158 for his code to convert SteamID to BEGUID.
+ - Tonic & Atlis RPG Admins for beening literally bleeding edge testers. And good sports when i messed up, wasn't out a week and multiple servers were testing out extDB.
+ - firefly2442 https://github.com/firefly2442 for work on new CMake Build System
 
 
 ##### Disclaimer
