@@ -24,6 +24,7 @@ So i decided to write up an C++ Extension for Arma3server.
 #### Working But Need to be Tested
 
  - DB_VAC (Player VAC Ban Check)  (DEV BRANCH ONLY ATM)
+ - DB_PROCEDURE (DEV BRANCH ONLY ATM)
  - DB_BASIC
 
 #### Requirements for Windows
@@ -46,7 +47,7 @@ http://www.altisliferpg.com/
        I will look into renaming the extdb intel mallocs dlls to prevent this issue in the the next update.  
        
    If u still having issues try check u have http://www.microsoft.com/en-ie/download/details.aspx?id=5555 installed.  
-       Haven't confirmed if i need it... but i be surprised if u dont have it.  
+       Haven't confirmed if i need it... but i be surprised if u dont have it installed.  
 
 #### Thanks to
 
