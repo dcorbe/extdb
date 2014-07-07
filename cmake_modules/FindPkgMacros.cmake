@@ -69,9 +69,8 @@ endmacro (use_pkgconfig)
 
 # Couple a set of release AND debug libraries (or frameworks)
 macro(make_library_set PREFIX)
-if (${PREFIX}_FWK)
-set(${PREFIX} ${${PREFIX}_FWK})
-elseif (${PREFIX}_REL AND ${PREFIX}_DBG)
+#LINK_DIRECTORIES(${PREFIX})
+if (${PREFIX}_REL AND ${PREFIX}_DBG)
 set(${PREFIX} optimized ${${PREFIX}_REL} debug ${${PREFIX}_DBG})
 elseif (${PREFIX}_REL)
 set(${PREFIX} ${${PREFIX}_REL})
@@ -113,32 +112,6 @@ message(FATAL_ERROR "Required library ${PREFIX} not found! Install the library (
 endif ()
 endif ()
 
-mark_as_advanced(${PREFIX}_INCLUDE_DIR ${PREFIX}_LIBRARY ${PREFIX}_LIBRARY_REL ${PREFIX}_LIBRARY_DBG ${PREFIX}_LIBRARY_FWK)
+mark_as_advanced(${PREFIX}_INCLUDE_DIR ${PREFIX}_LIBRARY ${PREFIX}_LIBRARY_REL ${PREFIX}_LIBRARY_DBG)
 endif ()
 endmacro(findpkg_finish)
-
-
-# Slightly customised framework finder
-MACRO(findpkg_framework fwk)
-IF(APPLE)
-SET(${fwk}_FRAMEWORK_PATH
-${${fwk}_FRAMEWORK_SEARCH_PATH}
-${CMAKE_FRAMEWORK_PATH}
-~/Library/Frameworks
-/Library/Frameworks
-/System/Library/Frameworks
-/Network/Library/Frameworks
-/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS3.0.sdk/System/Library/Frameworks/
-)
-FOREACH(dir ${${fwk}_FRAMEWORK_PATH})
-SET(fwkpath ${dir}/${fwk}.framework)
-IF(EXISTS ${fwkpath})
-SET(${fwk}_FRAMEWORK_INCLUDES ${${fwk}_FRAMEWORK_INCLUDES}
-${fwkpath}/Headers ${fwkpath}/PrivateHeaders)
-if (NOT ${fwk}_LIBRARY_FWK)
-SET(${fwk}_LIBRARY_FWK "-framework ${fwk}")
-endif ()
-ENDIF(EXISTS ${fwkpath})
-ENDFOREACH(dir)
-ENDIF(APPLE)
-ENDMACRO(findpkg_framework)

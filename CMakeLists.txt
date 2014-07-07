@@ -19,6 +19,11 @@ SET(SOURCES
 
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
+set(CMAKE_SUPPRESS_REGENERATION 1)
+SET(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_CONFIGURATION_TYPES Release CACHE TYPE  
+INTERNAL FORCE )
+
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
@@ -60,7 +65,7 @@ endif()
 
 
 # Install target
-install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
+#install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
 
 #TODO:
 #Copy over license, documentation, etc. to install location
