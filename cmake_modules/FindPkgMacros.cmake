@@ -69,7 +69,6 @@ endmacro (use_pkgconfig)
 
 # Couple a set of release AND debug libraries (or frameworks)
 macro(make_library_set PREFIX)
-#LINK_DIRECTORIES(${PREFIX})
 if (${PREFIX}_REL AND ${PREFIX}_DBG)
 set(${PREFIX} optimized ${${PREFIX}_REL} debug ${${PREFIX}_DBG})
 elseif (${PREFIX}_REL)

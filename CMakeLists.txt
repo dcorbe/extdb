@@ -1,6 +1,8 @@
 #Change this if you need to target a specific CMake version
 cmake_minimum_required(VERSION 2.8)
 
+cmake_policy(SET CMP0015 NEW)
+
 project(extDB)
 
 # Define sources and executable
@@ -17,8 +19,6 @@ SET(SOURCES
 	src/protocols/misc.cpp
 )
 
-add_executable(${EXECUTABLE_NAME} ${SOURCES})
-
 set(CMAKE_SUPPRESS_REGENERATION 1)
 SET(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CONFIGURATION_TYPES Release CACHE TYPE  
@@ -31,7 +31,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 find_package(Boost REQUIRED COMPONENTS filesystem system thread)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
-	target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})   
+	LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
 else()
 	message(FATAL_ERROR "BOOST not found")
 endif()
@@ -48,6 +48,11 @@ include(FindPOCO)
 include_directories(${POCO_INCLUDE_DIR} ${POCO_Crypto_INCLUDE_DIR} ${POCO_Data_INCLUDE_DIR} ${POCO_Data_ODBC_INCLUDE_DIR})
 include_directories(${POCO_Data_SQLite_INCLUDE_DIR} ${POCO_Data_MYSQL_INCLUDE_DIR} ${POCO_Net_INCLUDE_DIR} ${POCO_Util_INCLUDE_DIR})
 
+IF(DEFINED POCO_LIBRARYDIR)
+	LINK_DIRECTORIES(${POCO_LIBRARYDIR})
+else()
+	message(FATAL_ERROR "POCO_LIBRARYDIR not found")
+endif()
 
 
 # Look for C++11 support BOOST_NO_CXX11_NULLPTR
@@ -63,9 +68,11 @@ endif()
 
 
 
-
 # Install target
 #install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
 
 #TODO:
 #Copy over license, documentation, etc. to install location
+
+add_executable(${EXECUTABLE_NAME} ${SOURCES})
+target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
