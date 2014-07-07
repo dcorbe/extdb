@@ -3,6 +3,10 @@ cmake_minimum_required(VERSION 2.8)
 
 cmake_policy(SET CMP0015 NEW)
 
+set(CMAKE_USER_MAKE_RULES_OVERRIDE
+   ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/c_flag_overrides.cmake)
+set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
+   ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cxx_flag_overrides.cmake)
 project(extDB)
 
 # Define sources and executable
@@ -14,6 +18,7 @@ SET(SOURCES
 	src/uniqueid.cpp
 	src/sanitize.cpp
 	src/protocols/abstract_protocol.cpp
+	src/protocols/db_procedure.cpp
 	src/protocols/db_basic.cpp
 	src/protocols/db_raw.cpp
 	src/protocols/misc.cpp
@@ -33,25 +38,36 @@ if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
 	LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
 else()
-	message(FATAL_ERROR "BOOST not found")
+	message(FATAL_ERROR "\nBOOST not found\n Please Set BOOST_ROOT & BOOST_LIBRARYDIR")
 endif()
 
-if(${WIN32})
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_WIN32_WINNT=0x0501")
-
-	add_definitions(-D WIN32_WINNT=0x0501)
+#if(${WIN32})
+	add_definitions(-D _WIN32_WINNT=0x0501)
 	add_definitions(-D POCO_NO_UNWINDOWS)
-endif()
+#endif()
 
 # Look For POCO
 include(FindPOCO)
-include_directories(${POCO_INCLUDE_DIR} ${POCO_Crypto_INCLUDE_DIR} ${POCO_Data_INCLUDE_DIR} ${POCO_Data_ODBC_INCLUDE_DIR})
-include_directories(${POCO_Data_SQLite_INCLUDE_DIR} ${POCO_Data_MYSQL_INCLUDE_DIR} ${POCO_Net_INCLUDE_DIR} ${POCO_Util_INCLUDE_DIR})
+if(POCO_FOUND)
+	include_directories(${POCO_INCLUDE_DIR} ${POCO_Crypto_INCLUDE_DIR} ${POCO_Data_INCLUDE_DIR} ${POCO_Data_ODBC_INCLUDE_DIR})
+	include_directories(${POCO_Data_SQLite_INCLUDE_DIR} ${POCO_Data_MYSQL_INCLUDE_DIR} ${POCO_Net_INCLUDE_DIR} ${POCO_Util_INCLUDE_DIR})
+else()
+	message(FATAL_ERROR "\nPOCO not found\n Please Set POCO_ROOT")
+endif()
 
 IF(DEFINED POCO_LIBRARYDIR)
 	LINK_DIRECTORIES(${POCO_LIBRARYDIR})
 else()
-	message(FATAL_ERROR "POCO_LIBRARYDIR not found")
+	message(FATAL_ERROR "\nPOCO_LIBRARYDIR not found")
+endif()
+
+# Look for MySQL
+include(FindMySQL)
+if(MYSQL_FOUND)
+	include_directories(${MYSQL_INCLUDE_DIR})
+	LINK_DIRECTORIES(${MYSQL_LIBRARY})
+else()
+	message(FATAL_ERROR "\nMYSQL not found")
 endif()
 
 
@@ -76,3 +92,5 @@ endif()
 
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
 target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
+#target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
+target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})

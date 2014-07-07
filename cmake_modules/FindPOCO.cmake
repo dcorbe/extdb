@@ -48,12 +48,6 @@ make_library_set(POCO_LIBRARY)
 
 findpkg_finish(POCO)
 
-if (NOT POCO_FOUND)
-	message(FATAL_ERROR "POCO not found, set POCO_ROOT")
-	return()
-endif ()
-
-
 # Look for Poco's Foundation package
 findpkg_begin(POCO_Foundation)
 set(POCO_FOUNDATION_NAMES PocoFoundationmt)
