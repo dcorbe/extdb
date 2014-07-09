@@ -58,7 +58,7 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 				{
 					if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
 					{
-						result += "\"" + (rs[col].convert<std::string>() + "\"");  //  RangeException
+						result += "\"" + (rs[col].convert<std::string>() + "\"");  //  TODO: Exceptional Handling http://pocoproject.org/docs-1.5.0/Poco.Dynamic.Var.html#9392   + Check if string = empty
 					}
 					else
 					{
