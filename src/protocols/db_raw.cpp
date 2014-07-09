@@ -58,7 +58,7 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 				{
 					if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
 					{
-						result += "\"" + (rs[col].convert<std::string>() + "\"");
+						result += "\"" + (rs[col].convert<std::string>() + "\"");  //  RangeException
 					}
 					else
 					{
