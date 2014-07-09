@@ -28,6 +28,9 @@ http://www.altisliferpg.com
  - DB_PROCEDURE (DEV BRANCH ONLY ATM)
  - DB_BASIC
 
+#### Issues with Databases
+
+ - extDB Dont use large datatypes i.e LongText and others. Poco Library pre-allocates memory for maxsize of database type, before it receives data. Will result in memory starvation and random crashes.
 
 #### Install Windows
 Look in windows_release/, pick a version i.e latest one.  
