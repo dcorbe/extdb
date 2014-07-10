@@ -15,8 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-
 #include "db_raw.h"
 
 #include <Poco/Data/Common.h>
@@ -27,13 +25,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "Poco/Data/MySQL/Connector.h"
 #include "Poco/Data/MySQL/MySQLException.h"
-/*
 #include "Poco/Data/SQLite/Connector.h"
 #include "Poco/Data/SQLite/SQLiteException.h"
 #include "Poco/Data/SQLite/Connector.h"
 #include "Poco/Data/SQLite/SQLiteException.h"
 #include "Poco/Data/ODBC/Connector.h"
-#include "Poco/Data/ODBC/ODBCException.h"*/
+#include "Poco/Data/ODBC/ODBCException.h"
 
 #include <cstdlib>
 #include <iostream>
