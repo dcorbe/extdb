@@ -1,13 +1,31 @@
 //http://stackoverflow.com/questions/2620218/fastest-container-or-algorithm-for-unique-reusable-ids-in-c
 
 
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+
+#include <boost/numeric/interval.hpp>
+#include <limits>
+#include <set>
+#include <iostream>
+#include <string>
+
 #include "uniqueid.h"
 
 
 IdManager::IdManager()
 {
-	free_.insert(id_interval(1, std::numeric_limits<int>::max()));
-//	free_.insert(id_interval(seed_number, seed_number + 32768));
+	// Smaller Range of Unique ID 65536 is still loads
+	#ifdef TESTING
+		// Normal ID for Test APP, easier to work with if ID =! random
+		free_.insert(id_interval(1, std::numeric_limits<int>::max()));
+	#else
+		// Randomize Starting Unique ID
+		boost::random::mt19937 gen;
+		boost::random::uniform_int_distribution<> dist(1, (std::numeric_limits<int>::max()-65536));
+		const int seed = dist(gen);
+		free_.insert(id_interval(seed, (seed + 65536)));
+	#endif
 }
 
 int IdManager::AllocateId()

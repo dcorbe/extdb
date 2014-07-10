@@ -386,7 +386,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "10";
+    return "11-dev";
 }
 
 
@@ -475,11 +475,9 @@ void Ext::saveResult_mutexlock(const std::string &result, const int &unique_id)
 // Stores Result String  in a unordered map array.
 //   Used when string > arma output char
 {
-    {
-        boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
-        unordered_map_results[unique_id] = "[1," + result + "]";
-        unordered_map_wait.erase(unique_id);
-    }
+	boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
+	unordered_map_results[unique_id] = "[1," + result + "]";
+	unordered_map_wait.erase(unique_id);
 }
 
 
@@ -596,17 +594,10 @@ void Ext::asyncCallProtocol(const std::string protocol, const std::string data, 
 // ASync + Save callProtocol
 // We check if Protocol exists here, since its a thread (less time spent blocking arma) and it shouldnt happen anyways
 {
-    if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
-    {
-        saveResult_mutexlock(std::string("[0,\"Error Unknown Protocol\"]"), unique_id);
-    }
-    else
-    {
-		std::string result;
-		result.reserve(2000);
-		unordered_map_protocol[protocol].get()->callProtocol(this, data, result);
-        saveResult_mutexlock(result, unique_id);
-    }
+	std::string result;
+	result.reserve(2000);
+	unordered_map_protocol[protocol].get()->callProtocol(this, data, result);
+	saveResult_mutexlock(result, unique_id);
 }
 
 
@@ -642,16 +633,30 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					}
 					else
 					{
+						bool found_procotol = false;
 						const std::string protocol = input_str.substr(2,(found-2));
 						// Data
 						std::string data = input_str.substr(found+1);
 						int unique_id = getUniqueID_mutexlock();
 						{
 							boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
-							unordered_map_wait[unique_id] = true;
+							// Check for Protocol Name Exists
+							if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
+							{
+								std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
+							}
+							else
+							{
+								unordered_map_wait[unique_id] = true;
+								found_procotol = true;
+							}
 						}
-						io_service.post(boost::bind(&Ext::asyncCallProtocol, this, protocol, data, unique_id));
-						std::strcpy(output, (("[2,\"" + Poco::NumberFormatter::format(unique_id) + "\"]")).c_str());
+						// Only Add Job to Work Queue + Return ID if Protocol Name exists.
+						if (found_procotol)
+						{
+							io_service.post(boost::bind(&Ext::asyncCallProtocol, this, protocol, data, unique_id));
+							std::strcpy(output, (("[2,\"" + Poco::NumberFormatter::format(unique_id) + "\"]")).c_str());
+						}
 					}
 					break;
 				}
