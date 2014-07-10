@@ -85,7 +85,9 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 		if ((num_of_inputs == 4) && (t_arg[1].length() >= 3) && (isNumber(t_arg[0])))
 		{
 			std::string sql_str_procedure = "call " + t_arg[1].substr(1, (t_arg[1].length() - 2)) + "(";
+			sql_str_procedure.reserve(2000);
 			std::string sql_str_select = "SELECT ";
+			sql_str_select.reserve(2000);
 			
 			if ( (!Sqf::check(t_arg[0])) && (!Sqf::check(t_arg[1])) )
 			{
@@ -116,11 +118,9 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 					
 				// Generate Output Values
 				const int unique_id = extension->getUniqueID_mutexlock(); // Using this to make sure no clashing of Output Values
-				std::string unique_id_str = Poco::NumberFormatter::format(unique_id);
-
 				
 				for(int i = 0; i != num_of_outputs; ++i) {
-					const std::string temp_str = "@Output" + Poco::NumberFormatter::format(i) + "_" + unique_id_str +  t_arg[0] + ", ";
+					const std::string temp_str = "@Output" + Poco::NumberFormatter::format(i) + "_" + Poco::NumberFormatter::format(unique_id) +  t_arg[0] + ", ";
 					sql_str_procedure += temp_str;
 					sql_str_select += temp_str;
 				}
@@ -145,7 +145,6 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 				
 				Poco::Data::RecordSet rs(sql2);
 				
-				std::string result;
 				std::size_t cols = rs.columnCount();
 				if (cols >= 1)
 				{
