@@ -16,6 +16,12 @@ FIND_PATH(MYSQL_INCLUDE_DIR mysql.h
   C:/MySQL/include
 )
 
+FIND_PATH(MYSQL_LIB_DIR mysqlclient.lib  mysqlclient.so
+  /usr/lib
+  /usr/local/lib
+  C:/MySQL/lib
+)
+
 SET(MYSQL_NAMES mysqlclient mysqlclient_r)
 FIND_LIBRARY(MYSQL_LIBRARY
   NAMES ${MYSQL_NAMES}

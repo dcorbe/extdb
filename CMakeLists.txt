@@ -9,8 +9,6 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cxx_flag_overrides.cmake)
 project(extDB)
 
-# Define sources and executable
-set(EXECUTABLE_NAME "extDB")
 
 SET(SOURCES
 	src/main.cpp
@@ -65,9 +63,18 @@ endif()
 include(FindMySQL)
 if(MYSQL_FOUND)
 	include_directories(${MYSQL_INCLUDE_DIR})
-	LINK_DIRECTORIES(${MYSQL_LIBRARY})
+	LINK_DIRECTORIES(${MYSQL_LIB_DIR})
 else()
 	message(FATAL_ERROR "\nMYSQL not found")
+endif()
+
+# Look for ODBC
+include(FindODBC)
+if(MYSQL_FOUND)
+	include_directories(${ODBC_INCLUDE_DIR})
+	LINK_DIRECTORIES(${ODBC_LIB_DIR})
+else()
+	message(FATAL_ERROR "\nODBC not found")
 endif()
 
 
@@ -90,7 +97,9 @@ endif()
 #TODO:
 #Copy over license, documentation, etc. to install location
 
-add_executable(${EXECUTABLE_NAME} ${SOURCES})
-target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
+# Define sources and executable
+add_library (extDB SHARED ${SOURCES})
+##target_link_libraries(extDB ${Boost_LIBRARIES})
 #target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
-target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
+target_link_libraries(extDB ${ODBC_LIBRARY})
+target_link_libraries(extDB ${MYSQL_LIBRARY})

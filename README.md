@@ -1,3 +1,23 @@
+***********
+***********
+***********
+
+CMake Build System will compile on Windows ATM.  (UNTESTED DLL)
+This is not the Build System i am using atm.
+
+I still need to-go through the settings & get it same as the VC2010 Project Files
+Once thats done i switch over to it.
+Hopefully this weekend.
+
+Not Production Ready i.e its using wrong Char Encoding atm
+Not Production Ready i.e its using wrong Char Encoding atm
+Not Production Ready i.e its using wrong Char Encoding atm
+
+***********
+***********
+***********
+
+
 ## Arma3 Extension DB  C++ (windows / linux)
 
 I got bored waiting on 2017 / Epoch for Arma3.
