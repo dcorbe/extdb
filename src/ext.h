@@ -63,9 +63,15 @@ class Ext: public AbstractExt
 		#ifdef LOGGING
 			boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
 		#endif
-
+		
+		std::string getDBType();
 
 	private:
+		bool extDB_lock;
+		int max_threads;
+
+		std::string steam_api_key;
+		
 		struct DBConnectionInfo {
 			std::string db_type;
 			std::string connection_str;
@@ -73,11 +79,8 @@ class Ext: public AbstractExt
 			int max_sessions;
 			int idle_time;
 		};
-
-		bool extDB_lock;
-		int max_threads;
-
-		std::string steam_api_key;
+		
+		DBConnectionInfo db_conn_info;
 
 		// ASIO Thread Queue
 		boost::shared_ptr<boost::asio::io_service::work> io_work_ptr;
@@ -85,8 +88,6 @@ class Ext: public AbstractExt
 		boost::mutex mutex_io_service;
 
 		boost::thread_group threads;
-
-		DBConnectionInfo db_conn_info;
 
 		// Database Session Pool
 		boost::shared_ptr<Poco::Data::SessionPool> db_pool;
@@ -113,7 +114,7 @@ class Ext: public AbstractExt
 		// Plugins
 		void addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name);
 
-		void syncCallProtocol(char *output, const int &output_size, const std::string protocol, const std::string data);
+		void syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data);
 		void onewayCallProtocol(const std::string protocol, const std::string data);
 		void asyncCallProtocol(const std::string protocol, const std::string data, const int unique_id);
 };

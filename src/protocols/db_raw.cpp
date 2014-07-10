@@ -25,13 +25,22 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/Session.h>
 #include <Poco/Exception.h>
 
+#include "Poco/Data/MySQL/Connector.h"
+#include "Poco/Data/MySQL/MySQLException.h"
+/*
+#include "Poco/Data/SQLite/Connector.h"
+#include "Poco/Data/SQLite/SQLiteException.h"
+#include "Poco/Data/SQLite/Connector.h"
+#include "Poco/Data/SQLite/SQLiteException.h"
+#include "Poco/Data/ODBC/Connector.h"
+#include "Poco/Data/ODBC/ODBCException.h"*/
+
 #include <cstdlib>
 #include <iostream>
 
 
-std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
+void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
-
     try
     {
 		#ifdef TESTING
@@ -40,13 +49,13 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 		#ifdef LOGGING
 			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << " DB_RAW: " + input_str;
 		#endif
-		std::string result = "[";
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 		Poco::Data::Statement sql(db_session);
 		sql << input_str;
 		sql.execute();
 		Poco::Data::RecordSet rs(sql);
-		
+
+		result = "[";
 		std::size_t cols = rs.columnCount();
 		if (cols >= 1)
 		{
@@ -58,18 +67,27 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 				{
 					if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
 					{
-						result += "\"" + (rs[col].convert<std::string>() + "\"");  //  TODO: Exceptional Handling http://pocoproject.org/docs-1.5.0/Poco.Dynamic.Var.html#9392   + Check if string = empty
+						if (!rs[col].isEmpty())
+						{
+							result += "\"" + (rs[col].convert<std::string>() + "\"");
+						}
+						else
+						{
+							result += ("\"\"");
+						}
 					}
 					else
 					{
-						result += rs[col].convert<std::string>();
+						if (!rs[col].isEmpty())
+						{
+							result += rs[col].convert<std::string>();
+						}
 					}
 					if (col < (cols - 1))
 					{
 						result += ", ";
 					}
 				}
-
 				more = rs.moveNext();
 				if (more)
 				{
@@ -82,16 +100,51 @@ std::string DB_RAW::callProtocol(AbstractExt *extension, std::string input_str)
 			}
 		}
 		result += "]";
-		return result;
+		#ifdef TESTING
+			std::cout << "extDB: DEBUG INFO: RESULT:" + result << std::endl;
+		#endif
+		#ifdef LOGGING
+			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << " DB_RAW: RESULT:" + result;
+		#endif
 	}
-    catch (Poco::Exception& e)
+	catch (Poco::Data::MySQL::ConnectionException& e)
+	{
+		#ifdef TESTING
+			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+		#endif 
+		#ifdef LOGGING
+			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Connection Exception: " << e.displayText();
+		#endif
+		result = "[0,\"Error Connection Exception\"]";
+	}
+	catch(Poco::Data::MySQL::StatementException& e)
+	{
+		#ifdef TESTING
+			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+		#endif 
+		#ifdef LOGGING
+			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Statement Exception: " << e.displayText();
+		#endif
+		result = "[0,\"Error Statement Exception\"]";
+	}
+	catch (Poco::Data::DataException& e)
     {
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
 		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Error: " + e.displayText();
+			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Data Exception: " << e.displayText();
 		#endif
-        return "[0,\"Error\"]";
+        result = "[0,\"Error Data Exception\"]";
     }
+    catch (Poco::Exception& e)
+	{
+		#ifdef TESTING
+			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+		#endif 
+		#ifdef LOGGING
+			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Exception: " << e.displayText();
+		#endif
+		result = "[0,\"Error Exception\"]";
+	}
 }

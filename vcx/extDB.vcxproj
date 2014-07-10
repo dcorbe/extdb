@@ -133,12 +133,15 @@
       <CallingConvention>Cdecl</CallingConvention>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <CompileAsManaged>false</CompileAsManaged>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ErrorReporting>None</ErrorReporting>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalDependencies>mysqlclient.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Version>0</Version>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
     </Link>
     <ProjectReference>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
@@ -154,6 +157,7 @@
     <ClInclude Include="..\src\protocols\abstract_ext.h" />
     <ClInclude Include="..\src\protocols\abstract_protocol.h" />
     <ClInclude Include="..\src\protocols\db_basic.h" />
+    <ClInclude Include="..\src\protocols\db_procedure.h" />
     <ClInclude Include="..\src\protocols\db_raw.h" />
     <ClInclude Include="..\src\protocols\misc.h" />
     <ClInclude Include="..\src\sanitize.h" />
@@ -165,6 +169,7 @@
     <ClCompile Include="..\src\memory_allocator.cpp" />
     <ClCompile Include="..\src\protocols\abstract_protocol.cpp" />
     <ClCompile Include="..\src\protocols\db_basic.cpp" />
+    <ClCompile Include="..\src\protocols\db_procedure.cpp" />
     <ClCompile Include="..\src\protocols\db_raw.cpp" />
     <ClCompile Include="..\src\protocols\misc.cpp" />
     <ClCompile Include="..\src\sanitize.cpp" />

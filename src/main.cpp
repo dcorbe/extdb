@@ -2,6 +2,7 @@
 #include <cstring>
 #include <iostream>
 
+
 #include "ext.h"
 
 namespace {
@@ -9,10 +10,17 @@ namespace {
 };
 
 #ifdef __GNUC__
+	//#include <dlfcn.h>
+	//#include <stdio.h>
 	// Code for GNU C compiler
 	static void __attribute__((constructor))
 	extension_init(void)
 	{
+/*
+		Dl_info dl_info;
+		dladdr((void*)extension_init, &dl_info);
+		std::cout << "extDB: " << dl_info.dli_fname << std::endl;
+*/
 		extension = (new Ext());
 	}
 
@@ -43,6 +51,8 @@ namespace {
 		switch (ul_reason_for_call)
 		{
 		case DLL_PROCESS_ATTACH:
+			//TCHAR path[MAX_PATH+1];
+			//GetModuleFileName(hInstance, path, size(path));
 			extension = (new Ext());
 			break;
 		case DLL_THREAD_ATTACH:
@@ -66,8 +76,4 @@ namespace {
 		outputSize -= 1;
 		extension->callExtenion(output,outputSize,function);
 	};
-
-#elif __MINGW32__
-// Code for MINGW32 compiler
-// Someone figure this out thanks...
 #endif

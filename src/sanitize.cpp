@@ -87,7 +87,7 @@ namespace Sqf
 }
 
 
-#ifdef TESTING3
+#ifdef TESTSANITIZE
 int main(int nNumberofArgs, char* pszArgs[])
 {
 	//SqfValueParser test_parser;

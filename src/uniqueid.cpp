@@ -7,6 +7,7 @@
 IdManager::IdManager()
 {
 	free_.insert(id_interval(1, std::numeric_limits<int>::max()));
+//	free_.insert(id_interval(seed_number, seed_number + 32768));
 }
 
 int IdManager::AllocateId()

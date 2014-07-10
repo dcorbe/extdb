@@ -1,6 +1,14 @@
-3 = Fixed DB_RAW support for multiple Rows
-	Enabled Auto-Reconnect for MYSQL
-2 = Fixed MYSQL ODBC Database connection
-1 = Fixed get charuid in DB_BASIC,
-	Added missing Other Column to Player Info table	
-0 = Initial Release
+10 = Enabled TBB, String Reserved Length to help prevent bad_alloc
+9  = Disabled TBB
+8  = Procedure Support via DB_PROCEDURE(sanitized input), 
+	 Added DB_RAW trace logging returned results
+7  = Changed back to Poco 1.4
+6  = Log Flushing
+5  = Basic Logging Added
+4  = Changed to Poco 1.5, Procedure Support now available via DB_RAW
+3  = Fixed DB_RAW support for multiple Rows
+	 Enabled Auto-Reconnect for MYSQL
+2  = Fixed MYSQL ODBC Database connection
+1  = Fixed get charuid in DB_BASIC,
+	 Added missing Other Column to Player Info table	
+0  = Initial Release

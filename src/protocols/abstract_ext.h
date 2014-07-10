@@ -34,4 +34,6 @@ class AbstractExt
 		
 		virtual void freeUniqueID_mutexlock(const int &unique_id)=0;
 		virtual int getUniqueID_mutexlock()=0;
+		
+		virtual std::string getDBType()=0;
 };

@@ -204,9 +204,8 @@ Save		0-		2
 //setValue(table, uid, type, value)
 //getValue(table, uid, type, value)
 
-std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str)
+void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
-	std::string result;
 	if (input_str.length() <= 4)
 	{
 		result = "[0,\"Error Message to Short\"]";
@@ -341,5 +340,4 @@ std::string DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str
 			}
 		}
 	}
-	return result;
 }

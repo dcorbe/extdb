@@ -17,17 +17,22 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "ext.h"
 
+#include <Poco/Data/SessionPool.h>
 #include "Poco/Data/MySQL/Connector.h"
 #include "Poco/Data/MySQL/MySQLException.h"
-
 #include "Poco/Data/SQLite/Connector.h"
 #include "Poco/Data/SQLite/SQLiteException.h"
-
 #include "Poco/Data/SQLite/Connector.h"
 #include "Poco/Data/SQLite/SQLiteException.h"
-
 #include "Poco/Data/ODBC/Connector.h"
 #include "Poco/Data/ODBC/ODBCException.h"
+
+#include <Poco/DateTime.h>
+#include <Poco/DateTimeFormatter.h>
+#include <Poco/Exception.h>
+#include <Poco/NumberFormatter.h>
+#include <Poco/NumberParser.h>
+#include <Poco/Util/IniFileConfiguration.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -35,6 +40,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/filesystem.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/random/random_device.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/regex.hpp>
+
 
 #ifdef LOGGING
 	#include <boost/log/core.hpp>
@@ -45,29 +54,26 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 	#include <boost/log/sources/record_ostream.hpp>
 #endif
 
-#include <Poco/Data/SessionPool.h>
-#include <Poco/Exception.h>
-#include <Poco/NumberFormatter.h>
-#include <Poco/NumberParser.h>
-#include <Poco/Util/IniFileConfiguration.h>
-
-#include <Poco/DateTime.h>
-#include <Poco/DateTimeFormatter.h>
-
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <iterator>
+
 
 #include "uniqueid.h"
 
 #include "protocols/abstract_protocol.h"
 #include "protocols/db_basic.h"
+#include "protocols/db_procedure.h"
 #include "protocols/db_raw.h"
 #include "protocols/misc.h"
 
 
 
 Ext::Ext(void) {
+	mgr.reset (new IdManager);
+	extDB_lock = false;
+
 	#ifdef LOGGING
 		Poco::DateTime now;
 		std::string log_file_name = boost::filesystem::path("extDB/logs/" + Poco::DateTimeFormatter::format(now, "%Y/%n%/%d-Time-%H-%M-%S.log")).make_preferred().string();
@@ -87,38 +93,59 @@ Ext::Ext(void) {
 		);
 	#endif
 
-	mgr.reset (new IdManager);
-    extDB_lock = false;
+	bool conf_found = false;
+	bool conf_randomized = false;
     if ( !boost::filesystem::exists( "extdb-conf.ini" ))
     {
+		// Search for Randomize Config File -- Legacy Security Support For Arma2Servers
+			// TODO: WINDOWS ONLY ifdef endif
+        boost::regex expression("extdb-conf.*ini");
+        for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
+        {
+			if (is_regular_file(it->path()))
+			{
+				if(boost::regex_search(it->path().string(), expression))
+				{
+					conf_found = true;
+					conf_randomized = true;
+					pConf = (new Poco::Util::IniFileConfiguration(it->path().string()));  // Load Randomized Conf
+					break;
+				}
+			}
+		}
+    }
+    else
+    {
+		conf_found = true;
+		pConf = (new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
+	}
+	
+	if (!conf_found) 
+	{
 		#ifdef TESTING
 			std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;
 		#endif
 		#ifdef LOGGING
 			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "Unable to find extdb-conf.ini";
 		#endif
+		// Kill Server no config file found -- Evil
+		// TODO: See if we can extension limp along with bad config ?
         std::exit(EXIT_FAILURE);
-    }
-    else
-    {
+	}
+	else
+	{
+		
 		#ifdef TESTING
-			std::cout << "extDB: Loading extdb-conf.ini" << std::endl;
+			std::cout << "extDB: Found extdb-conf.ini" << std::endl;
 		#endif
 		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Loading extdb-conf.ini";
+			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Found extdb-conf.ini";
 		#endif
 
-		pConf = (new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
-
-		#ifdef TESTING
-			std::cout << "extDB: Loaded extdb-conf.ini" << std::endl;
-		#endif
-		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Loaded extdb-conf.ini";
-		#endif
-
-        max_threads = pConf->getInt("Main.Threads", 0);
 		steam_api_key = pConf->getString("Main.Steam_WEB_API_KEY", "");
+
+		// Start Threads + ASIO
+		max_threads = pConf->getInt("Main.Threads", 0);
         if (max_threads <= 0)
         {
             max_threads = boost::thread::hardware_concurrency();
@@ -135,6 +162,7 @@ Ext::Ext(void) {
 			#endif
         }
 
+		// Load Logging Filter Options
 		#ifdef LOGGING
 			#ifdef TESTING
 				std::cout << "extDB: Loading Log Settings" << std::endl;
@@ -155,6 +183,24 @@ Ext::Ext(void) {
 		#ifdef LOGGING
 //			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Loading Rcon Settings";
 		#endif
+		
+		
+		if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
+		// Only Gonna Randomize Once, Keeps things Simple
+		{
+			std::string chars("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+							  "1234567890");
+			// Skipping Lowercase, this function only for arma2 + extensions only available on windows.
+			boost::random::random_device rng;
+			boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
+			
+			std::string randomized_filename = "extdb-conf-";
+			for(int i = 0; i < 8; ++i) {
+					randomized_filename += chars[index_dist(rng)];
+				}
+			randomized_filename += ".ini";
+			boost::filesystem::rename("extdb-conf.ini", randomized_filename);
+		}
     }
 }
 
@@ -182,9 +228,6 @@ void Ext::stop()
     else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
         Poco::Data::SQLite::Connector::unregisterConnector();
 
-	#ifdef TESTING
-		std::cout << "extDB: Stopped" << std::endl;
-	#endif
 	#ifdef LOGGING
 		BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Stopped";
 		boost::log::core::get()->remove_all_sinks();
@@ -275,6 +318,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
             }
             else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
             {
+				db_conn_info.db_type = "SQLite";
                 Poco::Data::SQLite::Connector::registerConnector();
                 db_conn_info.connection_str = db_name;
 
@@ -342,7 +386,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "7";
+    return "10";
 }
 
 
@@ -368,9 +412,9 @@ void Ext::freeUniqueID_mutexlock(const int &unique_id)
 Poco::Data::Session Ext::getDBSession_mutexlock()
 // Gets available DB Session (mutex lock)
 {
-	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
 	try
 	{
+		boost::lock_guard<boost::mutex> lock(mutex_db_pool);
 		return db_pool->get();
 	}
 	catch (Poco::Data::SessionPoolExhaustedException&)
@@ -381,46 +425,49 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 	}
 }
 
+std::string Ext::getDBType()
+{
+	return db_conn_info.db_type;
+}
+
 void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &output_size)
 // Gets Result String from unordered map array
 //   If length of String = 0, sends arma "", and removes entry from unordered map array
 //   If <=, then sends output to arma
 //   If >, then sends 1 part to arma + stores rest.
 {
-    {
-        boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results); // TODO Try to make Mutex Lock smaller
-        boost::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
-        if (it == unordered_map_results.end()) // NO UNIQUE ID or WAIT
-        {
-            if (unordered_map_wait.count(unique_id) == 0)
-            {
-                std::strcpy(output, (""));
-            }
-            else
-            {
-                std::strcpy(output, ("[3]"));
-            }
-        }
-        else if (it->second.empty()) // END of MSG
-        {
-            unordered_map_results.erase(unique_id);
-            freeUniqueID_mutexlock(unique_id);
-            std::strcpy(output, (""));
-        }
-        else // SEND MSG (Part)
-        {
-            std::string msg = it->second.substr(0, output_size-9);
-            std::strcpy(output, msg.c_str());
-            if (it->second.length() >= (output_size-8))
-            {
-                unordered_map_results[unique_id] = it->second.substr(output_size-9);
-            }
-            else
-            {
-                unordered_map_results[unique_id] = std::string("");
-            }
-        }
-    }
+	boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results); // TODO Try to make Mutex Lock smaller
+	boost::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
+	if (it == unordered_map_results.end()) // NO UNIQUE ID or WAIT
+	{
+		if (unordered_map_wait.count(unique_id) == 0)
+		{
+			std::strcpy(output, (""));
+		}
+		else
+		{
+			std::strcpy(output, ("[3]"));
+		}
+	}
+	else if (it->second.empty()) // END of MSG
+	{
+		unordered_map_results.erase(unique_id);
+		freeUniqueID_mutexlock(unique_id);
+		std::strcpy(output, (""));
+	}
+	else // SEND MSG (Part)
+	{
+		std::string msg = it->second.substr(0, output_size-9);
+		std::strcpy(output, msg.c_str());
+		if (it->second.length() > (output_size-9))
+		{
+			unordered_map_results[unique_id] = it->second.substr(output_size-9);
+		}
+		else
+		{
+			unordered_map_results[unique_id].clear();
+		}
+	}
 }
 
 
@@ -444,20 +491,58 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		if (boost::iequals(protocol, std::string("MISC")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC());
-			unordered_map_protocol[protocol_name].get()->init(this);
-			std::strcpy(output, "[1]");
+			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_BASIC")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_BASIC());
-			unordered_map_protocol[protocol_name].get()->init(this);
-			std::strcpy(output, "[1]");
+			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
+		}
+		else if (boost::iequals(protocol, std::string("DB_PROCEDURE")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE());
+			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW());
-			unordered_map_protocol[protocol_name].get()->init(this);
-			std::strcpy(output, "[1]");
+			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
 		}
 		else
 		{
@@ -467,7 +552,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 }
 
 
-void Ext::syncCallProtocol(char *output, const int &output_size, const std::string protocol, const std::string data)
+void Ext::syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data)
 // Sync callPlugin
 {
     if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
@@ -479,7 +564,9 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 		// Checks if Result String will fit into arma output char
 		//   If <=, then sends output to arma
 		//   if >, then sends ID Message arma + stores rest. (mutex locks)
-        std::string result = (unordered_map_protocol[protocol].get()->callProtocol(this, data));
+		std::string result;
+		result.reserve(2000);
+        unordered_map_protocol[protocol].get()->callProtocol(this, data, result);
 		if (result.length() <= (output_size-9))
 		{
 			std::strcpy(output, ("[1, " + result + "]").c_str());
@@ -498,7 +585,9 @@ void Ext::onewayCallProtocol(const std::string protocol, const std::string data)
 {
     if (unordered_map_protocol.find(protocol) != unordered_map_protocol.end())
     {
-        unordered_map_protocol[protocol].get()->callProtocol(this, data);
+		std::string result;
+		result.reserve(2000);
+        unordered_map_protocol[protocol].get()->callProtocol(this, data, result);
     }
 }
 
@@ -513,7 +602,10 @@ void Ext::asyncCallProtocol(const std::string protocol, const std::string data, 
     }
     else
     {
-        saveResult_mutexlock((unordered_map_protocol[protocol].get()->callProtocol(this, data)), unique_id);
+		std::string result;
+		result.reserve(2000);
+		unordered_map_protocol[protocol].get()->callProtocol(this, data, result);
+        saveResult_mutexlock(result, unique_id);
     }
 }
 
@@ -522,6 +614,9 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 {
     try
     {
+		#ifdef LOGGING
+			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Extension Input from Server: " << function;
+		#endif
 		const std::string input_str(function);
 		if (input_str.length() <= 2)
 		{
@@ -579,7 +674,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					{
 						const std::string protocol = input_str.substr(2,(found-2));
 						// Data
-						std::string data = input_str.substr(found+1);
+						const std::string data = input_str.substr(found+1);
 						io_service.post(boost::bind(&Ext::onewayCallProtocol, this, protocol, data));
 						std::strcpy(output, "[1]");
 					}
@@ -598,7 +693,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					{
 						const std::string protocol = input_str.substr(2,(found-2));
 						// Data
-						std::string data = input_str.substr(found+1);
+						const std::string data = input_str.substr(found+1);
 						syncCallProtocol(output, output_size, protocol, data);
 					}
 					break;
@@ -610,6 +705,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						// Protocol
 						std::string::size_type found = input_str.find(sep_char,2);
 						std::string command;
+						command.reserve(100);
 						std::string data;
 						if (found==std::string::npos)  // Check Invalid Format
 						{

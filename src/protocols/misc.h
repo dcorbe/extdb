@@ -41,7 +41,7 @@ class MISC: public AbstractProtocol
 			return "Plugin_MISC";
 		}
 
-		std::string callProtocol(AbstractExt *extension, std::string input_str);
+		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 
 		//Poco::Checksum checksum_adler32;
 		//boost::mutex mutex_checksum_adler32;

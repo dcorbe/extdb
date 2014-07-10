@@ -88,14 +88,13 @@ void MISC::getMD5(std::string &input_str, std::string &result)
 	result = ("\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"");
 }
 
-std::string MISC::callProtocol(AbstractExt *extension, std::string input_str)
+void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
 	// Protocol
 	const std::string sep_char(":");
 
 	std::string command;
 	std::string data;
-	std::string result;
 
 	const std::string::size_type found = input_str.find(sep_char);
 
@@ -146,5 +145,4 @@ std::string MISC::callProtocol(AbstractExt *extension, std::string input_str)
 	{
 		result = ("[false,\"Error Invalid Command\"]");
 	}
-	return result;
 }

@@ -32,7 +32,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class DB_BASIC: public AbstractProtocol
 {
 	public:
-		std::string callProtocol(AbstractExt *extension, std::string input_str);
+		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 		
 	private:
 		bool isNumber(std::string &input_str);
