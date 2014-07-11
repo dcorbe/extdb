@@ -11,6 +11,7 @@ project(extDB-Logging)
 
 
 SET(SOURCES
+	../../src/memory_allocator.cpp
 	../../src/main.cpp
 	../../src/ext.cpp
 	../../src/uniqueid.cpp
@@ -85,20 +86,20 @@ else()
 	message(STATUS "Compiler does not support C++11") 
 endif()
 
+if (DEFINED INTEL_TBB_INCLUDE_DIR)
+	# TODO: Look For Intel TBB
+	include_directories(${INTEL_TBB_INCLUDE_DIR})
+	LINK_DIRECTORIES(${INTEL_TBB_LIB_DIR})
+else()
+	message(FATAL_ERROR "\nIntel TBB not found")
+endif (DEFINED INTEL_TBB_INCLUDE_DIR)
 
-
-# Install target
-#install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
-
-#TODO:
-#Copy over license, documentation, etc. to install location
 
 # Define sources and executable
 add_library (extDB SHARED ${SOURCES})
-##target_link_libraries(extDB ${Boost_LIBRARIES})
-#target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
 target_link_libraries(extDB ${ODBC_LIBRARY})
 target_link_libraries(extDB ${MYSQL_LIBRARY})
+target_link_libraries(${EXECUTABLE_NAME} ${INTEL_TBB_MALLOC_LIBRARY})
 
 add_definitions(-DLOGGING)
 if(${WIN32})
