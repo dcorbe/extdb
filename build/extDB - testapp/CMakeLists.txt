@@ -7,8 +7,9 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE
    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/c_flag_overrides.cmake)
 set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cxx_flag_overrides.cmake)
-project(extDB)
+project(extDB-Testapp)
 
+set(EXECUTABLE_NAME "extDB-test")
 
 SET(SOURCES
 	../../src/ext.cpp
@@ -93,11 +94,11 @@ endif()
 #Copy over license, documentation, etc. to install location
 
 # Define sources and executable
-add_library (extDB SHARED ${SOURCES})
 ##target_link_libraries(extDB ${Boost_LIBRARIES})
 #target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
-target_link_libraries(extDB ${ODBC_LIBRARY})
-target_link_libraries(extDB ${MYSQL_LIBRARY})
+add_executable(${EXECUTABLE_NAME} ${SOURCES})
+target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
+target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
 
 add_definitions(-DLOGGING)
 
@@ -108,5 +109,5 @@ if(${WIN32})
 	add_definitions(-D _WIN32_WINNT=0x0501)
 	add_definitions(-D POCO_NO_UNWINDOWS)
 	add_definitions(-DUNICODE -D_UNICODE)
-	SET_TARGET_PROPERTIES(extDB PROPERTIES LINK_FLAGS " /MANIFEST:NO /ERRORREPORT:NONE")
+	SET_TARGET_PROPERTIES(${EXECUTABLE_NAME} PROPERTIES LINK_FLAGS " /MANIFEST:NO /ERRORREPORT:NONE")
 endif()
