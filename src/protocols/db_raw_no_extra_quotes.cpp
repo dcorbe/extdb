@@ -17,10 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-#include "db_raw.h"
+#include "db_raw_no_extra_quotes.h"
 
 #include <Poco/Data/Common.h>
-#include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/Session.h>
 #include <Poco/Exception.h>
@@ -38,7 +37,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 
 
-void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void DB_RAW_NO_EXTRA_QUOTES::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
     try
     {
@@ -64,23 +63,9 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
 				result += " [";
 				for (std::size_t col = 0; col < cols; ++col)
 				{
-					if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+					if (!rs[col].isEmpty())
 					{
-						if (!rs[col].isEmpty())
-						{
-							result += "\"" + (rs[col].convert<std::string>() + "\"");
-						}
-						else
-						{
-							result += ("\"\"");
-						}
-					}
-					else
-					{
-						if (!rs[col].isEmpty())
-						{
-							result += rs[col].convert<std::string>();
-						}
+						result += rs[col].convert<std::string>();
 					}
 					if (col < (cols - 1))
 					{

@@ -20,6 +20,7 @@ SET(SOURCES
 	../../src/protocols/db_procedure.cpp
 	../../src/protocols/db_basic.cpp
 	../../src/protocols/db_raw.cpp
+	../../src/protocols/db_raw_no_extra_quotes.cpp
 	../../src/protocols/misc.cpp
 )
 

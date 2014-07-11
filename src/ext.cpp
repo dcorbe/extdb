@@ -66,6 +66,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/db_basic.h"
 #include "protocols/db_procedure.h"
 #include "protocols/db_raw.h"
+#include "protocols/db_raw_no_extra_quotes.h"
 #include "protocols/misc.h"
 
 
@@ -287,7 +288,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
                 std::string port = pConf->getString(conf_option + ".Port");
 
 				db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
-				// TODO Add compress option via config file 
+				// TODO Add compress option via config file
 
                 db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
 															db_conn_info.connection_str, 
@@ -531,6 +532,20 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("DB_RAW")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW());
+			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
+		}
+		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_NO_EXTRA_QUOTES());
 			if (!unordered_map_protocol[protocol_name].get()->init(this))
 			// Remove Class Instance if Failed to Load
 			{
