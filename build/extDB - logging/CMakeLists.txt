@@ -7,21 +7,21 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE
    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/c_flag_overrides.cmake)
 set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cxx_flag_overrides.cmake)
-project(extDB)
+project(extDB-Logging)
 
-# Define sources and executable
-set(EXECUTABLE_NAME "extDB")
 
 SET(SOURCES
-	src/main.cpp
-	src/ext.cpp
-	src/uniqueid.cpp
-	src/sanitize.cpp
-	src/protocols/abstract_protocol.cpp
-	src/protocols/db_procedure.cpp
-	src/protocols/db_basic.cpp
-	src/protocols/db_raw.cpp
-	src/protocols/misc.cpp
+	../../src/memory_allocator.cpp
+	../../src/main.cpp
+	../../src/ext.cpp
+	../../src/uniqueid.cpp
+	../../src/sanitize.cpp
+	../../src/protocols/abstract_protocol.cpp
+	../../src/protocols/db_procedure.cpp
+	../../src/protocols/db_basic.cpp
+	../../src/protocols/db_raw.cpp
+	../../src/protocols/db_raw_no_extra_quotes.cpp
+	../../src/protocols/misc.cpp
 )
 
 set(CMAKE_SUPPRESS_REGENERATION 1)
@@ -33,18 +33,13 @@ INTERNAL FORCE )
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 # Look for BOOST
-find_package(Boost REQUIRED COMPONENTS filesystem system thread)
+find_package(Boost REQUIRED COMPONENTS filesystem random regex system thread)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
 	LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
 else()
 	message(FATAL_ERROR "\nBOOST not found\n Please Set BOOST_ROOT & BOOST_LIBRARYDIR")
 endif()
-
-#if(${WIN32})
-	add_definitions(-D _WIN32_WINNT=0x0501)
-	add_definitions(-D POCO_NO_UNWINDOWS)
-#endif()
 
 # Look For POCO
 include(FindPOCO)
@@ -55,9 +50,10 @@ else()
 	message(FATAL_ERROR "\nPOCO not found\n Please Set POCO_ROOT")
 endif()
 
+
 IF(DEFINED POCO_LIBRARYDIR)
 	LINK_DIRECTORIES(${POCO_LIBRARYDIR})
-else()
+else()	
 	message(FATAL_ERROR "\nPOCO_LIBRARYDIR not found")
 endif()
 
@@ -65,9 +61,18 @@ endif()
 include(FindMySQL)
 if(MYSQL_FOUND)
 	include_directories(${MYSQL_INCLUDE_DIR})
-	LINK_DIRECTORIES(${MYSQL_LIBRARY})
+	LINK_DIRECTORIES(${MYSQL_LIB_DIR})
 else()
 	message(FATAL_ERROR "\nMYSQL not found")
+endif()
+
+# Look for ODBC
+include(FindODBC)
+if(MYSQL_FOUND)
+	include_directories(${ODBC_INCLUDE_DIR})
+	LINK_DIRECTORIES(${ODBC_LIB_DIR})
+else()
+	message(FATAL_ERROR "\nODBC not found")
 endif()
 
 
@@ -82,15 +87,25 @@ else()
 	message(STATUS "Compiler does not support C++11") 
 endif()
 
+if (DEFINED INTEL_TBB_INCLUDE_DIR)
+	# TODO: Look For Intel TBB
+	include_directories(${INTEL_TBB_INCLUDE_DIR})
+	LINK_DIRECTORIES(${INTEL_TBB_LIB_DIR})
+else()
+	message(FATAL_ERROR "\nIntel TBB not found")
+endif (DEFINED INTEL_TBB_INCLUDE_DIR)
 
 
-# Install target
-#install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
+# Define sources and executable
+add_library (extDB SHARED ${SOURCES})
+target_link_libraries(extDB ${ODBC_LIBRARY})
+target_link_libraries(extDB ${MYSQL_LIBRARY})
+target_link_libraries(${EXECUTABLE_NAME} ${INTEL_TBB_MALLOC_LIBRARY})
 
-#TODO:
-#Copy over license, documentation, etc. to install location
-
-add_executable(${EXECUTABLE_NAME} ${SOURCES})
-target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
-#target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
-target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
+add_definitions(-DLOGGING)
+if(${WIN32})
+	add_definitions(-D _WIN32_WINNT=0x0501)
+	add_definitions(-D POCO_NO_UNWINDOWS)
+	add_definitions(-DUNICODE -D_UNICODE)
+	SET_TARGET_PROPERTIES(extDB PROPERTIES LINK_FLAGS " /MANIFEST:NO /ERRORREPORT:NONE")
+endif()
