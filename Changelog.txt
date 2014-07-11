@@ -1,3 +1,5 @@
+11 = Randomized Unique ID starting Number, also made smaller range.
+     DB_RAW_NO_EXTRA_QUOTES, New CMake Build System for Windows Source Compile   
 10 = Enabled TBB, String Reserved Length to help prevent bad_alloc
 9  = Disabled TBB
 8  = Procedure Support via DB_PROCEDURE(sanitized input), 
