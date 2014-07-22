@@ -5,7 +5,7 @@ FILES := src/ext.cpp src/uniqueid.cpp src/sanitize.cpp src/protocols/*.cpp
 
 
 extdb:
-	$(COMPILER) $(CFLAGS) -shared -o extDB.so $(FILES) src/main.cpp $(LIBRARYS) -DTESTING
+	$(COMPILER) $(CFLAGS) -shared -o extDB.so $(FILES) src/main.cpp $(LIBRARYS)
 
 extdb-logging:
 	$(COMPILER) $(CFLAGS) -g -shared -o extDB.so $(FILES) src/main.cpp -DLOGGING -DBOOST_LOG_DYN_LINK $(LIBRARYS) -lboost_log -lboost_log_setup -lpthread
