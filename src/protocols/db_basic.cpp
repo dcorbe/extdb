@@ -34,6 +34,28 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "../sanitize.h"
 
+
+bool DB_BASIC::init(AbstractExt *extension)
+{
+	if (extension->getDBType() == std::string("MySQL"))
+	{
+		return true;
+	}
+	else if (extension->getDBType() == std::string("ODBC"))
+	{
+		return true;
+	}
+	else if (extension->getDBType() == std::string("SQLite"))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
 bool DB_BASIC::isNumber(std::string &input_str)
 {
 	bool status = true;

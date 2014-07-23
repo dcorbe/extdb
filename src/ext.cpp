@@ -69,6 +69,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/db_raw_no_extra_quotes.h"
 #include "protocols/misc.h"
 
+#include <stdexcept>
+
 
 
 Ext::Ext(void) {
@@ -86,7 +88,7 @@ Ext::Ext(void) {
 		(
 			boost::log::keywords::auto_flush = true, 
 			boost::log::keywords::file_name = log_file_name,
-			boost::log::keywords::format = "[%TimeStamp%]: extdb: %Message%"
+			boost::log::keywords::format = "[%TimeStamp%]: extDB: %Message%"
 		);
 		boost::log::core::get()->set_filter
 		(
@@ -261,7 +263,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
             db_conn_info.idle_time = pConf->getInt(conf_option + ".idleTime");
 
 			#ifdef TESTING
-				std::cout << "extdb: Database Type: " << db_conn_info.db_type << std::endl;
+				std::cout << "extDB: Database Type: " << db_conn_info.db_type << std::endl;
 			#endif
 			#ifdef LOGGING
 				BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Database Type: " << db_conn_info.db_type;
@@ -280,7 +282,6 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
                     Poco::Data::ODBC::Connector::registerConnector();
 				}
 
-				
                 std::string username = pConf->getString(conf_option + ".Username");
                 std::string password = pConf->getString(conf_option + ".Password");
 
@@ -299,7 +300,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
                 if (db_pool->get().isConnected())
                 {
 					#ifdef TESTING
-						std::cout << "extdb: Database Session Pool Started" << std::endl;
+						std::cout << "extDB: Database Session Pool Started" << std::endl;
 					#endif
 					#ifdef LOGGING
 						BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Database Session Pool Started";
@@ -309,7 +310,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
                 else
                 {
 					#ifdef TESTING
-						std::cout << "extdb: Database Session Pool Failed" << std::endl;
+						std::cout << "extDB: Database Session Pool Failed" << std::endl;
 					#endif
 					#ifdef LOGGING
 						BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "Database Session Pool Failed";
@@ -332,7 +333,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
                 if (db_pool->get().isConnected())
                 {
 					#ifdef TESTING
-						std::cout << "extdb: Database Session Pool Started" << std::endl;
+						std::cout << "extDB: Database Session Pool Started" << std::endl;
 					#endif 
 					#ifdef LOGGING
 						BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Database Session Pool Started";
@@ -342,7 +343,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
                 else
                 {
 					#ifdef TESTING
-						std::cout << "extdb: Database Session Pool Failed" << std::endl;
+						std::cout << "extDB: Database Session Pool Failed" << std::endl;
 					#endif 
 					#ifdef LOGGING
 						BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "Database Session Pool Failed";
@@ -353,7 +354,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
             else
             {
 				#ifdef TESTING
-					std::cout << "extdb: No Database Engine Found for " << db_name << "." << std::endl;
+					std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
 				#endif 
 				#ifdef LOGGING
 					BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "No Database Engine Found for " << db_name << ".";
@@ -364,7 +365,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
         else
         {
 			#ifdef TESTING
-				std::cout << "extdb: No Config Option Found: " << conf_option << "." << std::endl;
+				std::cout << "extDB: WARNING No Config Option Found: " << conf_option << "." << std::endl;
 			#endif 
 			#ifdef LOGGING
 				BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "No Config Option Found: " << conf_option << ".";
@@ -375,7 +376,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
     catch (Poco::Exception& e)
     {
 		#ifdef TESTING
-			std::cout << "extdb: Database Setup Failed: " << e.displayText() << std::endl;
+			std::cout << "extDB: Database Setup Failed: " << e.displayText() << std::endl;
 		#endif 
 		#ifdef LOGGING
 			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "Database Setup Failed: " << e.displayText();
@@ -490,15 +491,15 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		if (boost::iequals(protocol, std::string("MISC")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC());
-			if (!unordered_map_protocol[protocol_name].get()->init(this))
-			// Remove Class Instance if Failed to Load
+			if (unordered_map_protocol[protocol_name].get()->init(this))
 			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				std::strcpy(output, "[1]");
 			}
 			else
 			{
-				std::strcpy(output, "[1]");
+				// Remove Class Instance if Failed to Load
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_BASIC")) == 1)
@@ -784,6 +785,16 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Error: " << e.displayText();
 		#endif
     }
+	catch (const std::out_of_range& e)
+	{
+		#ifdef TESTING
+			std::cout << "extDB: Out of Range error: " << e.what() << std::endl;
+		#endif
+		#ifdef LOGGING
+			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Out of Range error: " << e.what() << std::endl;
+		#endif
+		std::strcpy(output, ("[0,\"Error Out of Range error\"]"));
+	}
 }
 
 #ifdef TESTAPP

@@ -38,6 +38,27 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 
 
+
+bool DB_RAW::init(AbstractExt *extension)
+{
+	if (extension->getDBType() == std::string("MySQL"))
+	{
+		return true;
+	}
+	else if (extension->getDBType() == std::string("ODBC"))
+	{
+		return true;
+	}
+	else if (extension->getDBType() == std::string("SQLite"))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
     try
@@ -46,7 +67,7 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
 			std::cout << "extDB: DEBUG INFO: " + input_str << std::endl;
 		#endif
 		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << " DB_RAW: " + input_str;
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << " DB_RAW: " + input_str;
 		#endif
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 		Poco::Data::Statement sql(db_session);
@@ -103,7 +124,7 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
 			std::cout << "extDB: DEBUG INFO: RESULT:" + result << std::endl;
 		#endif
 		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << " DB_RAW: RESULT:" + result;
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << " DB_RAW: RESULT:" + result;
 		#endif
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
@@ -112,7 +133,7 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
 		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Connection Exception: " << e.displayText();
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << " DB_RAW: Connection Exception: " << e.displayText();
 		#endif
 		result = "[0,\"Error Connection Exception\"]";
 	}
@@ -122,7 +143,7 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
 		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Statement Exception: " << e.displayText();
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << " DB_RAW: Statement Exception: " << e.displayText();
 		#endif
 		result = "[0,\"Error Statement Exception\"]";
 	}
@@ -132,7 +153,7 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
 		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Data Exception: " << e.displayText();
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << " DB_RAW: Data Exception: " << e.displayText();
 		#endif
         result = "[0,\"Error Data Exception\"]";
     }
@@ -142,7 +163,7 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
 		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Exception: " << e.displayText();
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << " DB_RAW: Exception: " << e.displayText();
 		#endif
 		result = "[0,\"Error Exception\"]";
 	}
