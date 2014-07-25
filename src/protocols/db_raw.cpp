@@ -55,6 +55,11 @@ bool DB_RAW::init(AbstractExt *extension)
 	}
 	else
 	{
+		// DATABASE NOT SETUP YET or SQLITE Doesn't Support Procedures
+		#ifdef TESTING
+			std::cout << "extDB: DB_RAW: No Database Connection" << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW: No Database Connection";
 		return false;
 	}
 }
@@ -64,7 +69,7 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
     try
     {
 		#ifdef TESTING
-			std::cout << "extDB: DEBUG INFO: " + input_str << std::endl;
+			std::cout << "extDB: DB_RAW: DEBUG INFO: " + input_str << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
 			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW: " + input_str;

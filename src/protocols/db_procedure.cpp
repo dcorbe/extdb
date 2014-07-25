@@ -45,7 +45,7 @@ bool DB_PROCEDURE::init(AbstractExt *extension)
 	{
 		// DATABASE NOT SETUP YET or SQLITE Doesn't Support Procedures
 		#ifdef TESTING
-			std::cout << "DB_PROCEDURE: Doesn't Support SQLite" << std::endl;
+			std::cout << "extDB: DB_PROCEDURE: Doesn't Support SQLite" << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE: Doesn't Support SQLite";
 		return false;

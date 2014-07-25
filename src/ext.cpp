@@ -149,7 +149,7 @@ Ext::Ext(void) {
         {
             threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
 			#ifdef TESTING
-				std::cout << "+1 Thread" << std::endl ;
+				std::cout << "extDB: Creating Worker Thread +1" << std::endl ;
 			#endif
 			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Creating Worker Thread +1";
         }
@@ -524,14 +524,9 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			}
 		}
 		else if (boost::iequals(protocol, std::string("LOG")) == 1)
-		{
-			const std::string::size_type found = protocol_name.find(":");
-			logname = input_str.substr(2,(found-2));
-			data = input_str.substr(found+1);
-			data.substr(found+1)
-			
+		{			
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC_LOG());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, std::string("omg")))
+			if (!unordered_map_protocol[protocol_name].get()->init(this))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);

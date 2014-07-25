@@ -23,4 +23,5 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 void MISC_LOG::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
 	BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << input_str;
+	result = "[1]";
 }
