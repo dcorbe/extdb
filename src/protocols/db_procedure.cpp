@@ -45,11 +45,9 @@ bool DB_PROCEDURE::init(AbstractExt *extension)
 	{
 		// DATABASE NOT SETUP YET or SQLITE Doesn't Support Procedures
 		#ifdef TESTING
-			std::cout << "extDB: DEBUG INFO: " + input_str << std::endl;
+			std::cout << "DB_PROCEDURE: Doesn't Support SQLite" << std::endl;
 		#endif
-		#ifdef LOGGING
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << " DB_PROCEDURE: Doesn't Support SQLite" + input_str;
-		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE: Doesn't Support SQLite";
 		return false;
 	}
 	else
@@ -85,8 +83,8 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 	#ifdef TESTING
 		std::cout << "extDB: DEBUG INFO: " + input_str << std::endl;
 	#endif
-	#ifdef LOGGING
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << " DB_PROCEDURE: " + input_str;
+	#ifdef DEBUG_LOGGING
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE: " + input_str;
 	#endif
 
     try
@@ -196,8 +194,8 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 				#ifdef TESTING
 					std::cout << "extDB: DEBUG INFO: RESULT:" + result << std::endl;
 				#endif
-				#ifdef LOGGING
-					BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << " DB_PROCEDURE: RESULT:" + result;
+				#ifdef DEBUG_LOGGING
+					BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE: RESULT:" + result;
 				#endif
 			}
 			else
@@ -210,9 +208,7 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 			#ifdef TESTING
 				std::cout << "extDB: DEBUG INFO: Invalid Format" << std::endl;
 			#endif
-			#ifdef LOGGING
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << " DB_PROCEDURE: Invalid Format" + input_str;
-			#endif
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE: Invalid Format" + input_str;
 			result = "[0,\"Invalid Format\"]";
 		}
 	}
@@ -221,9 +217,8 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 		#ifdef TESTING
 			std::cout << "extdb: Error: " << e.displayText() << std::endl;
 		#endif 
-		#ifdef LOGGING
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << " DB_PROCEDURE: Error: " + e.displayText();
-		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_PROCEDURE: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_PROCEDURE: Error: " + e.displayText();
         result = "[0,\"Error\"]";
     }
 }

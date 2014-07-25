@@ -23,6 +23,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/Session.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/sources/record_ostream.hpp>
+
 
 class AbstractExt
 {
@@ -36,4 +42,8 @@ class AbstractExt
 		virtual int getUniqueID_mutexlock()=0;
 		
 		virtual std::string getDBType()=0;
+		
+		#ifdef LOGGING
+			boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
+		#endif
 };

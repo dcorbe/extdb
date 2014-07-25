@@ -17,19 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-#pragma once
+#include "misc_log.h"
 
-#include <Poco/Data/SessionPool.h>
 
-#include <cstdlib>
-#include <iostream>
-
-#include "abstract_ext.h"
-#include "abstract_protocol.h"
-
-class DB_RAW: public AbstractProtocol
+void MISC_LOG::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
-	public:
-		bool init(AbstractExt *extension);
-		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
-};
+	BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << input_str;
+}
