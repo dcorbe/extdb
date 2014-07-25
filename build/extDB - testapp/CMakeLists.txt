@@ -102,10 +102,10 @@ target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} ${INTEL_TBB_MALLOC_LIBRARY})
 
-add_definitions(-DLOGGING)
 
 add_definitions(-DTESTAPP)
 add_definitions(-DTESTING)
+add_definitions(-DDEBUG_LOGGING)
 
 if(${WIN32})
 	add_definitions(-D _WIN32_WINNT=0x0501)
