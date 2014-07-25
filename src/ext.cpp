@@ -68,7 +68,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/misc.h"
 
 
-
 Ext::Ext(void) {
 	mgr.reset (new IdManager);
 	extDB_lock = false;
@@ -78,12 +77,11 @@ Ext::Ext(void) {
 
 	boost::log::add_common_attributes();
 
-	std::cout << "extDB: Logging Enabled" << std::endl;
 	boost::log::add_file_log
 	(
 		boost::log::keywords::auto_flush = true, 
 		boost::log::keywords::file_name = log_file_name,
-		boost::log::keywords::format = "[%TimeStamp%]: extDB: %Message%"
+		boost::log::keywords::format = "[%TimeStamp%]: %Message%"
 	);
 	boost::log::core::get()->set_filter
 	(
@@ -762,14 +760,6 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		#endif 
 		BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Error: " << e.displayText();
     }
-	catch (const std::out_of_range& e)
-	{
-		#ifdef TESTING
-			std::cout << "extDB: Out of Range error: " << e.what() << std::endl;
-		#endif
-		BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Out of Range error: " << e.what() << std::endl;
-		std::strcpy(output, ("[0,\"Error Out of Range error\"]"));
-	}
 }
 
 #ifdef TESTAPP
