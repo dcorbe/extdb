@@ -27,6 +27,9 @@ http://www.altisliferpg.com
  - LOG
 
 
+#### Documentation @  
+https://github.com/Torndeco/extDB/wiki
+
 #### Install Windows
 Look in windows_release/ pick a version i.e latest one.  
 
