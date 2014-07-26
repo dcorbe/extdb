@@ -1,3 +1,7 @@
+12 = New Log Class, so u can output text to extDB logfiles.
+     All extensions have basic startup + error logging
+     Fixed DB_BASIC get all commands
+     Added minor Error Handling Logic checks when adding Protocols
 11 = Randomized Unique ID starting Number, also made smaller range.
      DB_RAW_NO_EXTRA_QUOTES, New CMake Build System for Windows Source Compile   
 10 = Enabled TBB, String Reserved Length to help prevent bad_alloc
