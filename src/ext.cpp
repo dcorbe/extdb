@@ -784,7 +784,7 @@ int main(int nNumberofArgs, char* pszArgs[])
             std::cout << "extDB: " << result << std::endl;
         }
     }
-	std::cout << "extDB: Quiting Please Wait" << std::endl;
+	std::cout << "extDB Test: Quiting Please Wait" << std::endl;
 	extension->stop();
 	//delete extension;
     return 0;

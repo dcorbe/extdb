@@ -118,6 +118,7 @@ void DB_BASIC::getOptionAll(Poco::Data::Session &db_session, std::string &table,
 
 	Poco::Data::RecordSet rs(sql);
 	
+	result = "[";
 	std::size_t cols = rs.columnCount();
 	if (cols >= 1)
 	{
@@ -129,14 +130,27 @@ void DB_BASIC::getOptionAll(Poco::Data::Session &db_session, std::string &table,
 			{
 				if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
 				{
-					result += "\"" + (rs[col].convert<std::string>() + "\"" + ", ");
+					if (!rs[col].isEmpty())
+					{
+						result += "\"" + (rs[col].convert<std::string>() + "\"");
+					}
+					else
+					{
+						result += ("\"\"");
+					}
 				}
 				else
 				{
-					result += (rs[col].convert<std::string>() + ", ");
+					if (!rs[col].isEmpty())
+					{
+						result += rs[col].convert<std::string>();
+					}
+				}
+				if (col < (cols - 1))
+				{
+					result += ", ";
 				}
 			}
-
 			more = rs.moveNext();
 			if (more)
 			{
@@ -144,18 +158,11 @@ void DB_BASIC::getOptionAll(Poco::Data::Session &db_session, std::string &table,
 			}
 			else
 			{
-				result = result.substr(0, (result.length() - 2)) + "]";
+				result += "]";
 			}
 		}
 	}
-	else
-	{
-		result = "[1, []]";
-	}
-	if (!Sqf::check(result))
-	{
-		result = "[0, \"ERROR UID\"]";
-	}
+	result += "]";
 }
 
 
@@ -241,9 +248,9 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 		const std::string sep_char(":");
 		const std::string::size_type found = input_str.find(sep_char,4);
 		
-		if (found==std::string::npos)  // Check Invalid Format
+		if (found==std::string::npos)
 		{
-			result = "[0,\"Error Invalid Format\"]"; // TODO
+			result = "[0,\"Error Invalid Format\"]";
 		}
 		else
 		{
@@ -309,7 +316,14 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 					std::string table = "Player Characters";
 					if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
 					{
-						getOption(db_session, table, uid, option, result);
+						if (option_all)
+						{
+							getOptionAll(db_session, table, result);
+						}
+						else
+						{
+							getOption(db_session, table, uid, option, result);
+						}
 					}
 					else
 					{

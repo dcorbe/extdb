@@ -52,6 +52,11 @@ bool DB_PROCEDURE::init(AbstractExt *extension)
 	}
 	else
 	{
+		// DATABASE NOT SETUP YET or SQLITE Doesn't Support Procedures
+		#ifdef TESTING
+			std::cout << "extDB: DB_PROCEDURE: No Database Connection" << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE: No Database Connection";
 		return false;
 	}
 }
