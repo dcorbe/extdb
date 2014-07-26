@@ -27,36 +27,27 @@ http://www.altisliferpg.com
  - LOG (dev branch atm)
 
 
-#### Crash C000005 ACCESS_VIOLATION
-
- extDB doesn't work well with large datatypes in Database...
- Check for Longtext (4GB) change it to MediumText / Text
- 
-
 #### Install Windows
 Look in windows_release/ pick a version i.e latest one.  
 
-
+#### Crash C000005 ACCESS_VIOLATION
+extDB doesn't work well with large datatypes in Database...
+   Check for Longtext (4GB) change it to MediumText / Text
+ 
 #### Using Fred's Malloc
-   ExtDB is incompatiable with https://github.com/fred41/tbbmalloc_arma.  
-       Workaround rename Fred's malloc & change arma startup to the new filename.  
+ExtDB is incompatiable with https://github.com/fred41/tbbmalloc_arma.  
+   Workaround rename Fred's malloc & change arma startup to the new filename.  
 
 #### Requirements for Windows
 
  - Windows XP or greater
  - Windows Server 2003 or greater
 
-
 #### Install from Source - Windows
 https://github.com/Torndeco/extdb/wiki/Install
 
 #### Install from Source - Linux
 https://github.com/Torndeco/extdb/wiki/Install-Linux---Chroot-Guide-%28WIP%29
-
-#### Extdb Known Issues with Linux
-   None ? :) 
-   Its annoying to have to setup a 32bit chroot enviroment.  
-   But its alot easier than trying to install 32bit libraries on 64bit system without breaking something
 
 
 #### Thanks to
