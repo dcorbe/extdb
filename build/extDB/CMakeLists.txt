@@ -101,7 +101,7 @@ endif (DEFINED INTEL_TBB_INCLUDE_DIR)
 add_library (extDB SHARED ${SOURCES})
 target_link_libraries(extDB ${ODBC_LIBRARY})
 target_link_libraries(extDB ${MYSQL_LIBRARY})
-target_link_libraries(${EXECUTABLE_NAME} ${INTEL_TBB_MALLOC_LIBRARY})
+target_link_libraries(extDB ${INTEL_TBB_MALLOC_LIBRARY})
 
 if(${WIN32})
 	add_definitions(-D _WIN32_WINNT=0x0501)
