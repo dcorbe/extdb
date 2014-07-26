@@ -43,7 +43,5 @@ class AbstractExt
 		
 		virtual std::string getDBType()=0;
 		
-		#ifdef LOGGING
-			boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
-		#endif
+		boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
 };

@@ -51,6 +51,11 @@ bool DB_BASIC::init(AbstractExt *extension)
 	}
 	else
 	{
+		// DATABASE NOT SETUP YET
+		#ifdef TESTING
+			std::cout << "extDB: DB_BASIC: No Database Connection" << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: No Database Connection";
 		return false;
 	}
 }

@@ -55,7 +55,7 @@ bool DB_RAW::init(AbstractExt *extension)
 	}
 	else
 	{
-		// DATABASE NOT SETUP YET or SQLITE Doesn't Support Procedures
+		// DATABASE NOT SETUP YET
 		#ifdef TESTING
 			std::cout << "extDB: DB_RAW: No Database Connection" << std::endl;
 		#endif

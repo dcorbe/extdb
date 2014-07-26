@@ -295,6 +295,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
             {
 				db_conn_info.db_type = "SQLite";
                 Poco::Data::SQLite::Connector::registerConnector();
+				db_name = boost::filesystem::path("extDB/sqlite/" + db_name).make_preferred().string();
                 db_conn_info.connection_str = db_name;
 
                 db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
@@ -351,7 +352,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "11";
+    return "12";
 }
 
 
