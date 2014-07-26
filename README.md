@@ -31,7 +31,7 @@ http://www.altisliferpg.com
 Look in windows_release/ pick a version i.e latest one.  
 
 #### Crash C000005 ACCESS_VIOLATION
-extDB doesn't work well with large datatypes in Database...
+extDB doesn't work well with large datatypes in Database...  
    Check for Longtext (4GB) change it to MediumText / Text
  
 #### Using Fred's Malloc
