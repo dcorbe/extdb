@@ -21,6 +21,7 @@ SET(SOURCES
 	../../src/protocols/db_basic.cpp
 	../../src/protocols/db_raw.cpp
 	../../src/protocols/db_raw_no_extra_quotes.cpp
+	../../src/protocols/misc_log.cpp
 	../../src/protocols/misc.cpp
 )
 
@@ -102,7 +103,8 @@ target_link_libraries(extDB ${ODBC_LIBRARY})
 target_link_libraries(extDB ${MYSQL_LIBRARY})
 target_link_libraries(extDB ${INTEL_TBB_MALLOC_LIBRARY})
 
-add_definitions(-DLOGGING)
+add_definitions(-DDEBUG_LOGGING)
+
 if(${WIN32})
 	add_definitions(-D _WIN32_WINNT=0x0501)
 	add_definitions(-D POCO_NO_UNWINDOWS)

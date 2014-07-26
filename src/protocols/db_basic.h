@@ -29,9 +29,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_protocol.h"
 #include "../sanitize.h"
 
+
 class DB_BASIC: public AbstractProtocol
 {
 	public:
+		bool init(AbstractExt *extension);
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 		
 	private:

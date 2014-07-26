@@ -38,15 +38,41 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 
 
+
+bool DB_RAW::init(AbstractExt *extension)
+{
+	if (extension->getDBType() == std::string("MySQL"))
+	{
+		return true;
+	}
+	else if (extension->getDBType() == std::string("ODBC"))
+	{
+		return true;
+	}
+	else if (extension->getDBType() == std::string("SQLite"))
+	{
+		return true;
+	}
+	else
+	{
+		// DATABASE NOT SETUP YET
+		#ifdef TESTING
+			std::cout << "extDB: DB_RAW: No Database Connection" << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW: No Database Connection";
+		return false;
+	}
+}
+
 void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
     try
     {
 		#ifdef TESTING
-			std::cout << "extDB: DEBUG INFO: " + input_str << std::endl;
+			std::cout << "extDB: DB_RAW: DEBUG INFO: " + input_str << std::endl;
 		#endif
-		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << " DB_RAW: " + input_str;
+		#ifdef DEBUG_LOGGING
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW: " + input_str;
 		#endif
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 		Poco::Data::Statement sql(db_session);
@@ -102,8 +128,8 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
 		#ifdef TESTING
 			std::cout << "extDB: DEBUG INFO: RESULT:" + result << std::endl;
 		#endif
-		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << " DB_RAW: RESULT:" + result;
+		#ifdef DEBUG_LOGGING
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW: RESULT:" + result;
 		#endif
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
@@ -111,9 +137,8 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Connection Exception: " << e.displayText();
-		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Connection Exception: " << e.displayText();
 		result = "[0,\"Error Connection Exception\"]";
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
@@ -121,29 +146,26 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Statement Exception: " << e.displayText();
-		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Statement Exception: " << e.displayText();
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
     {
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
-		#endif 
-		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Data Exception: " << e.displayText();
 		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Data Exception: " << e.displayText();
         result = "[0,\"Error Data Exception\"]";
     }
     catch (Poco::Exception& e)
 	{
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
-		#endif 
-		#ifdef LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << " DB_RAW: Exception: " << e.displayText();
 		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Exception: " << e.displayText();
 		result = "[0,\"Error Exception\"]";
 	}
 }

@@ -21,6 +21,7 @@ SET(SOURCES
 	../../src/protocols/db_basic.cpp
 	../../src/protocols/db_raw.cpp
 	../../src/protocols/db_raw_no_extra_quotes.cpp
+	../../src/protocols/misc_log.cpp
 	../../src/protocols/misc.cpp
 )
 
@@ -101,10 +102,10 @@ target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} ${INTEL_TBB_MALLOC_LIBRARY})
 
-add_definitions(-DLOGGING)
 
 add_definitions(-DTESTAPP)
 add_definitions(-DTESTING)
+add_definitions(-DDEBUG_LOGGING)
 
 if(${WIN32})
 	add_definitions(-D _WIN32_WINNT=0x0501)
