@@ -69,9 +69,10 @@ endif()
 
 # Look for ODBC
 include(FindODBC)
-if(MYSQL_FOUND)
+if(ODBC_FOUND)
 	include_directories(${ODBC_INCLUDE_DIR})
-	LINK_DIRECTORIES(${ODBC_LIB_DIR})
+	#TODO: is the following needed?	
+	#LINK_DIRECTORIES(${ODBC_LIB_DIR})
 else()
 	message(FATAL_ERROR "\nODBC not found")
 endif()
@@ -88,20 +89,33 @@ else()
 	message(STATUS "Compiler does not support C++11") 
 endif()
 
-if (DEFINED INTEL_TBB_INCLUDE_DIR)
-	# TODO: Look For Intel TBB
-	include_directories(${INTEL_TBB_INCLUDE_DIR})
-	LINK_DIRECTORIES(${INTEL_TBB_LIB_DIR})
+# Look for Intel Threading Building Blocks (TBB)
+include(FindTBB)
+if(TBB_FOUND)
+	include_directories(${TBB_INCLUDE_DIRS})
+	LINK_DIRECTORIES(${TBB_LIBRARY_DIRS})
 else()
 	message(FATAL_ERROR "\nIntel TBB not found")
-endif (DEFINED INTEL_TBB_INCLUDE_DIR)
+endif()
 
 
 # Define sources and executable
 add_library (extDB SHARED ${SOURCES})
 target_link_libraries(extDB ${ODBC_LIBRARY})
 target_link_libraries(extDB ${MYSQL_LIBRARY})
-target_link_libraries(extDB ${INTEL_TBB_MALLOC_LIBRARY})
+target_link_libraries(extDB ${TBB_LIBRARIES})
+
+
+# Logging defaults to OFF
+SET(LOGGING FALSE CACHE BOOL "Enables or disables logging.")
+
+
+if (LOGGING)
+	add_definitions(-DDEBUG_LOGGING)
+	message(STATUS "Logging is enabled.")
+else()
+	message(STATUS "Logging is disabled.")
+endif()
 
 if(${WIN32})
 	add_definitions(-D _WIN32_WINNT=0x0501)
