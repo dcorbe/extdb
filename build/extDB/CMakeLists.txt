@@ -13,7 +13,6 @@ set(EXECUTABLE_NAME "extDB")
 
 SET(SOURCES
 	../../src/memory_allocator.cpp
-	../../src/main.cpp
 	../../src/ext.cpp
 	../../src/uniqueid.cpp
 	../../src/sanitize.cpp
@@ -25,6 +24,10 @@ SET(SOURCES
 	../../src/protocols/misc_log.cpp
 	../../src/protocols/misc.cpp
 )
+
+if (NOT COMPILE_TEST_APPLICATION)
+	LIST(APPEND SOURCES ../../src/main.cpp)
+endif()
 
 set(CMAKE_SUPPRESS_REGENERATION 1)
 SET(CMAKE_BUILD_TYPE "Release")
@@ -149,16 +152,20 @@ endif()
 
 
 # Define sources and executable
-add_library (${EXECUTABLE_NAME} SHARED ${SOURCES})
+if (COMPILE_TEST_APPLICATION)
+	add_executable(${EXECUTABLE_NAME} ${SOURCES})
+else()
+	add_library (${EXECUTABLE_NAME} SHARED ${SOURCES})
+endif()
 target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
-target_link_libraries(${EXECUTABLE_NAME} ${TBB_LIBRARIES})
+target_link_libraries(${EXECUTABLE_NAME} ${TBB_MALLOC_LIBRARY})
 
 if(${WIN32})
 	add_definitions(-D _WIN32_WINNT=0x0501)
 	add_definitions(-D POCO_NO_UNWINDOWS)
 	add_definitions(-DUNICODE -D_UNICODE)
-	SET_TARGET_PROPERTIES(extDB PROPERTIES LINK_FLAGS " /MANIFEST:NO /ERRORREPORT:NONE")
+	SET_TARGET_PROPERTIES(${EXECUTABLE_NAME} PROPERTIES LINK_FLAGS " /MANIFEST:NO /ERRORREPORT:NONE")
 else()
 	add_definitions(-DBOOST_LOG_DYN_LINK)
 endif()
