@@ -24,7 +24,7 @@ http://www.altisliferpg.com
  - DB_RAW (by raw i mean raw sql commands, no santizing input or output checks at all)
  - DB_RAW_NO_EXTRA_QUOTES
  - MISC (has crc32 md4 md5 time + time offset)
- - LOG
+ - MISC_LOG (ability to add info to extDB logfile)
 
 
 #### Documentation @  
