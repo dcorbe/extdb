@@ -46,6 +46,12 @@ ExtDB is incompatible with https://github.com/fred41/tbbmalloc_arma.
  - Windows XP or greater
  - Windows Server 2003 or greater
 
+
+#### Install from Source Notes 27/07/14
+Working on CMake Build System, if its broken use the older one in directory.
+Linux builds aren't working yet, they will compile atm. Use the makefile for now.
+
+
 #### Install from Source - Windows
 https://github.com/Torndeco/extdb/wiki/Install
 
