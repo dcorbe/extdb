@@ -50,18 +50,18 @@ findpkg_finish(POCO)
 # Look for Poco's Foundation package
 findpkg_begin(POCO_Foundation)
 set(POCO_FOUNDATION_NAMES PocoFoundationmt PocoFoundation)
-find_path(POCO_Foundation_INCLUDE_DIR NAMES Poco/Foundation.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Foundation/include)
-find_library(POCO_Crypto_LIBRARY_REL NAMES ${POCO_FOUNDATION_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
+find_path(POCO_Foundation_INCLUDE_DIR NAMES Poco/Foundation.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Foundation/include .)
+find_library(POCO_Foundation_LIBRARY_REL NAMES ${POCO_FOUNDATION_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
 make_library_set(POCO_Foundation_LIBRARY)
 findpkg_finish(POCO_Foundation)
 
 # Look for Poco's Crypto package
-findpkg_begin(POCO_Crypt)
+findpkg_begin(POCO_Crypto)
 set(POCO_CRYPTO_LIBRARY_NAMES PocoCryptomt PocoCrypto)
-find_path(POCO_Crypto_INCLUDE_DIR NAMES Poco/Crypto/Crypto.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Crypto/include)
+find_path(POCO_Crypto_INCLUDE_DIR NAMES Poco/Crypto/Crypto.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Crypto/include .)
 find_library(POCO_Crypto_LIBRARY_REL NAMES ${POCO_CRYPTO_LIBRARY_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
 make_library_set(POCO_Crypto_LIBRARY)
-findpkg_finish(POCO_Crypt)
+findpkg_finish(POCO_Crypto)
 
 # Look for Poco's Data package
 findpkg_begin(POCO_Data)
@@ -120,9 +120,9 @@ find_library(POCO_XML_LIBRARY_REL NAMES ${POCO_XML_LIBRARY_NAMES} HINTS ${POCO_L
 make_library_set(POCO_XML_LIBRARY)
 findpkg_finish(POCO_XML)
 
-IF (POCO_Foundation_INCLUDE_DIR AND POCO_Crypto_LIBRARY_REL)
+IF (POCO_Foundation_INCLUDE_DIR)
 	SET(POCO_FOUND TRUE)
-ENDIF (POCO_Foundation_INCLUDE_DIR AND POCO_Crypto_LIBRARY_REL)
+ENDIF (POCO_Foundation_INCLUDE_DIR)
 
 set (POCO_LIBRARYDIR ${POCO_ROOT}/lib)
 if(NOT DEFINED POCO_LIBRARYDIR)

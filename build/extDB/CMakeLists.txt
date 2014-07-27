@@ -73,7 +73,7 @@ include(FindODBC)
 if(ODBC_FOUND)
 	include_directories(${ODBC_INCLUDE_DIR})
 	#TODO: is the following needed?	
-	#LINK_DIRECTORIES(${ODBC_LIB_DIR})
+	LINK_DIRECTORIES(${ODBC_LIB_DIR})
 else()
 	message(FATAL_ERROR "\nODBC not found")
 endif()
@@ -96,11 +96,12 @@ if(TBB_FOUND)
 	include_directories(${TBB_INCLUDE_DIRS})
 	LINK_DIRECTORIES(${TBB_LIBRARY_DIRS})
 else()
-	message(FATAL_ERROR "\nIntel TBB not found")
+	message(FATAL_ERROR "\nIntel TBB not found\n Please Set TBB_ROOT")
 endif()
 
+
 # Logging defaults to OFF
-SET(LOGGING FALSE CACHE BOOL "Enables or disables logging.")
+SET(DEBUG_LOGGING FALSE CACHE BOOL "Enables or disables Debug Logging.")
 # Compile test application defaults to OFF
 SET(COMPILE_TEST_APPLICATION FALSE CACHE BOOL "Compiles a test application of extdb.")
 # Testing defaults to OFF
@@ -111,11 +112,11 @@ SET(TEST_RCON FALSE CACHE BOOL "Enables or disables testing of RCON.")
 SET(TEST_SANITIZE FALSE CACHE BOOL "Enables or disables testing of sanitization.")
 
 
-if (LOGGING)
+if (DEBUG_LOGGING)
 	add_definitions(-DDEBUG_LOGGING)
-	message(STATUS "Logging is enabled.")
+	message(STATUS "Debug Logging is enabled.")
 else()
-	message(STATUS "Logging is disabled.")
+	message(STATUS "Debug Logging is disabled.")
 endif()
 
 if (COMPILE_TEST_APPLICATION)
@@ -158,4 +159,6 @@ if(${WIN32})
 	add_definitions(-D POCO_NO_UNWINDOWS)
 	add_definitions(-DUNICODE -D_UNICODE)
 	SET_TARGET_PROPERTIES(extDB PROPERTIES LINK_FLAGS " /MANIFEST:NO /ERRORREPORT:NONE")
+else()
+	add_definitions(-DBOOST_LOG_DYN_LINK)
 endif()
