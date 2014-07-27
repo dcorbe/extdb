@@ -34,7 +34,7 @@ INTERNAL FORCE )
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 # Look for BOOST
-find_package(Boost REQUIRED COMPONENTS filesystem random regex system thread)
+find_package(Boost REQUIRED COMPONENTS filesystem random regex system thread log)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
 	LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
