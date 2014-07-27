@@ -9,6 +9,7 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cxx_flag_overrides.cmake)
 project(extDB)
 
+set(EXECUTABLE_NAME "extDB")
 
 SET(SOURCES
 	../../src/memory_allocator.cpp
@@ -34,7 +35,7 @@ INTERNAL FORCE )
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 # Look for BOOST
-find_package(Boost REQUIRED COMPONENTS filesystem random regex system thread)
+find_package(Boost REQUIRED COMPONENTS filesystem random regex system thread log)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
 	LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
@@ -69,9 +70,10 @@ endif()
 
 # Look for ODBC
 include(FindODBC)
-if(MYSQL_FOUND)
+if(ODBC_FOUND)
 	include_directories(${ODBC_INCLUDE_DIR})
-	LINK_DIRECTORIES(${ODBC_LIB_DIR})
+	#TODO: is the following needed?	
+	#LINK_DIRECTORIES(${ODBC_LIB_DIR})
 else()
 	message(FATAL_ERROR "\nODBC not found")
 endif()
@@ -88,20 +90,68 @@ else()
 	message(STATUS "Compiler does not support C++11") 
 endif()
 
-if (DEFINED INTEL_TBB_INCLUDE_DIR)
-	# TODO: Look For Intel TBB
-	include_directories(${INTEL_TBB_INCLUDE_DIR})
-	LINK_DIRECTORIES(${INTEL_TBB_LIB_DIR})
+# Look for Intel Threading Building Blocks (TBB)
+include(FindTBB)
+if(TBB_FOUND)
+	include_directories(${TBB_INCLUDE_DIRS})
+	LINK_DIRECTORIES(${TBB_LIBRARY_DIRS})
 else()
 	message(FATAL_ERROR "\nIntel TBB not found")
-endif (DEFINED INTEL_TBB_INCLUDE_DIR)
+endif()
+
+# Logging defaults to OFF
+SET(LOGGING FALSE CACHE BOOL "Enables or disables logging.")
+# Compile test application defaults to OFF
+SET(COMPILE_TEST_APPLICATION FALSE CACHE BOOL "Compiles a test application of extdb.")
+# Testing defaults to OFF
+SET(TESTING FALSE CACHE BOOL "Sets the testing flag for extdb.")
+# Test RCON defaults to OFF
+SET(TEST_RCON FALSE CACHE BOOL "Enables or disables testing of RCON.")
+# Test sanitize defaults to OFF
+SET(TEST_SANITIZE FALSE CACHE BOOL "Enables or disables testing of sanitization.")
+
+
+if (LOGGING)
+	add_definitions(-DDEBUG_LOGGING)
+	message(STATUS "Logging is enabled.")
+else()
+	message(STATUS "Logging is disabled.")
+endif()
+
+if (COMPILE_TEST_APPLICATION)
+	add_definitions(-DTESTAPP)
+	message(STATUS "The extdb test application will be compiled.")
+	set(EXECUTABLE_NAME "extdb-test")
+endif()
+
+if (TEST_RCON)
+	if (NOT TESTING)
+		message(FATAL_ERROR "RCON testing was enabled but the TESTING flag is disabled.  Please enable it.")
+	endif()
+	add_definitions(-DTESTRCON)
+	message(STATUS "RCON testing is enabled.")
+endif()
+
+if (TEST_SANITIZE)
+	if (NOT TESTING)
+		message(FATAL_ERROR "Sanitize testing was enabled but the TESTING flag is disabled.  Please enable it.")
+	endif()
+	add_definitions(-DTESTSANITIZE)
+	message(STATUS "Sanitization testing is enabled.")
+endif()
+
+if (TESTING)
+	add_definitions(-DTESTING)
+	message(STATUS "Testing flag is enabled.")
+	set(EXECUTABLE_NAME "extDB-test")
+endif()
 
 
 # Define sources and executable
-add_library (extDB SHARED ${SOURCES})
-target_link_libraries(extDB ${ODBC_LIBRARY})
-target_link_libraries(extDB ${MYSQL_LIBRARY})
-target_link_libraries(extDB ${INTEL_TBB_MALLOC_LIBRARY})
+add_library (${EXECUTABLE_NAME} SHARED ${SOURCES})
+target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
+target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
+target_link_libraries(${EXECUTABLE_NAME} ${TBB_LIBRARIES})
 
 if(${WIN32})
 	add_definitions(-D _WIN32_WINNT=0x0501)
