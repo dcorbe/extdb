@@ -9,6 +9,7 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cxx_flag_overrides.cmake)
 project(extDB)
 
+set(EXECUTABLE_NAME "extDB")
 
 SET(SOURCES
 	../../src/memory_allocator.cpp
@@ -98,16 +99,16 @@ else()
 	message(FATAL_ERROR "\nIntel TBB not found")
 endif()
 
-
-# Define sources and executable
-add_library (extDB SHARED ${SOURCES})
-target_link_libraries(extDB ${ODBC_LIBRARY})
-target_link_libraries(extDB ${MYSQL_LIBRARY})
-target_link_libraries(extDB ${TBB_LIBRARIES})
-
-
 # Logging defaults to OFF
 SET(LOGGING FALSE CACHE BOOL "Enables or disables logging.")
+# Compile test application defaults to OFF
+SET(COMPILE_TEST_APPLICATION FALSE CACHE BOOL "Compiles a test application of extdb.")
+# Testing defaults to OFF
+SET(TESTING FALSE CACHE BOOL "Sets the testing flag for extdb.")
+# Test RCON defaults to OFF
+SET(TEST_RCON FALSE CACHE BOOL "Enables or disables testing of RCON.")
+# Test sanitize defaults to OFF
+SET(TEST_SANITIZE FALSE CACHE BOOL "Enables or disables testing of sanitization.")
 
 
 if (LOGGING)
@@ -116,6 +117,41 @@ if (LOGGING)
 else()
 	message(STATUS "Logging is disabled.")
 endif()
+
+if (COMPILE_TEST_APPLICATION)
+	add_definitions(-DTESTAPP)
+	message(STATUS "The extdb test application will be compiled.")
+	set(EXECUTABLE_NAME "extdb-test")
+endif()
+
+if (TEST_RCON)
+	if (NOT TESTING)
+		message(FATAL_ERROR "RCON testing was enabled but the TESTING flag is disabled.  Please enable it.")
+	endif()
+	add_definitions(-DTESTRCON)
+	message(STATUS "RCON testing is enabled.")
+endif()
+
+if (TEST_SANITIZE)
+	if (NOT TESTING)
+		message(FATAL_ERROR "Sanitize testing was enabled but the TESTING flag is disabled.  Please enable it.")
+	endif()
+	add_definitions(-DTESTSANITIZE)
+	message(STATUS "Sanitization testing is enabled.")
+endif()
+
+if (TESTING)
+	add_definitions(-DTESTING)
+	message(STATUS "Testing flag is enabled.")
+	set(EXECUTABLE_NAME "extDB-test")
+endif()
+
+
+# Define sources and executable
+add_library (${EXECUTABLE_NAME} SHARED ${SOURCES})
+target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
+target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
+target_link_libraries(${EXECUTABLE_NAME} ${TBB_LIBRARIES})
 
 if(${WIN32})
 	add_definitions(-D _WIN32_WINNT=0x0501)
