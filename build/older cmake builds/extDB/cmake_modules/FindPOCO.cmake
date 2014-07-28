@@ -49,23 +49,23 @@ findpkg_finish(POCO)
 
 # Look for Poco's Foundation package
 findpkg_begin(POCO_Foundation)
-set(POCO_FOUNDATION_NAMES PocoFoundationmt PocoFoundation)
-find_path(POCO_Foundation_INCLUDE_DIR NAMES Poco/Foundation.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Foundation/include .)
-find_library(POCO_Foundation_LIBRARY_REL NAMES ${POCO_FOUNDATION_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
+set(POCO_FOUNDATION_NAMES PocoFoundationmt)
+find_path(POCO_Foundation_INCLUDE_DIR NAMES Poco/Foundation.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Foundation/include)
+find_library(POCO_Crypto_LIBRARY_REL NAMES ${POCO_FOUNDATION_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
 make_library_set(POCO_Foundation_LIBRARY)
 findpkg_finish(POCO_Foundation)
 
 # Look for Poco's Crypto package
-findpkg_begin(POCO_Crypto)
-set(POCO_CRYPTO_LIBRARY_NAMES PocoCryptomt PocoCrypto)
-find_path(POCO_Crypto_INCLUDE_DIR NAMES Poco/Crypto/Crypto.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Crypto/include .)
+findpkg_begin(POCO_Crypt)
+set(POCO_CRYPTO_LIBRARY_NAMES PocoCryptomt)
+find_path(POCO_Crypto_INCLUDE_DIR NAMES Poco/Crypto/Crypto.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Crypto/include)
 find_library(POCO_Crypto_LIBRARY_REL NAMES ${POCO_CRYPTO_LIBRARY_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
 make_library_set(POCO_Crypto_LIBRARY)
-findpkg_finish(POCO_Crypto)
+findpkg_finish(POCO_Crypt)
 
 # Look for Poco's Data package
 findpkg_begin(POCO_Data)
-set(POCO_DATA_LIBRARY_NAMES PocoDatamt PocoData)
+set(POCO_DATA_LIBRARY_NAMES PocoDatamt)
 find_path(POCO_Data_INCLUDE_DIR NAMES Poco/Data/Data.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Data/include)
 find_library(POCO_Data_LIBRARY_REL NAMES ${POCO_DATA_LIBRARY_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
 make_library_set(POCO_Data_LIBRARY)
@@ -73,7 +73,7 @@ findpkg_finish(POCO_Data)
 
 # Look for Poco's ODBC package
 findpkg_begin(POCO_Data_ODBC)
-set(POCO_Data_ODBC_LIBRARY_NAMES PocoDataODBCmt PocoODBC PocoDataODBC)
+set(POCO_Data_ODBC_LIBRARY_NAMES PocoDataODBCmt)
 find_path(POCO_Data_ODBC_INCLUDE_DIR NAMES Poco/Data/ODBC/ODBC.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Data/ODBC/include)
 find_library(POCO_Data_ODBC_LIBRARY_REL NAMES ${POCO_Data_ODBC_LIBRARY_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
 make_library_set(POCO_Data_ODBC_LIBRARY)
@@ -81,7 +81,7 @@ findpkg_finish(POCO_Data_ODBC)
 
 # Look for Poco's SQLite package
 findpkg_begin(POCO_Data_SQLite)
-set(POCO_Data_SQLite_LIBRARY_NAMES PocoDataSQLitemt PocoSQLite PocoDataSQLite)
+set(POCO_Data_SQLite_LIBRARY_NAMES PocoDataSQLitemt)
 find_path(POCO_Data_SQLite_INCLUDE_DIR NAMES Poco/Data/SQLite/SQLite.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Data/SQLite/include)
 find_library(POCO_Data_SQLite_LIBRARY_REL NAMES ${POCO_Data_SQLite_LIBRARY_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
 make_library_set(POCO_Data_SQLite_LIBRARY)
@@ -89,15 +89,15 @@ findpkg_finish(POCO_Data_SQLite)
 
 # Look for Poco's MYSQL package
 findpkg_begin(POCO_Data_MYSQL)
-set(POCO_Data_MYSQL_LIBRARY_NAMES PocoDataSQLitemt PocoMySQL PocoDataMySQL)
-find_path(POCO_Data_MYSQL_INCLUDE_DIR NAMES Poco/Data/MYSQL/MySQL.h Poco/Data/MySQL/MySQL.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Data/MySQL/include)
+set(POCO_Data_MYSQL_LIBRARY_NAMES PocoDataSQLitemt)
+find_path(POCO_Data_MYSQL_INCLUDE_DIR NAMES Poco/Data/MYSQL/MySQL.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Data/MySQL/include)
 find_library(POCO_Data_MYSQL_LIBRARY_REL NAMES ${POCO_Data_MYSQL_LIBRARY_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
 make_library_set(POCO_Data_MYSQL_LIBRARY)
 findpkg_finish(POCO_Data_MYSQL)
 
 # Look for Poco's Net package
 findpkg_begin(POCO_Net)
-set(POCO_Net_LIBRARY_NAMES PocoNetmt PocoNet)
+set(POCO_Net_LIBRARY_NAMES PocoNetmt)
 find_path(POCO_Net_INCLUDE_DIR NAMES Poco/Net/Net.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Net/include)
 find_library(POCO_Net_LIBRARY_REL NAMES ${POCO_Net_LIBRARY_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
 make_library_set(POCO_Net_LIBRARY)
@@ -105,7 +105,7 @@ findpkg_finish(POCO_Net)
 
 # Look for Poco's Util package
 findpkg_begin(POCO_Util)
-set(POCO_Util_LIBRARY_NAMES PocoUtilmt PocoUtil)
+set(POCO_Util_LIBRARY_NAMES PocoUtilmt)
 find_path(POCO_Util_INCLUDE_DIR NAMES Poco/Util/Util.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES Util/include)
 find_library(POCO_Util_LIBRARY_REL NAMES ${POCO_Util_LIBRARY_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
 make_library_set(POCO_Util_LIBRARY)
@@ -114,15 +114,15 @@ findpkg_finish(POCO_Util)
 
 # Look for Poco's XML package
 findpkg_begin(POCO_XML)
-set(POCO_XML_LIBRARY_NAMES PocoXMLmt PocoXML)
+set(POCO_XML_LIBRARY_NAMES PocoXMLmt)
 find_path(POCO_XML_INCLUDE_DIR NAMES Poco/XML/XML.h HINTS ${POCO_INCLUDE_DIR} ${POCO_INC_SEARCH_PATH} ${POCO_PKGC_INCLUDE_DIRS} PATH_SUFFIXES XML/include)
 find_library(POCO_XML_LIBRARY_REL NAMES ${POCO_XML_LIBRARY_NAMES} HINTS ${POCO_LIB_SEARCH_PATH} ${POCO_PKGC_LIBRARY_DIRS} PATH_SUFFIXES Linux/i686)
 make_library_set(POCO_XML_LIBRARY)
 findpkg_finish(POCO_XML)
 
-IF (POCO_Foundation_INCLUDE_DIR)
+IF (POCO_Foundation_INCLUDE_DIR AND POCO_Crypto_LIBRARY_REL)
 	SET(POCO_FOUND TRUE)
-ENDIF (POCO_Foundation_INCLUDE_DIR)
+ENDIF (POCO_Foundation_INCLUDE_DIR AND POCO_Crypto_LIBRARY_REL)
 
 set (POCO_LIBRARYDIR ${POCO_ROOT}/lib)
 if(NOT DEFINED POCO_LIBRARYDIR)

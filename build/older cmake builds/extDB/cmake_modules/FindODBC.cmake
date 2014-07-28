@@ -4,30 +4,15 @@ IF (ODBC_INCLUDE_DIR)
 ENDIF (ODBC_INCLUDE_DIR)
 
 
-FIND_PATH(ODBC_INCLUDE_DIR 
-  NAMES odbcinst.h sql.h 
-  
-  PATHS
-  /usr/include
-  /usr/include/odbc
-  /usr/local/include
-  /usr/local/include/odbc
-  /usr/local/odbc/include
+FIND_PATH(ODBC_INCLUDE_DIR odbcinst.h
   /usr/local/include/mysql
   /usr/include/mysql
   "C:/Program Files/ODBC/include"
   "C:/ODBC/include"
-  "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Include"
+  "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/include"
 )
 
-FIND_PATH(ODBC_LIB_DIR 
-  NAMES odbc32.lib odbc 
-  
-  PATHS
-  /usr/lib
-  /usr/lib/odbc
-  /usr/local/lib
-  /usr/local/lib/odbc
+FIND_PATH(ODBC_LIB_DIR odbc32.lib
   /usr/local/include/mysql
   /usr/include/mysql
   "C:/Program Files/ODBC/lib"
@@ -35,9 +20,8 @@ FIND_PATH(ODBC_LIB_DIR
   "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib"
 )
 
-FIND_LIBRARY(ODBC_LIBRARY 
-  NAMES iodbc odbc odbcinst odbc32 unixodbc
-  
+FIND_LIBRARY(ODBC_LIBRARY
+  NAMES iodbc odbc odbcinst odbc32
   PATHS
   /usr/lib
   /usr/lib/odbc
@@ -48,7 +32,3 @@ FIND_LIBRARY(ODBC_LIBRARY
   "C:/ODBC/lib/debug"
   "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib"
 )
-
-IF (ODBC_INCLUDE_DIR AND ODBC_LIBRARY)
-	SET(ODBC_FOUND TRUE)
-ENDIF()
