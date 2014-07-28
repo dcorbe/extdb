@@ -38,11 +38,12 @@ INTERNAL FORCE )
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 # Look for BOOST
+#set(Boost_USE_STATIC_LIBS ON)
+#set(Boost_USE_MULTITHREADED ON)
 find_package(Boost REQUIRED COMPONENTS filesystem random regex system thread log log_setup)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
-	LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
-
+	LINK_DIRECTORIES(${Boost_LIBRARY_DIR}) ## TODO: Fix
 else()
 	message(FATAL_ERROR "\nBOOST not found\n Please Set BOOST_ROOT & BOOST_LIBRARYDIR")
 endif()
@@ -52,24 +53,15 @@ include(FindPOCO)
 if(POCO_FOUND)
 	include_directories(${POCO_INCLUDE_DIR} ${POCO_Crypto_INCLUDE_DIR} ${POCO_Data_INCLUDE_DIR} ${POCO_Data_ODBC_INCLUDE_DIR})
 	include_directories(${POCO_Data_SQLite_INCLUDE_DIR} ${POCO_Data_MYSQL_INCLUDE_DIR} ${POCO_Net_INCLUDE_DIR} ${POCO_Util_INCLUDE_DIR})
+	LINK_DIRECTORIES(${POCO_LIBRARYDIR}) ## TODO: Fix
 else()
 	message(FATAL_ERROR "\nPOCO not found\n Please Set POCO_ROOT")
-endif()
-
-
-
-
-IF(DEFINED POCO_LIBRARYDIR)
-	LINK_DIRECTORIES(${POCO_LIBRARYDIR})
-else()	
-	message(FATAL_ERROR "\nPOCO_LIBRARYDIR not found")
 endif()
 
 # Look for MySQL
 include(FindMySQL)
 if(MYSQL_FOUND)
 	include_directories(${MYSQL_INCLUDE_DIR})
-	LINK_DIRECTORIES(${MYSQL_LIB_DIR})
 else()
 	message(FATAL_ERROR "\nMYSQL not found")
 endif()
@@ -78,8 +70,6 @@ endif()
 include(FindODBC)
 if(ODBC_FOUND)
 	include_directories(${ODBC_INCLUDE_DIR})
-	#TODO: is the following needed?	
-	LINK_DIRECTORIES(${ODBC_LIB_DIR})
 else()
 	message(FATAL_ERROR "\nODBC not found")
 endif()
@@ -100,7 +90,6 @@ endif()
 include(FindTBB)
 if(TBB_FOUND)
 	include_directories(${TBB_INCLUDE_DIRS})
-	LINK_DIRECTORIES(${TBB_LIBRARY_DIRS})
 else()
 	message(FATAL_ERROR "\nIntel TBB not found\n Please Set TBB_ROOT")
 endif()
@@ -160,19 +149,23 @@ if (COMPILE_TEST_APPLICATION)
 else()
 	add_library (${EXECUTABLE_NAME} SHARED ${SOURCES})
 endif()
+
 target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} ${TBB_MALLOC_LIBRARY})
-target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
-target_link_libraries(${EXECUTABLE_NAME} ${POCO_LIBRARIES})
 
 if(${WIN32})
+	# Windows
 	add_definitions(-D _WIN32_WINNT=0x0501)
 	add_definitions(-D POCO_NO_UNWINDOWS)
 	add_definitions(-DUNICODE -D_UNICODE)
 	SET_TARGET_PROPERTIES(${EXECUTABLE_NAME} PROPERTIES LINK_FLAGS " /MANIFEST:NO /ERRORREPORT:NONE")
 else()
+	# Linux
 	add_definitions(-DBOOST_LOG_DYN_LINK)
+	target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES}) #TODO Fix on Windows, so can not use LINK_DIRECTORIES (not finding correct static lib)
+	target_link_libraries(${EXECUTABLE_NAME} ${POCO_LIBRARIES})	#TODO Fix on Windows, so can not use LINK_DIRECTORIES (not finding correct PocoMYSQL lib)
+	
 	if (NOT COMPILE_TEST_APPLICATION)
 		ADD_CUSTOM_COMMAND(
 			TARGET ${EXECUTABLE_NAME}
