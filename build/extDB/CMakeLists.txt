@@ -38,10 +38,11 @@ INTERNAL FORCE )
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 # Look for BOOST
-find_package(Boost REQUIRED COMPONENTS filesystem random regex system thread log)
+find_package(Boost REQUIRED COMPONENTS filesystem random regex system thread log log_setup)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
 	LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
+
 else()
 	message(FATAL_ERROR "\nBOOST not found\n Please Set BOOST_ROOT & BOOST_LIBRARYDIR")
 endif()
@@ -54,6 +55,8 @@ if(POCO_FOUND)
 else()
 	message(FATAL_ERROR "\nPOCO not found\n Please Set POCO_ROOT")
 endif()
+
+
 
 
 IF(DEFINED POCO_LIBRARYDIR)
@@ -160,6 +163,8 @@ endif()
 target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} ${TBB_MALLOC_LIBRARY})
+target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
+target_link_libraries(${EXECUTABLE_NAME} ${POCO_LIBRARIES})
 
 if(${WIN32})
 	add_definitions(-D _WIN32_WINNT=0x0501)
@@ -168,4 +173,11 @@ if(${WIN32})
 	SET_TARGET_PROPERTIES(${EXECUTABLE_NAME} PROPERTIES LINK_FLAGS " /MANIFEST:NO /ERRORREPORT:NONE")
 else()
 	add_definitions(-DBOOST_LOG_DYN_LINK)
+	if (NOT COMPILE_TEST_APPLICATION)
+		ADD_CUSTOM_COMMAND(
+			TARGET ${EXECUTABLE_NAME}
+			POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E rename libextDB.so extDB.so
+		)
+	endif()
 endif()
