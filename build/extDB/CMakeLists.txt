@@ -1,6 +1,5 @@
 #Change this if you need to target a specific CMake version
 cmake_minimum_required(VERSION 2.8)
-
 cmake_policy(SET CMP0015 NEW)
 
 set(CMAKE_USER_MAKE_RULES_OVERRIDE
@@ -10,6 +9,7 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
 project(extDB)
 
 set(EXECUTABLE_NAME "extDB")
+# Define sources and executable
 
 SET(SOURCES
 	../../src/memory_allocator.cpp
@@ -34,16 +34,25 @@ SET(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CONFIGURATION_TYPES Release CACHE TYPE  
 INTERNAL FORCE )
 
+if (COMPILE_TEST_APPLICATION)
+	add_executable(${EXECUTABLE_NAME} ${SOURCES})
+else()
+	add_library (${EXECUTABLE_NAME} SHARED ${SOURCES})
+endif()
+
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 # Look for BOOST
-#set(Boost_USE_STATIC_LIBS ON)
-#set(Boost_USE_MULTITHREADED ON)
-find_package(Boost REQUIRED COMPONENTS filesystem random regex system thread log log_setup)
+if(${WIN32})
+	set(Boost_USE_STATIC_LIBS ON)
+	set(Boost_USE_MULTITHREADED ON)
+	set(Boost_USE_STATIC_RUNTIME ON)
+endif()
+find_package(Boost REQUIRED COMPONENTS chrono date_time filesystem random regex system thread log log_setup)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
-	LINK_DIRECTORIES(${Boost_LIBRARY_DIR}) ## TODO: Fix
+	target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
 else()
 	message(FATAL_ERROR "\nBOOST not found\n Please Set BOOST_ROOT & BOOST_LIBRARYDIR")
 endif()
@@ -53,7 +62,7 @@ include(FindPOCO)
 if(POCO_FOUND)
 	include_directories(${POCO_INCLUDE_DIR} ${POCO_Crypto_INCLUDE_DIR} ${POCO_Data_INCLUDE_DIR} ${POCO_Data_ODBC_INCLUDE_DIR})
 	include_directories(${POCO_Data_SQLite_INCLUDE_DIR} ${POCO_Data_MYSQL_INCLUDE_DIR} ${POCO_Net_INCLUDE_DIR} ${POCO_Util_INCLUDE_DIR})
-	LINK_DIRECTORIES(${POCO_LIBRARYDIR}) ## TODO: Fix
+	target_link_libraries(${EXECUTABLE_NAME} ${POCO_LIBRARIES})
 else()
 	message(FATAL_ERROR "\nPOCO not found\n Please Set POCO_ROOT")
 endif()
@@ -62,6 +71,7 @@ endif()
 include(FindMySQL)
 if(MYSQL_FOUND)
 	include_directories(${MYSQL_INCLUDE_DIR})
+	target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
 else()
 	message(FATAL_ERROR "\nMYSQL not found")
 endif()
@@ -70,8 +80,18 @@ endif()
 include(FindODBC)
 if(ODBC_FOUND)
 	include_directories(${ODBC_INCLUDE_DIR})
+	target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
 else()
 	message(FATAL_ERROR "\nODBC not found")
+endif()
+
+# Look for Intel Threading Building Blocks (TBB)
+include(FindTBB)
+if(TBB_FOUND)
+	include_directories(${TBB_INCLUDE_DIRS})
+	target_link_libraries(${EXECUTABLE_NAME} ${TBB_MALLOC_LIBRARY})
+else()
+	message(FATAL_ERROR "\nIntel TBB not found\n Please Set TBB_ROOT")
 endif()
 
 
@@ -86,21 +106,13 @@ else()
 	message(STATUS "Compiler does not support C++11") 
 endif()
 
-# Look for Intel Threading Building Blocks (TBB)
-include(FindTBB)
-if(TBB_FOUND)
-	include_directories(${TBB_INCLUDE_DIRS})
-else()
-	message(FATAL_ERROR "\nIntel TBB not found\n Please Set TBB_ROOT")
-endif()
-
 
 # Logging defaults to OFF
 SET(DEBUG_LOGGING FALSE CACHE BOOL "Enables or disables Debug Logging.")
 # Compile test application defaults to OFF
-SET(COMPILE_TEST_APPLICATION FALSE CACHE BOOL "Compiles a test application of extdb.")
+SET(COMPILE_TEST_APPLICATION FALSE CACHE BOOL "Compiles a test application of extDB.")
 # Testing defaults to OFF
-SET(TESTING FALSE CACHE BOOL "Sets the testing flag for extdb.")
+SET(TESTING FALSE CACHE BOOL "Sets the testing flag for extDB.")
 # Test RCON defaults to OFF
 SET(TEST_RCON FALSE CACHE BOOL "Enables or disables testing of RCON.")
 # Test sanitize defaults to OFF
@@ -116,8 +128,8 @@ endif()
 
 if (COMPILE_TEST_APPLICATION)
 	add_definitions(-DTESTAPP)
-	message(STATUS "The extdb test application will be compiled.")
-	set(EXECUTABLE_NAME "extdb-test")
+	message(STATUS "The extDB test application will be compiled.")
+	set(EXECUTABLE_NAME "extDB-test")
 endif()
 
 if (TEST_RCON)
@@ -143,17 +155,6 @@ if (TESTING)
 endif()
 
 
-# Define sources and executable
-if (COMPILE_TEST_APPLICATION)
-	add_executable(${EXECUTABLE_NAME} ${SOURCES})
-else()
-	add_library (${EXECUTABLE_NAME} SHARED ${SOURCES})
-endif()
-
-target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
-target_link_libraries(${EXECUTABLE_NAME} ${MYSQL_LIBRARY})
-target_link_libraries(${EXECUTABLE_NAME} ${TBB_MALLOC_LIBRARY})
-
 if(${WIN32})
 	# Windows
 	add_definitions(-D _WIN32_WINNT=0x0501)
@@ -163,8 +164,6 @@ if(${WIN32})
 else()
 	# Linux
 	add_definitions(-DBOOST_LOG_DYN_LINK)
-	target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES}) #TODO Fix on Windows, so can not use LINK_DIRECTORIES (not finding correct static lib)
-	target_link_libraries(${EXECUTABLE_NAME} ${POCO_LIBRARIES})	#TODO Fix on Windows, so can not use LINK_DIRECTORIES (not finding correct PocoMYSQL lib)
 	
 	if (NOT COMPILE_TEST_APPLICATION)
 		ADD_CUSTOM_COMMAND(
