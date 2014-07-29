@@ -8,7 +8,42 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cxx_flag_overrides.cmake)
 project(extDB)
 
-set(EXECUTABLE_NAME "extDB")
+if (DEBUG_LOGGING)
+	add_definitions(-DDEBUG_LOGGING)
+	message(STATUS "Debug Logging is enabled.")
+else()
+	message(STATUS "Debug Logging is disabled.")
+endif()
+
+if (TESTING)
+	add_definitions(-DTESTING)
+	message(STATUS "Testing flag is enabled.")
+	set(EXECUTABLE_NAME "extDB-test")
+endif()
+
+if (COMPILE_TEST_APPLICATION)
+	add_definitions(-DTEST_APP)
+	message(STATUS "The extDB test application will be compiled.")
+	set(EXECUTABLE_NAME "extDB-test")
+	
+elseif (COMPILE_TEST_SANITIZE_APPLICATION)
+	if (NOT TESTING)
+		message(FATAL_ERROR "Sanitize testing was enabled but the TESTING flag is disabled.  Please enable it.")
+	endif()
+	add_definitions(-DTEST_SANITIZE_APP)
+	message(STATUS "Sanitization testing is enabled.")
+	
+elseif (COMPILE_RCON_APPLICATION)
+	if (NOT TESTING)
+		message(FATAL_ERROR "RCON testing was enabled but the TESTING flag is disabled.  Please enable it.")
+	endif()
+	add_definitions(-DRCON_APP)
+	message(STATUS "RCON testing is enabled.")
+else()
+	set(EXECUTABLE_NAME "extDB")
+endif()
+
+
 # Define sources and executable
 
 SET(SOURCES
@@ -25,8 +60,11 @@ SET(SOURCES
 	../../src/protocols/misc.cpp
 )
 
-if (NOT COMPILE_TEST_APPLICATION)
+if (NOT((COMPILE_TEST_APPLICATION) OR (COMPILE_RCON_APPLICATION) OR (COMPILE_TEST_SANITIZE_APPLICATION)))
 	LIST(APPEND SOURCES ../../src/main.cpp)
+	add_library (${EXECUTABLE_NAME} SHARED ${SOURCES})
+else()
+	add_executable(${EXECUTABLE_NAME} ${SOURCES})
 endif()
 
 set(CMAKE_SUPPRESS_REGENERATION 1)
@@ -34,14 +72,14 @@ SET(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CONFIGURATION_TYPES Release CACHE TYPE  
 INTERNAL FORCE )
 
-if (COMPILE_TEST_APPLICATION)
-	add_executable(${EXECUTABLE_NAME} ${SOURCES})
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
+
+if (NOT((COMPILE_TEST_APPLICATION) OR (COMPILE_RCON_APPLICATION) OR (COMPILE_TEST_SANITIZE_APPLICATION)))
+	
 else()
-	add_library (${EXECUTABLE_NAME} SHARED ${SOURCES})
+	
 endif()
 
-
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 # Look for BOOST
 if(${WIN32})
@@ -119,40 +157,8 @@ SET(TEST_RCON FALSE CACHE BOOL "Enables or disables testing of RCON.")
 SET(TEST_SANITIZE FALSE CACHE BOOL "Enables or disables testing of sanitization.")
 
 
-if (DEBUG_LOGGING)
-	add_definitions(-DDEBUG_LOGGING)
-	message(STATUS "Debug Logging is enabled.")
-else()
-	message(STATUS "Debug Logging is disabled.")
-endif()
 
-if (COMPILE_TEST_APPLICATION)
-	add_definitions(-DTESTAPP)
-	message(STATUS "The extDB test application will be compiled.")
-	set(EXECUTABLE_NAME "extDB-test")
-endif()
 
-if (TEST_RCON)
-	if (NOT TESTING)
-		message(FATAL_ERROR "RCON testing was enabled but the TESTING flag is disabled.  Please enable it.")
-	endif()
-	add_definitions(-DTESTRCON)
-	message(STATUS "RCON testing is enabled.")
-endif()
-
-if (TEST_SANITIZE)
-	if (NOT TESTING)
-		message(FATAL_ERROR "Sanitize testing was enabled but the TESTING flag is disabled.  Please enable it.")
-	endif()
-	add_definitions(-DTESTSANITIZE)
-	message(STATUS "Sanitization testing is enabled.")
-endif()
-
-if (TESTING)
-	add_definitions(-DTESTING)
-	message(STATUS "Testing flag is enabled.")
-	set(EXECUTABLE_NAME "extDB-test")
-endif()
 
 
 if(${WIN32})
@@ -165,7 +171,7 @@ else()
 	# Linux
 	add_definitions(-DBOOST_LOG_DYN_LINK)
 	
-	if (NOT COMPILE_TEST_APPLICATION)
+	if (NOT((COMPILE_TEST_APPLICATION) OR (COMPILE_RCON_APPLICATION) OR (COMPILE_TEST_SANITIZE_APPLICATION)))
 		ADD_CUSTOM_COMMAND(
 			TARGET ${EXECUTABLE_NAME}
 			POST_BUILD

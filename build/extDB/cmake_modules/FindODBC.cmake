@@ -21,7 +21,7 @@ FIND_PATH(ODBC_INCLUDE_DIR
 )
 
 FIND_PATH(ODBC_LIB_DIR 
-  NAMES odbc32.lib odbc 
+  NAMES odbc32.lib libiodbc.so odbc odbcinst odbc32 unixodbc
   
   PATHS
   /usr/lib
