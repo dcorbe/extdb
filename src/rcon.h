@@ -26,7 +26,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Net/SocketAddress.h>
 #include <Poco/Net/NetException.h>
 
-#include <boost/thread/thread.hpp>
+//#include <boost/thread/thread.hpp>
 
 class Rcon
 {
@@ -61,7 +61,7 @@ class Rcon
 		bool cmd_response;
 		int size;
 		
-		boost::mutex mutex_rcon_global; // TODO:: Look @ changing Rcon Code to avoid this
+		//boost::mutex mutex_rcon_global; // TODO:: Look @ changing Rcon Code to avoid this
 
 		void connect();
 		void sendCommand(std::string &command, std::string &response);

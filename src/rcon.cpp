@@ -33,6 +33,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iomanip>
 #include <iostream>
 #include <cstring>
+#include <stdlib.h>
 
 #include "rcon.h"
 
@@ -104,13 +105,10 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 			std::cout << "Waited more than 10 secs Exiting" << std::endl;
 			break;
 		}
-		try 
-		{
+//		try 
+//		{
 			size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
 			buffer[size] = '\0';
-			std::cout << "." << std::endl;
-			std::cout << sa.toString() << ": " << buffer << std::endl;
-			std::cout << "size:" << size << std::endl;
 
 			if (buffer[7] == 0x02)
 			{
@@ -130,7 +128,7 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 
 					std::string data;
 					extractData(9, data);
-					std::cout << data << std::endl;
+					//std::cout << data << std::endl;
 				}
 			}
 
@@ -188,20 +186,20 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 				std::string packet;
 				makePacket(rcon_packet, packet);
 				dgs.sendBytes(packet.data(), packet.size());
-				std::cout << packet << std::endl;
+				//std::cout << packet << std::endl;
 				cmd_sent = true;
 			}
-		}
-		catch (Poco::TimeoutException&)
-		{
-			std::cout << "Sending KeepAlive" << std::endl;
-			rcon_packet.packetCode = 0x01;
-			rcon_packet.cmd = '\0';
-			std::string packet;
-			makePacket(rcon_packet, packet);
-			dgs.sendBytes(packet.data(), packet.size());
-			std::cout << "Sent KeepAlive" << std::endl;
-		}
+//		}
+//		catch (Poco::TimeoutException&)
+//		{
+//			std::cout << "Sending KeepAlive" << std::endl;
+//			rcon_packet.packetCode = 0x01;
+//			rcon_packet.cmd = '\0';
+//			std::string packet;
+//			makePacket(rcon_packet, packet);
+//			dgs.sendBytes(packet.data(), packet.size());
+//			std::cout << "Sent KeepAlive" << std::endl;
+//		}
 	}
 }
 
@@ -210,11 +208,11 @@ void Rcon::sendCommand(std::string command)
 {
 	try
 	{
-		boost::lock_guard<boost::mutex> lock(mutex_rcon_global);  // TODO:: Look @ changing Rcon Code to avoid this
+		//boost::lock_guard<boost::mutex> lock(mutex_rcon_global);  // TODO:: Look @ changing Rcon Code to avoid this
 		std::string response;
 		connect();
 		sendCommand(command, response);
-		std::cout << response << std::endl;
+		//std::cout << response << std::endl;
 	}
 	catch (Poco::Net::ConnectionRefusedException& e)
 	{
@@ -222,7 +220,7 @@ void Rcon::sendCommand(std::string command)
 	}
 	catch (Poco::Exception& e)
 	{
-		std::cout << "extDB: rcon Failed: " << e.displayText() << std::endl;
+		//std::cout << "extDB: rcon Failed: " << e.displayText() << std::endl;
 	}
 }
 
@@ -235,7 +233,7 @@ void Rcon::extractData(int pos, std::string &data)
 	  ss << buffer[i];
 	}
 	std::string s = ss.str();
-	std::cout << s << std::endl;
+	//std::cout << s << std::endl;
 }
 
 
@@ -245,7 +243,7 @@ void Rcon::connect()
 
 	dgs.connect(sa);
 
-	std::cout << "Password: " << std::string(rcon_login.password) << std::endl;
+	//std::cout << "Password: " << std::string(rcon_login.password) << std::endl;
 
 	rcon_packet.cmd = rcon_login.password;
 	rcon_packet.packetCode = 0x00;
@@ -253,12 +251,9 @@ void Rcon::connect()
 	std::string packet;
 	makePacket(rcon_packet, packet);
 
-	std::cout << "Sending login info" << std::endl;
-	std::cout << packet << std::endl;
+	//std::cout << "Sending login info" << std::endl;
 
 	dgs.sendBytes(packet.data(), packet.size());
-
-	std::cout << "Sent login info" << std::endl;
 
 	start_time = std::clock();
 
@@ -272,19 +267,23 @@ void Rcon::init(int port, std::string password)
 {
 	char *passwd = new char[password.size()+1] ;
 	std::strcpy(passwd, password.c_str());
-
 	rcon_login.port = port;
 	rcon_login.password = passwd;
 }
 
 
-#ifdef TESTING_RCON
+#ifdef RCON_APP
 int main(int nNumberofArgs, char* pszArgs[])
 {
 	Rcon *rcon;
-	rcon = (new Rcon());
+	int port = atoi(pszArgs[1]);
+	std::string password = pszArgs[2];
+	rcon = (new Rcon()); 
+	rcon->init(port, password);
+	rcon->sendCommand(pszArgs[3]);
+	/*
 	char result[255];
-	rcon->init(int(2302), std::string("testing"));
+	
 	for (;;) {
 		char input_str[100];
 		std::cin.getline(input_str, sizeof(input_str));
@@ -294,11 +293,11 @@ int main(int nNumberofArgs, char* pszArgs[])
 		}
 		else
 		{
-			rcon->sendCommand(std::string(input_str));
+			rcon->sendCommand(pszArgs[2];);
 			//std::cout << "extDB: " << result << std::endl;
 		}
 	}
-	std::cout << "quitting" << std::endl;
+	std::cout << "quitting" << std::endl;*/
 	return 0;
 }
 #endif

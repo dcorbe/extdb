@@ -1,4 +1,5 @@
 #Change this if you need to target a specific CMake version
+
 cmake_minimum_required(VERSION 2.8)
 cmake_policy(SET CMP0015 NEW)
 
@@ -8,6 +9,43 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cxx_flag_overrides.cmake)
 project(extDB)
 
+
+# Logging defaults to OFF
+SET(DEBUG_LOGGING FALSE CACHE BOOL "Enables or disables Debug Logging.")
+# Compile test application defaults to OFF
+SET(COMPILE_TEST_APPLICATION FALSE CACHE BOOL "Compiles a test application of extDB.")
+# Testing defaults to OFF
+SET(TESTING FALSE CACHE BOOL "Sets the testing flag for extDB.")
+# Test RCON defaults to OFF
+SET(COMPILE_RCON_APPLICATION FALSE CACHE BOOL "Enables or disables testing of RCON.")
+# Test sanitize defaults to OFF
+SET(COMPILE_TEST_SANITIZE_APPLICATION FALSE CACHE BOOL "Enables or disables testing of sanitization.")
+
+
+if (TESTING)
+	set(EXECUTABLE_NAME "extDB-test")
+	add_definitions(-DTESTING)
+	message(STATUS "Testing flag is enabled.")
+endif()
+
+if (COMPILE_TEST_APPLICATION)
+	set(EXECUTABLE_NAME "extDB-test")
+	add_definitions(-DTEST_APP)
+	message(STATUS "The extDB test application will be compiled.")
+	
+elseif (COMPILE_TEST_SANITIZE_APPLICATION)
+	set(EXECUTABLE_NAME "extDB-sanitize")
+	add_definitions(-DTEST_SANITIZE_APP)
+	message(STATUS "Sanitization testing is enabled.")
+	
+elseif (COMPILE_RCON_APPLICATION)
+	set(EXECUTABLE_NAME "extDB-rcon")
+	add_definitions(-DRCON_APP)
+	message(STATUS "RCON testing is enabled.")
+else()
+	set(EXECUTABLE_NAME "extDB")
+endif()
+
 if (DEBUG_LOGGING)
 	add_definitions(-DDEBUG_LOGGING)
 	message(STATUS "Debug Logging is enabled.")
@@ -15,41 +53,14 @@ else()
 	message(STATUS "Debug Logging is disabled.")
 endif()
 
-if (TESTING)
-	add_definitions(-DTESTING)
-	message(STATUS "Testing flag is enabled.")
-	set(EXECUTABLE_NAME "extDB-test")
-endif()
 
-if (COMPILE_TEST_APPLICATION)
-	add_definitions(-DTEST_APP)
-	message(STATUS "The extDB test application will be compiled.")
-	set(EXECUTABLE_NAME "extDB-test")
-	
-elseif (COMPILE_TEST_SANITIZE_APPLICATION)
-	if (NOT TESTING)
-		message(FATAL_ERROR "Sanitize testing was enabled but the TESTING flag is disabled.  Please enable it.")
-	endif()
-	add_definitions(-DTEST_SANITIZE_APP)
-	message(STATUS "Sanitization testing is enabled.")
-	
-elseif (COMPILE_RCON_APPLICATION)
-	if (NOT TESTING)
-		message(FATAL_ERROR "RCON testing was enabled but the TESTING flag is disabled.  Please enable it.")
-	endif()
-	add_definitions(-DRCON_APP)
-	message(STATUS "RCON testing is enabled.")
-else()
-	set(EXECUTABLE_NAME "extDB")
-endif()
-
-
-# Define sources and executable
+# Define sources
 
 SET(SOURCES
 	../../src/memory_allocator.cpp
 	../../src/ext.cpp
 	../../src/uniqueid.cpp
+	../../src/rcon.cpp
 	../../src/sanitize.cpp
 	../../src/protocols/abstract_protocol.cpp
 	../../src/protocols/db_procedure.cpp
@@ -73,12 +84,6 @@ set(CMAKE_CONFIGURATION_TYPES Release CACHE TYPE
 INTERNAL FORCE )
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
-
-if (NOT((COMPILE_TEST_APPLICATION) OR (COMPILE_RCON_APPLICATION) OR (COMPILE_TEST_SANITIZE_APPLICATION)))
-	
-else()
-	
-endif()
 
 
 # Look for BOOST
@@ -143,22 +148,6 @@ else()
 	# TODO: Add check for NullPtr, i.e for VS2010
 	message(STATUS "Compiler does not support C++11") 
 endif()
-
-
-# Logging defaults to OFF
-SET(DEBUG_LOGGING FALSE CACHE BOOL "Enables or disables Debug Logging.")
-# Compile test application defaults to OFF
-SET(COMPILE_TEST_APPLICATION FALSE CACHE BOOL "Compiles a test application of extDB.")
-# Testing defaults to OFF
-SET(TESTING FALSE CACHE BOOL "Sets the testing flag for extDB.")
-# Test RCON defaults to OFF
-SET(TEST_RCON FALSE CACHE BOOL "Enables or disables testing of RCON.")
-# Test sanitize defaults to OFF
-SET(TEST_SANITIZE FALSE CACHE BOOL "Enables or disables testing of sanitization.")
-
-
-
-
 
 
 if(${WIN32})
