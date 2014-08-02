@@ -763,7 +763,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
     }
 }
 
-#ifdef TESTAPP
+#ifdef TEST_APP
 int main(int nNumberofArgs, char* pszArgs[])
 {
 	std::cout << std::endl << "Welcome to extDB Test Application : " << std::endl;

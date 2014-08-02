@@ -229,6 +229,8 @@ Inventory			3
 Medical				4
 Alive				5
 Other				6
+Other2				7
+Other3				8
 Everything alive	9
 
 Get					5
@@ -240,9 +242,17 @@ Save		0-		2
 
 void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
+	#ifdef TESTING
+		std::cout << "extDB: DB_BASIC: DEBUG INFO: " + input_str << std::endl;
+	#endif
+	#ifdef DEBUG_LOGGING
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: " + input_str;
+	#endif
 	if (input_str.length() <= 4)
 	{
 		result = "[0,\"Error Message to Short\"]";
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Error: Message to Short";
 	}
 	else
 	{
@@ -256,6 +266,8 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 		if (found==std::string::npos)
 		{
 			result = "[0,\"Error Invalid Format\"]";
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Input: " + input_str;
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Error: Invalid Format";
 		}
 		else
 		{
@@ -288,7 +300,13 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 					option = "Alive";
 					break;
 				case 6:
-					option = "Other";
+					option = "Other 1";
+					break;
+				case 7:
+					option = "Other 2";
+					break;
+				case 8:
+					option = "Other 3";
 					break;
 				default:
 					option = "Model";
@@ -377,8 +395,18 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 					break;
 				}
 				default:
+				{
 					result = "[0,\"Error Unknown Option\"]";
+					BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Input: " + input_str;
+					BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Error: Unknown Option";
+				}
 			}
+			#ifdef TESTING
+				std::cout << "extDB: DB_BASIC: DEBUG INFO: RESULT:" + result << std::endl;
+			#endif
+			#ifdef DEBUG_LOGGING
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: RESULT:" + result;
+			#endif
 		}
 	}
 }
