@@ -132,6 +132,15 @@ void DB_RAW::callProtocol(AbstractExt *extension, std::string input_str, std::st
 			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW: RESULT:" + result;
 		#endif
 	}
+	catch (Poco::Data::SQLite::DBLockedException& e)
+	{
+		#ifdef TESTING
+			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+		#endif 
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: DBLocked Exception: " << e.displayText();
+		result = "[0,\"Error DBLocked Exception\"]";
+	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
 	{
 		#ifdef TESTING
