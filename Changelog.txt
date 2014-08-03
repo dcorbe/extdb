@@ -3,7 +3,7 @@
      ADDED: WIP Rcon Code (just used in rcon app atm)
      UPDATED: DB_BASIC now contains Other 1 + Other 2 + Other 3 Fields
      UPDATED: DB_BASIC now has logging output
-     FIXED:  for SQlite concurrent access
+     FIXED: SQlite DB Locked concurrent access
 12 = New Log Class, so u can output text to extDB logfiles.
      All extensions have basic startup + error logging
      Fixed DB_BASIC get all commands
