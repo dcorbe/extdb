@@ -115,6 +115,8 @@ Ext::Ext(void) {
 		pConf = (new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
 	}
 	
+	BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Version: " + version();
+	
 	if (!conf_found) 
 	{
 		#ifdef TESTING
@@ -181,8 +183,8 @@ Ext::Ext(void) {
 			
 			std::string randomized_filename = "extdb-conf-";
 			for(int i = 0; i < 8; ++i) {
-					randomized_filename += chars[index_dist(rng)];
-				}
+				randomized_filename += chars[index_dist(rng)];
+			}
 			randomized_filename += ".ini";
 			boost::filesystem::rename("extdb-conf.ini", randomized_filename);
 		}
@@ -356,7 +358,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "12";
+    return "13";
 }
 
 
@@ -793,7 +795,7 @@ int main(int nNumberofArgs, char* pszArgs[])
             std::cout << "extDB: " << result << std::endl;
         }
     }
-	std::cout << "extDB Test: Quiting Please Wait" << std::endl;
+	std::cout << "extDB Test: Quitting Please Wait" << std::endl;
 	extension->stop();
 	//delete extension;
     return 0;
