@@ -247,25 +247,29 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
             if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
             {
+                std::string username = pConf->getString(conf_option + ".Username");
+                std::string password = pConf->getString(conf_option + ".Password");
+
+                std::string ip = pConf->getString(conf_option + ".IP");
+                std::string port = pConf->getString(conf_option + ".Port");
+				
+				db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
+				
                 if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
                 {
 					db_conn_info.db_type = "MySQL";
                     Poco::Data::MySQL::Connector::registerConnector();
+					std::string compress = pConf->getString(conf_option + ".Compress", "false");
+					if (boost::iequals(compress, "true") == 1)
+					{
+						db_conn_info.connection_str = db_conn_info.connection_str + "compress=true";
+					}
                 }
                 else
                 {
 					db_conn_info.db_type = "ODBC";
                     Poco::Data::ODBC::Connector::registerConnector();
 				}
-
-                std::string username = pConf->getString(conf_option + ".Username");
-                std::string password = pConf->getString(conf_option + ".Password");
-
-                std::string ip = pConf->getString(conf_option + ".IP");
-                std::string port = pConf->getString(conf_option + ".Port");
-
-				db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
-				// TODO Add compress option via config file
 
                 db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
 															db_conn_info.connection_str, 
