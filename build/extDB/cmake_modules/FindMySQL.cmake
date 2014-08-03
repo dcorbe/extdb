@@ -5,19 +5,17 @@
 #  MYSQL_LIBRARIES   - List of libraries when using MySQL.
 #  MYSQL_FOUND       - True if MySQL found.
 
-IF (MYSQL_INCLUDE_DIR)
-  # Already in cache, be silent
-  SET(MYSQL_FIND_QUIETLY TRUE)
-ENDIF (MYSQL_INCLUDE_DIR)
-
-FIND_PATH(MYSQL_INCLUDE_DIR mysql.h
+FIND_PATH(MYSQL_INCLUDE_DIR NAMES mysql.h
+  PATHS
   /usr/local/include/mysql
   /usr/include/mysql
   C:/MySQL/include
 )
 
-FIND_PATH(MYSQL_LIB_DIR mysqlclient.lib  mysqlclient.so
+FIND_PATH(MYSQL_LIB_DIR NAMES mysqlclient.lib  mysqlclient.so libmysqlclient.so
+  PATHS
   /usr/lib
+  /usr/lib/i386-linux-gnu
   /usr/local/lib
   C:/MySQL/lib
 )

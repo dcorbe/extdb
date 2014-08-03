@@ -115,6 +115,8 @@ Ext::Ext(void) {
 		pConf = (new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
 	}
 	
+	BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Version: " + version();
+	
 	if (!conf_found) 
 	{
 		#ifdef TESTING
@@ -181,8 +183,8 @@ Ext::Ext(void) {
 			
 			std::string randomized_filename = "extdb-conf-";
 			for(int i = 0; i < 8; ++i) {
-					randomized_filename += chars[index_dist(rng)];
-				}
+				randomized_filename += chars[index_dist(rng)];
+			}
 			randomized_filename += ".ini";
 			boost::filesystem::rename("extdb-conf.ini", randomized_filename);
 		}
@@ -247,25 +249,29 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
             if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
             {
+                std::string username = pConf->getString(conf_option + ".Username");
+                std::string password = pConf->getString(conf_option + ".Password");
+
+                std::string ip = pConf->getString(conf_option + ".IP");
+                std::string port = pConf->getString(conf_option + ".Port");
+				
+				db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
+				
                 if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
                 {
 					db_conn_info.db_type = "MySQL";
                     Poco::Data::MySQL::Connector::registerConnector();
+					std::string compress = pConf->getString(conf_option + ".Compress", "false");
+					if (boost::iequals(compress, "true") == 1)
+					{
+						db_conn_info.connection_str = db_conn_info.connection_str + "compress=true";
+					}
                 }
                 else
                 {
 					db_conn_info.db_type = "ODBC";
                     Poco::Data::ODBC::Connector::registerConnector();
 				}
-
-                std::string username = pConf->getString(conf_option + ".Username");
-                std::string password = pConf->getString(conf_option + ".Password");
-
-                std::string ip = pConf->getString(conf_option + ".IP");
-                std::string port = pConf->getString(conf_option + ".Port");
-
-				db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
-				// TODO Add compress option via config file
 
                 db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
 															db_conn_info.connection_str, 
@@ -352,7 +358,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "12";
+    return "13";
 }
 
 
@@ -381,13 +387,23 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 	try
 	{
 		boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-		return db_pool->get();
+		Poco::Data::Session free_session =  db_pool->get();
+		if (db_conn_info.db_type == "SQLite")
+		{
+			free_session.setProperty("maxRetryAttempts", 100); // TODO: Add Exceptional Handling for rare scenario where retrys fail
+		}
+		return free_session;
 	}
 	catch (Poco::Data::SessionPoolExhaustedException&)
 		//		Exceptiontal Handling in event of scenario if all asio worker threads are busy using all db connections
 		//			And there is SYNC call using db & db_pool = exhausted
 	{
-		return Poco::Data::Session (db_conn_info.db_type, db_conn_info.connection_str);
+		Poco::Data::Session new_session(db_conn_info.db_type, db_conn_info.connection_str);
+		if (db_conn_info.db_type == "SQLite")
+		{
+			new_session.setProperty("maxRetryAttempts", 100); // TODO: Add Exceptional Handling for rare scenario where retrys fail
+		}
+		return new_session;
 	}
 }
 
@@ -523,7 +539,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			}
 		}
 		else if (boost::iequals(protocol, std::string("LOG")) == 1)
-		{			
+		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC_LOG());
 			if (!unordered_map_protocol[protocol_name].get()->init(this))
 			// Remove Class Instance if Failed to Load
@@ -763,7 +779,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
     }
 }
 
-#ifdef TESTAPP
+#ifdef TEST_APP
 int main(int nNumberofArgs, char* pszArgs[])
 {
 	std::cout << std::endl << "Welcome to extDB Test Application : " << std::endl;
@@ -785,7 +801,7 @@ int main(int nNumberofArgs, char* pszArgs[])
             std::cout << "extDB: " << result << std::endl;
         }
     }
-	std::cout << "extDB Test: Quiting Please Wait" << std::endl;
+	std::cout << "extDB Test: Quitting Please Wait" << std::endl;
 	extension->stop();
 	//delete extension;
     return 0;

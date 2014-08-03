@@ -1,9 +1,3 @@
-IF (ODBC_INCLUDE_DIR)
-  # Already in cache, be silent
-  SET(ODBC_FIND_QUIETLY TRUE)
-ENDIF (ODBC_INCLUDE_DIR)
-
-
 FIND_PATH(ODBC_INCLUDE_DIR 
   NAMES odbcinst.h sql.h 
   
@@ -21,7 +15,7 @@ FIND_PATH(ODBC_INCLUDE_DIR
 )
 
 FIND_PATH(ODBC_LIB_DIR 
-  NAMES odbc32.lib odbc 
+  NAMES odbc32.lib libiodbc.so odbc odbcinst odbc32 unixodbc
   
   PATHS
   /usr/lib

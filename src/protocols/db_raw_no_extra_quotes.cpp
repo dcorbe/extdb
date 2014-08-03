@@ -42,10 +42,10 @@ void DB_RAW_NO_EXTRA_QUOTES::callProtocol(AbstractExt *extension, std::string in
     try
     {
 		#ifdef TESTING
-			std::cout << "extDB: DEBUG INFO: " + input_str << std::endl;
+			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: DEBUG INFO: " + input_str << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW: " + input_str;
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW_NO_EXTRA_QUOTES: " + input_str;
 		#endif
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 		Poco::Data::Statement sql(db_session);
@@ -85,19 +85,28 @@ void DB_RAW_NO_EXTRA_QUOTES::callProtocol(AbstractExt *extension, std::string in
 		}
 		result += "]";
 		#ifdef TESTING
-			std::cout << "extDB: DEBUG INFO: RESULT:" + result << std::endl;
+			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: DEBUG INFO: RESULT:" + result << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW: RESULT:" + result;
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW_NO_EXTRA_QUOTES: RESULT:" + result;
 		#endif
+	}
+	catch (Poco::Data::SQLite::DBLockedException& e)
+	{
+		#ifdef TESTING
+			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+		#endif 
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_NO_EXTRA_QUOTES: DBLocked Exception: " << e.displayText();
+		result = "[0,\"Error DBLocked Exception\"]";
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
 	{
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Input: " + input_str;
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Connection Exception: " << e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Connection Exception: " << e.displayText();
 		result = "[0,\"Error Connection Exception\"]";
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
@@ -105,8 +114,8 @@ void DB_RAW_NO_EXTRA_QUOTES::callProtocol(AbstractExt *extension, std::string in
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Input: " + input_str;
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Statement Exception: " << e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Statement Exception: " << e.displayText();
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
@@ -114,8 +123,8 @@ void DB_RAW_NO_EXTRA_QUOTES::callProtocol(AbstractExt *extension, std::string in
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Input: " + input_str;
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Data Exception: " << e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Data Exception: " << e.displayText();
         result = "[0,\"Error Data Exception\"]";
     }
     catch (Poco::Exception& e)
@@ -123,8 +132,8 @@ void DB_RAW_NO_EXTRA_QUOTES::callProtocol(AbstractExt *extension, std::string in
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Input: " + input_str;
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW: Exception: " << e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Exception: " << e.displayText();
 		result = "[0,\"Error Exception\"]";
 	}
 }

@@ -28,6 +28,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/Session.h>
 #include <Poco/Exception.h>
 
+#include "Poco/Data/MySQL/Connector.h"
+#include "Poco/Data/MySQL/MySQLException.h"
+#include "Poco/Data/SQLite/Connector.h"
+#include "Poco/Data/SQLite/SQLiteException.h"
+#include "Poco/Data/SQLite/Connector.h"
+#include "Poco/Data/SQLite/SQLiteException.h"
+#include "Poco/Data/ODBC/Connector.h"
+#include "Poco/Data/ODBC/ODBCException.h"
+
 #include <cctype>
 #include <cstdlib>
 #include <iostream>
@@ -229,6 +238,8 @@ Inventory			3
 Medical				4
 Alive				5
 Other				6
+Other2				7
+Other3				8
 Everything alive	9
 
 Get					5
@@ -240,145 +251,183 @@ Save		0-		2
 
 void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
-	if (input_str.length() <= 4)
+	try
 	{
-		result = "[0,\"Error Message to Short\"]";
-	}
-	else
-	{
-		bool option_all;
-		std::string option;
-		std::string value;
-		
-		const std::string sep_char(":");
-		const std::string::size_type found = input_str.find(sep_char,4);
-		
-		if (found==std::string::npos)
+		#ifdef TESTING
+			std::cout << "extDB: DB_BASIC: DEBUG INFO: " + input_str << std::endl;
+		#endif
+		#ifdef DEBUG_LOGGING
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: " + input_str;
+		#endif
+		if (input_str.length() <= 4)
 		{
-			result = "[0,\"Error Invalid Format\"]";
+			result = "[0,\"Error Message to Short\"]";
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Input: " + input_str;
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Error: Message to Short";
 		}
 		else
 		{
-			std::string uid = input_str.substr(4,found-4);
-			std::string value = input_str.substr(found+1);
+			bool option_all;
+			std::string option;
+			std::string value;
 			
+			const std::string sep_char(":");
+			const std::string::size_type found = input_str.find(sep_char,4);
 			
-			Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-			
-			
-			switch (Poco::NumberParser::parse(input_str.substr(2,1)))
+			if (found==std::string::npos)
 			{
-				case 0:
-					option = "Model";
-					option_all = true;
-					break;
-				case 1:
-					option = "Model";
-					break;
-				case 2:
-					option = "Position";
-					break;
-				case 3:
-					option = "Inventory";
-					break;
-				case 4:
-					option = "Medical";
-					break;
-				case 5:
-					option = "Alive";
-					break;
-				case 6:
-					option = "Other";
-					break;
-				default:
-					option = "Model";
+				result = "[0,\"Error Invalid Format\"]";
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Input: " + input_str;
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Error: Invalid Format";
 			}
-			
-			switch (Poco::NumberParser::parse(input_str.substr(1,1)))
+			else
 			{
-				case (0):  // Player Info
+				std::string uid = input_str.substr(4,found-4);
+				std::string value = input_str.substr(found+1);
+				
+				
+				Poco::Data::Session db_session = extension->getDBSession_mutexlock();
+				
+				
+				switch (Poco::NumberParser::parse(input_str.substr(2,1)))
 				{
-					if (option =="Other")
+					case 0:
+						option = "Model";
+						option_all = true;
+						break;
+					case 1:
+						option = "Model";
+						break;
+					case 2:
+						option = "Position";
+						break;
+					case 3:
+						option = "Inventory";
+						break;
+					case 4:
+						option = "Medical";
+						break;
+					case 5:
+						option = "Alive";
+						break;
+					case 6:
+						option = "Other 1";
+						break;
+					case 7:
+						option = "Other 2";
+						break;
+					case 8:
+						option = "Other 3";
+						break;
+					default:
+						option = "Model";
+				}
+				
+				switch (Poco::NumberParser::parse(input_str.substr(1,1)))
+				{
+					case (0):  // Player Info
 					{
-						std::string table = "Player Info";
+						if (option =="Other")
+						{
+							std::string table = "Player Info";
+							if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
+							{
+								getOption(db_session, table, uid, option, result);
+							}
+							else
+							{
+								setOption(db_session, table, uid, option, value, result);
+							}
+						}
+						else
+						{
+							getCharUID(db_session, value, result);
+						}
+						break;
+					}
+					case (1):  // Player Char  "Player Characters"
+					{
+						std::string table = "Player Characters";
 						if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
 						{
-							getOption(db_session, table, uid, option, result);
+							if (option_all)
+							{
+								getOptionAll(db_session, table, result);
+							}
+							else
+							{
+								getOption(db_session, table, uid, option, result);
+							}
 						}
 						else
 						{
 							setOption(db_session, table, uid, option, value, result);
 						}
+						break;
 					}
-					else
+					case (2):  // Vehicles    "Vehicles"
 					{
-						getCharUID(db_session, value, result);
-					}
-					break;
-				}
-				case (1):  // Player Char  "Player Characters"
-				{
-					std::string table = "Player Characters";
-					if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
-					{
-						if (option_all)
+						std::string table = "Vehicles";
+						if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
 						{
-							getOptionAll(db_session, table, result);
+							if (option_all)
+							{
+								getOptionAll(db_session, table, result);
+							}
+							else
+							{
+								getOption(db_session, table, uid, option, result);
+							}
 						}
 						else
 						{
-							getOption(db_session, table, uid, option, result);
+							setOption(db_session, table, uid, option, value, result);
 						}
+						break;
 					}
-					else
+					case (3):  // Objects    "Objects"
 					{
-						setOption(db_session, table, uid, option, value, result);
-					}
-					break;
-				}
-				case (2):  // Vehicles    "Vehicles"
-				{
-					std::string table = "Vehicles";
-					if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
-					{
-						if (option_all)
+						std::string table = "Objects";
+						if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
 						{
-							getOptionAll(db_session, table, result);
+							if (option_all)
+							{
+								getOptionAll(db_session, table, result);
+							}
+							else
+							{
+								getOption(db_session, table, uid, option, result);
+							}
 						}
 						else
 						{
-							getOption(db_session, table, uid, option, result);
+							setOption(db_session, table, uid, option, value, result);
 						}
+						break;
 					}
-					else
+					default:
 					{
-						setOption(db_session, table, uid, option, value, result);
+						result = "[0,\"Error Unknown Option\"]";
+						BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Input: " + input_str;
+						BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Error: Unknown Option";
 					}
-					break;
 				}
-				case (3):  // Objects    "Objects"
-				{
-					std::string table = "Objects";
-					if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
-					{
-						if (option_all)
-						{
-							getOptionAll(db_session, table, result);
-						}
-						else
-						{
-							getOption(db_session, table, uid, option, result);
-						}
-					}
-					else
-					{
-						setOption(db_session, table, uid, option, value, result);
-					}
-					break;
-				}
-				default:
-					result = "[0,\"Error Unknown Option\"]";
+				#ifdef TESTING
+					std::cout << "extDB: DB_BASIC: DEBUG INFO: RESULT:" + result << std::endl;
+				#endif
+				#ifdef DEBUG_LOGGING
+					BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: RESULT:" + result;
+				#endif
 			}
 		}
+	}
+	catch (Poco::Data::SQLite::DBLockedException& e)
+	{
+		#ifdef TESTING
+			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+		#endif 
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC: DBLocked Exception: " << e.displayText();
+		result = "[0,\"Error DBLocked Exception\"]";
 	}
 }

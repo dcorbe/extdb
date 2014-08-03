@@ -107,11 +107,23 @@
       <File Name="src/protocols/db_basic.h"/>
       <File Name="src/protocols/db_vac.cpp"/>
       <File Name="src/protocols/db_vac.h"/>
+      <File Name="src/protocols/db_procedure.cpp"/>
+      <File Name="src/protocols/db_procedure.h"/>
+      <File Name="src/protocols/db_raw_no_extra_quotes.cpp"/>
+      <File Name="src/protocols/db_raw_no_extra_quotes.h"/>
+      <File Name="src/protocols/misc_log.cpp"/>
+      <File Name="src/protocols/misc_log.h"/>
+      <File Name="src/protocols/misc_vac.cpp"/>
+      <File Name="src/protocols/misc_vac.h"/>
     </VirtualDirectory>
-    <File Name="src/rcon.cpp"/>
-    <File Name="src/rcon.h"/>
     <File Name="src/memory_allocator.cpp"/>
     <File Name="src/sanitize.cpp"/>
     <File Name="src/sanitize.h"/>
+    <File Name="src/rcon.cpp"/>
+    <File Name="src/rcon.h"/>
   </VirtualDirectory>
+  <BuildMatrix>
+    <WorkspaceConfiguration Name="Debug" Selected="no"/>
+    <WorkspaceConfiguration Name="Release" Selected="yes"/>
+  </BuildMatrix>
 </CodeLite_Project>
