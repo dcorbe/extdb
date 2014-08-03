@@ -388,7 +388,10 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 	{
 		boost::lock_guard<boost::mutex> lock(mutex_db_pool);
 		Poco::Data::Session free_session =  db_pool->get();
-		free_session.setProperty("setMaxRetryAttempts", 100); // TODO: Add Exceptional Handling for rare scenario where retrys fail
+		if (db_conn_info.db_type == "SQLite")
+		{
+			free_session.setProperty("maxRetryAttempts", 100); // TODO: Add Exceptional Handling for rare scenario where retrys fail
+		}
 		return free_session;
 	}
 	catch (Poco::Data::SessionPoolExhaustedException&)
@@ -396,7 +399,10 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 		//			And there is SYNC call using db & db_pool = exhausted
 	{
 		Poco::Data::Session new_session(db_conn_info.db_type, db_conn_info.connection_str);
-		new_session.setProperty("setMaxRetryAttempts", 100); // TODO: Add Exceptional Handling for rare scenario where retrys fail
+		if (db_conn_info.db_type == "SQLite")
+		{
+			new_session.setProperty("maxRetryAttempts", 100); // TODO: Add Exceptional Handling for rare scenario where retrys fail
+		}
 		return new_session;
 	}
 }
