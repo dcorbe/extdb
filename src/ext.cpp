@@ -381,13 +381,17 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 	try
 	{
 		boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-		return db_pool->get();
+		Poco::Data::Session free_session =  db_pool->get();
+		free_session.setProperty("setMaxRetryAttempts", 100); // TODO: Add Exceptional Handling for rare scenario where retrys fail
+		return free_session;
 	}
 	catch (Poco::Data::SessionPoolExhaustedException&)
 		//		Exceptiontal Handling in event of scenario if all asio worker threads are busy using all db connections
 		//			And there is SYNC call using db & db_pool = exhausted
 	{
-		return Poco::Data::Session (db_conn_info.db_type, db_conn_info.connection_str);
+		Poco::Data::Session new_session(db_conn_info.db_type, db_conn_info.connection_str);
+		new_session.setProperty("setMaxRetryAttempts", 100); // TODO: Add Exceptional Handling for rare scenario where retrys fail
+		return new_session;
 	}
 }
 
@@ -523,7 +527,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			}
 		}
 		else if (boost::iequals(protocol, std::string("LOG")) == 1)
-		{			
+		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC_LOG());
 			if (!unordered_map_protocol[protocol_name].get()->init(this))
 			// Remove Class Instance if Failed to Load

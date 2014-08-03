@@ -22,13 +22,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/thread/thread.hpp>
 #include <boost/unordered_map.hpp>
 
-#ifdef LOGGING
-	#include <boost/log/core.hpp>
-	#include <boost/log/trivial.hpp>
-	#include <boost/log/utility/setup/file.hpp>
-	#include <boost/log/sources/severity_logger.hpp>
-	#include <boost/log/sources/record_ostream.hpp>
-#endif
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/sources/record_ostream.hpp>
 
 #include <Poco/AutoPtr.h>
 #include <Poco/Data/Session.h>
@@ -39,6 +37,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "protocols/abstract_ext.h"
 #include "protocols/abstract_protocol.h"
+
 
 class Ext: public AbstractExt
 {
@@ -60,9 +59,8 @@ class Ext: public AbstractExt
 		void freeUniqueID_mutexlock(const int &unique_id);
 		int getUniqueID_mutexlock();
 
-		#ifdef LOGGING
-			boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
-		#endif
+		boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
+		
 		
 		std::string getDBType();
 
