@@ -1,6 +1,8 @@
 13 = CMake Build System Updates + Fixes
      ADDED: MySQL compress config option
      ADDED: WIP Rcon Code (just used in rcon app atm)
+     UPDATED: DB_BASIC now contains Other 1 + Other 2 + Other 3 Fields
+     UPDATED: DB_BASIC now has logging output
      FIXED:  for SQlite concurrent access
 12 = New Log Class, so u can output text to extDB logfiles.
      All extensions have basic startup + error logging
