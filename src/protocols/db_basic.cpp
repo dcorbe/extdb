@@ -473,7 +473,7 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC: Input: " + input_str;
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC: DBLocked Exception: " << e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC: Database Locked Exception Exception: " << e.displayText();
 		result = "[0,\"Error DB Locked Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
