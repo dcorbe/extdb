@@ -186,7 +186,7 @@ void DB_BASIC::getOption(Poco::Data::Session &db_session, std::string &table, st
 	{
 		Poco::Data::Statement sql(db_session);
 		sql << ("SELECT `" + option + "` FROM `" + table + "` WHERE UID=" + uid), Poco::Data::into(result), Poco::Data::now;
-		result = "[1, " + result + "]";
+		result = "[1, [" + result + "]]";
 		if (!Sqf::check(result))
 		{
 			result = "[0, \"ERROR VALUE\"]";
@@ -195,6 +195,25 @@ void DB_BASIC::getOption(Poco::Data::Session &db_session, std::string &table, st
 	else
 	{
 		result = "[0, \"ERROR UID\"]";
+	}
+}
+
+
+void DB_BASIC::getCharOption(Poco::Data::Session &db_session, std::string &table, std::string &steamid, std::string &option, std::string &result)
+{
+	if (isNumber(steamid))
+	{
+		Poco::Data::Statement sql(db_session);
+		sql << ("SELECT `" + option + "` FROM `" + table + "` WHERE SteamID=" + steamid), Poco::Data::into(result), Poco::Data::now;
+		result = "[1, [" + result + "]]";
+		if (!Sqf::check(result))
+		{
+			result = "[0, \"ERROR VALUE\"]";
+		}
+	}
+	else
+	{
+		result = "[0, \"ERROR SteamID\"]";
 	}
 }
 
@@ -219,6 +238,29 @@ void DB_BASIC::setOption(Poco::Data::Session &db_session, std::string &table, st
 	else
 	{
 		result = "[0, \"ERROR UID\"]";
+	}
+}
+
+void DB_BASIC::setCharOption(Poco::Data::Session &db_session, std::string &table, std::string &steamid, std::string &option, std::string value, std::string &result)
+{
+	if (isNumber(steamid))
+	{
+		//if (Sqf::check(value))
+		if (true)
+		{
+			Poco::Data::Statement sql(db_session);
+			std::cout << ("UPDATE \"" + table + "\" SET `" + option + "` = '" + value + "' WHERE SteamID=" + steamid) << std::endl;
+			sql << ("UPDATE \"" + table + "\" SET `" + option + "` = '" + value + "' WHERE SteamID=" + steamid), Poco::Data::now;
+			result = "[1]";
+		}
+		else
+		{
+			result = "[0, \"ERROR VALUE\"]";
+		}
+	}
+	else
+	{
+		result = "[0, \"ERROR SteamID\"]";
 	}
 }
 
@@ -267,7 +309,8 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 		}
 		else
 		{
-			bool option_all;
+			bool option_all = false;
+			bool option_other = false;
 			std::string option;
 			std::string value;
 			
@@ -312,12 +355,15 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 						break;
 					case 6:
 						option = "Other 1";
+						option_other = true;
 						break;
 					case 7:
 						option = "Other 2";
+						option_other = true;
 						break;
 					case 8:
 						option = "Other 3";
+						option_other = true;
 						break;
 					default:
 						option = "Model";
@@ -327,16 +373,16 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 				{
 					case (0):  // Player Info
 					{
-						if (option =="Other")
+						if (option_other)
 						{
 							std::string table = "Player Info";
 							if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
 							{
-								getOption(db_session, table, uid, option, result);
+								getCharOption(db_session, table, value, option, result);
 							}
 							else
 							{
-								setOption(db_session, table, uid, option, value, result);
+								setCharOption(db_session, table, uid, option, value, result);
 							}
 						}
 						else
@@ -428,6 +474,24 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 		#endif 
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC: Input: " + input_str;
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC: DBLocked Exception: " << e.displayText();
-		result = "[0,\"Error DBLocked Exception\"]";
+		result = "[0,\"Error DB Locked Exception\"]";
+	}
+	catch (Poco::Data::DataException& e)
+    {
+		#ifdef TESTING
+			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC: Data Exception: " << e.displayText();
+        result = "[0,\"Error Data Exception\"]";
+    }
+    catch (Poco::Exception& e)
+	{
+		#ifdef TESTING
+			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC: Input: " + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC: Exception: " << e.displayText();
+		result = "[0,\"Error Exception\"]";
 	}
 }
