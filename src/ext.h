@@ -18,20 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <boost/asio.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sources/record_ostream.hpp>
-
-#include <Poco/AutoPtr.h>
-#include <Poco/Data/Session.h>
-#include <Poco/Data/SessionPool.h>
-#include <Poco/Util/IniFileConfiguration.h>
+#include <Poco/AsyncChannel.h>
+#include <Poco/FormattingChannel.h>
+#include <Poco/PatternFormatter.h>
+#include <Poco/SimpleFileChannel.h>
 
 #include "uniqueid.h"
 
@@ -45,6 +38,12 @@ class Ext: public AbstractExt
 		Ext();
 		~Ext();
 
+	
+		Poco::AutoPtr<Poco::SimpleFileChannel> pChannel;
+		Poco::AutoPtr<Poco::AsyncChannel> pAsync;
+		Poco::AutoPtr<Poco::PatternFormatter> pPF;
+		Poco::AutoPtr<Poco::FormattingChannel> pPFC;
+
 		void callExtenion(char *output, const int &output_size, const char *function);
 		std::string version() const;
 
@@ -55,16 +54,14 @@ class Ext: public AbstractExt
 		void stop();
 
 		std::string getAPIKey();
-
-		void freeUniqueID_mutexlock(const int &unique_id);
-		int getUniqueID_mutexlock();
-
-		boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
-		
-		
 		std::string getDBType();
 
+		int getUniqueID_mutexlock();
+		void freeUniqueID_mutexlock(const int &unique_id);
+
+
 	private:
+		Poco::Logger *pLogger;
 		bool extDB_lock;
 		int max_threads;
 

@@ -16,8 +16,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #include "abstract_protocol.h"
+
 
 AbstractProtocol::AbstractProtocol()
 {
@@ -35,5 +35,9 @@ bool AbstractProtocol::init(AbstractExt *extension)
 {
 	// Use this function for any initialize, or if u need to read value from extdb-conf.ini i.e
 	//		extension.pConf (Poco::AutoPtr<Poco::Util::IniFileConfiguration>)
+	
+	// Also use this to initialize Protocol Logger
+	
+	//pLogger = &Poco::Logger::get("Abstract Protocol");
 	return true;
 }

@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#include "db_basic.h"
+#include "db_basic_v2.h"
 
 #include <Poco/DateTime.h>
 #include <Poco/DateTimeFormatter.h>
@@ -43,10 +43,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "../sanitize.h"
 
 
-bool DB_BASIC::init(AbstractExt *extension)
+bool DB_BASIC_V2::init(AbstractExt *extension)
 {
-	pLogger = &Poco::Logger::get("DB_BASIC");
-
+	pLogger = &Poco::Logger::get("DB_BASIC_V2");
+	
 	if (extension->getDBType() == std::string("MySQL"))
 	{
 		return true;
@@ -71,7 +71,7 @@ bool DB_BASIC::init(AbstractExt *extension)
 }
 
 
-bool DB_BASIC::isNumber(std::string &input_str)
+bool DB_BASIC_V2::isNumber(std::string &input_str)
 {
 	bool status = true;
 	for (unsigned int index=0; index < input_str.length(); index++)
@@ -85,8 +85,7 @@ bool DB_BASIC::isNumber(std::string &input_str)
 	return status;
 }
 
-
-void DB_BASIC::getCharUID(Poco::Data::Session &db_session, std::string &steamid, std::string &result)
+void DB_BASIC_V2::getCharUID(Poco::Data::Session &db_session, std::string &steamid, std::string &result)
 {
 	if (isNumber(steamid))
 	{
@@ -118,7 +117,7 @@ void DB_BASIC::getCharUID(Poco::Data::Session &db_session, std::string &steamid,
 			Poco::Data::Statement sql6(db_session);
 			sql6 << ("UPDATE `Player Info` SET Name = '" + name + "' WHERE SteamID=" + steamid), Poco::Data::now;
 		}
-		result = "[1, " + result + "]";
+		result = "[1, [" + result + "]]";
 	}
 	else
 	{
@@ -127,14 +126,14 @@ void DB_BASIC::getCharUID(Poco::Data::Session &db_session, std::string &steamid,
 }
 
 
-void DB_BASIC::getOptionAll(Poco::Data::Session &db_session, std::string &table, std::string &result)
+void DB_BASIC_V2::getOptionAll(Poco::Data::Session &db_session, std::string &table, std::string &result)
 {
 	Poco::Data::Statement sql(db_session);
 	sql << ("SELECT * FROM `" + table + "` WHERE Alive = 1"), Poco::Data::now;
 
 	Poco::Data::RecordSet rs(sql);
 	
-	result = "[";
+	result = "[1, [";
 	std::size_t cols = rs.columnCount();
 	if (cols >= 1)
 	{
@@ -178,11 +177,11 @@ void DB_BASIC::getOptionAll(Poco::Data::Session &db_session, std::string &table,
 			}
 		}
 	}
-	result += "]";
+	result += "]]";
 }
 
 
-void DB_BASIC::getOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string &result)
+void DB_BASIC_V2::getOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string &result)
 {
 	if (isNumber(uid))
 	{
@@ -201,12 +200,12 @@ void DB_BASIC::getOption(Poco::Data::Session &db_session, std::string &table, st
 }
 
 
-void DB_BASIC::getCharOption(Poco::Data::Session &db_session, std::string &table, std::string &steamid, std::string &option, std::string &result)
+void DB_BASIC_V2::getCharOption(Poco::Data::Session &db_session, std::string &steamid, std::string &option, std::string &result)
 {
 	if (isNumber(steamid))
 	{
 		Poco::Data::Statement sql(db_session);
-		sql << ("SELECT `" + option + "` FROM `" + table + "` WHERE SteamID=" + steamid), Poco::Data::into(result), Poco::Data::now;
+		sql << ("SELECT `" + option + "` FROM `Player Info` WHERE SteamID=" + steamid), Poco::Data::into(result), Poco::Data::now;
 		result = "[1, [" + result + "]]";
 		if (!Sqf::check(result))
 		{
@@ -220,7 +219,7 @@ void DB_BASIC::getCharOption(Poco::Data::Session &db_session, std::string &table
 }
 
 
-void DB_BASIC::setOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string value, std::string &result)
+void DB_BASIC_V2::setOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string value, std::string &result)
 {
 	if (isNumber(uid))
 	{
@@ -243,8 +242,7 @@ void DB_BASIC::setOption(Poco::Data::Session &db_session, std::string &table, st
 	}
 }
 
-
-void DB_BASIC::setCharOption(Poco::Data::Session &db_session, std::string &table, std::string &steamid, std::string &option, std::string value, std::string &result)
+void DB_BASIC_V2::setCharOption(Poco::Data::Session &db_session, std::string &steamid, std::string &option, std::string value, std::string &result)
 {
 	if (isNumber(steamid))
 	{
@@ -252,8 +250,8 @@ void DB_BASIC::setCharOption(Poco::Data::Session &db_session, std::string &table
 		if (true)
 		{
 			Poco::Data::Statement sql(db_session);
-			std::cout << ("UPDATE \"" + table + "\" SET `" + option + "` = '" + value + "' WHERE SteamID=" + steamid) << std::endl;
-			sql << ("UPDATE \"" + table + "\" SET `" + option + "` = '" + value + "' WHERE SteamID=" + steamid), Poco::Data::now;
+			std::cout << ("UPDATE \"Player Info\" SET `" + option + "` = '" + value + "' WHERE SteamID=" + steamid) << std::endl;
+			sql << ("UPDATE \"Player Info\" SET `" + option + "` = '" + value + "' WHERE SteamID=" + steamid), Poco::Data::now;
 			result = "[1]";
 		}
 		else
@@ -294,12 +292,12 @@ Save		0-		2
 //setValue(table, uid, type, value)
 //getValue(table, uid, type, value)
 
-void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
 	try
 	{
 		#ifdef TESTING
-			std::cout << "extDB: DB_BASIC: DEBUG INFO: " + input_str << std::endl;
+			std::cout << "extDB: DB_BASIC_V2: DEBUG INFO: " + input_str << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
 			pLogger->trace(" " + input_str);
@@ -331,7 +329,9 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 				std::string uid = input_str.substr(4,found-4);
 				std::string value = input_str.substr(found+1);
 				
+				
 				Poco::Data::Session db_session = extension->getDBSession_mutexlock();
+				
 				
 				switch (Poco::NumberParser::parse(input_str.substr(2,1)))
 				{
@@ -379,11 +379,11 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 							std::string table = "Player Info";
 							if ((Poco::NumberParser::parse(input_str.substr(0,1))) == 5)
 							{
-								getCharOption(db_session, table, value, option, result);
+								getCharOption(db_session, value, option, result);
 							}
 							else
 							{
-								setCharOption(db_session, table, uid, option, value, result);
+								setCharOption(db_session, uid, option, value, result);
 							}
 						}
 						else
@@ -460,7 +460,7 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 					}
 				}
 				#ifdef TESTING
-					std::cout << "extDB: DB_BASIC: DEBUG INFO: RESULT:" + result << std::endl;
+					std::cout << "extDB: DB_BASIC_V2: DEBUG INFO: RESULT:" + result << std::endl;
 				#endif
 				#ifdef DEBUG_LOGGING
 					pLogger->trace("Result: " + result);
@@ -492,7 +492,7 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif
 		pLogger->critical("Input: " + input_str);
-		pLogger->critical("Exception: " + e.displayText());
+		pLogger->critical("Database Locked Exception: " + e.displayText());
 		result = "[0,\"Error Exception\"]";
 	}
 }

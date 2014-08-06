@@ -31,15 +31,18 @@ SET(SOURCES
 	../../src/memory_allocator.cpp
 	../../src/ext.cpp
 	../../src/uniqueid.cpp
-	../../src/rcon.cpp
 	../../src/sanitize.cpp
 	../../src/protocols/abstract_protocol.cpp
 	../../src/protocols/db_procedure.cpp
+	../../src/protocols/db_procedure_v2.cpp
 	../../src/protocols/db_basic.cpp
+	../../src/protocols/db_basic_v2.cpp
 	../../src/protocols/db_raw.cpp
+	../../src/protocols/db_raw_v2.cpp
 	../../src/protocols/db_raw_no_extra_quotes.cpp
-	../../src/protocols/misc_log.cpp
+	../../src/protocols/db_raw_no_extra_quotes_v2.cpp
 	../../src/protocols/misc.cpp
+	../../src/protocols/log.cpp
 )
 
 if (COMPILE_TEST_APPLICATION)
@@ -48,19 +51,19 @@ if (COMPILE_TEST_APPLICATION)
 	add_definitions(-DTEST_APP)
 	message(STATUS "The extDB test application will be compiled.")
 elseif (COMPILE_TEST_SANITIZE_APPLICATION)
-        SET(SOURCES ../../src/sanitize.cpp) # Override Sources
+	SET(SOURCES ../../src/sanitize.cpp) # Override Sources
 	set(EXECUTABLE_NAME "extDB-sanitize")
 	add_executable(${EXECUTABLE_NAME} ${SOURCES})
 	add_definitions(-DTEST_SANITIZE_APP)
 	message(STATUS "Sanitization testing is enabled.")	
 elseif (COMPILE_RCON_APPLICATION)
-        SET(SOURCES ../../src/rcon.cpp) # Override Sources
+	SET(SOURCES ../../src/rcon.cpp) # Override Sources
 	set(EXECUTABLE_NAME "extDB-rcon")
 	add_executable(${EXECUTABLE_NAME} ${SOURCES})
 	add_definitions(-DRCON_APP)
 	message(STATUS "RCON testing is enabled.")
 else()
-        LIST(APPEND SOURCES ../../src/main.cpp)  # Add main.cpp for library build
+	LIST(APPEND SOURCES ../../src/main.cpp)  # Add main.cpp for library build
 	set(EXECUTABLE_NAME "extDB")
 	add_library (${EXECUTABLE_NAME} SHARED ${SOURCES})
 endif()
@@ -87,7 +90,7 @@ if(${WIN32})
 else()
 	add_definitions(-DBOOST_LOG_DYN_LINK)
 endif()
-find_package(Boost REQUIRED COMPONENTS chrono date_time filesystem random regex system thread log log_setup)
+find_package(Boost REQUIRED COMPONENTS chrono date_time random regex system thread)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
 	target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})

@@ -1,27 +1,34 @@
+14 = V2 Protocols, screwed up the logic in return values. V2 Protocol so wouldn't break any sqf code.
+		Will deprecated Original Protocols in next version & remove sometime in the future.
+		Its only a minor Change more info in Wiki soon.
+	Changed over to Poco Library for Filesystem & Logging  (Should compile on Debian now without having to update Boost)
+		Log Format == slightly different.
+		Log Files are now sub divided on Days aswell (directories).
+		Replace Log Filter Option with Log Level Option (has different values)
 13 = CMake Build System Updates + Fixes
-     ADDED: MySQL compress config option
-     ADDED: WIP Rcon Code (just used in rcon app atm)
-     UPDATED: DB_BASIC now contains Other 1 + Other 2 + Other 3 Fields
-     UPDATED: DB_BASIC now has logging output
-     FIXED: SQlite DB Locked concurrent access
+	ADDED: MySQL compress config option
+	ADDED: WIP Rcon Code (just used in rcon app atm)
+	UPDATED: DB_BASIC now contains Other 1 + Other 2 + Other 3 Fields
+	UPDATED: DB_BASIC now has logging output
+	FIXED: SQlite DB Locked concurrent access
 12 = New Log Class, so u can output text to extDB logfiles.
-     All extensions have basic startup + error logging
-     Fixed DB_BASIC get all commands
-     Added minor Error Handling Logic checks when adding Protocols
-     SQLite Databases moved into extDB/ directory
+	All extensions have basic startup + error logging
+	Fixed DB_BASIC get all commands
+	Added minor Error Handling Logic checks when adding Protocols
+	SQLite Databases moved into extDB/ directory
 11 = Randomized Unique ID starting Number, also made smaller range.
-     DB_RAW_NO_EXTRA_QUOTES, New CMake Build System for Windows Source Compile   
+	DB_RAW_NO_EXTRA_QUOTES, New CMake Build System for Windows Source Compile
 10 = Enabled TBB, String Reserved Length to help prevent bad_alloc
-9  = Disabled TBB
-8  = Procedure Support via DB_PROCEDURE(sanitized input), 
-	 Added DB_RAW trace logging returned results
-7  = Changed back to Poco 1.4
-6  = Log Flushing
-5  = Basic Logging Added
-4  = Changed to Poco 1.5, Procedure Support now available via DB_RAW
-3  = Fixed DB_RAW support for multiple Rows
-	 Enabled Auto-Reconnect for MYSQL
-2  = Fixed MYSQL ODBC Database connection
-1  = Fixed get charuid in DB_BASIC,
-	 Added missing Other Column to Player Info table	
-0  = Initial Release
+9 = Disabled TBB
+8 = Procedure Support via DB_PROCEDURE(sanitized input),
+	Added DB_RAW trace logging returned results
+7 = Changed back to Poco 1.4
+6 = Log Flushing
+5 = Basic Logging Added
+4 = Changed to Poco 1.5, Procedure Support now available via DB_RAW
+3 = Fixed DB_RAW support for multiple Rows
+	Enabled Auto-Reconnect for MYSQL
+2 = Fixed MYSQL ODBC Database connection
+1 = Fixed get charuid in DB_BASIC,
+	Added missing Other Column to Player Info table
+0 = Initial Release

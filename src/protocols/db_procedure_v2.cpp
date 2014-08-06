@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#include "db_procedure.h"
+#include "db_procedure_v2.h"
 
 #include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>
@@ -36,9 +36,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "../sanitize.h"
 
 
-bool DB_PROCEDURE::init(AbstractExt *extension)
+bool DB_PROCEDURE_V2::init(AbstractExt *extension)
 {
-	pLogger = &Poco::Logger::get("DB_PROCEDURE");
+	pLogger = &Poco::Logger::get("DB_PROCEDURE_V2");
 	
 	if (extension->getDBType() == std::string("MySQL"))
 	{
@@ -68,7 +68,7 @@ bool DB_PROCEDURE::init(AbstractExt *extension)
 	}
 }
 
-bool DB_PROCEDURE::isNumber(const std::string &input_str)
+bool DB_PROCEDURE_V2::isNumber(const std::string &input_str)
 {
 bool status = true;
 	for (unsigned int index=0; index < input_str.length(); index++)
@@ -82,7 +82,7 @@ bool status = true;
 return status;
 }
 
-void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
 //  Unique ID
 //   |
@@ -168,6 +168,7 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 				
 				Poco::Data::RecordSet rs(sql2);
 				
+				result = "[1, [";
 				std::size_t cols = rs.columnCount();
 				if (cols >= 1)
 				{
@@ -202,7 +203,7 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 						}
 					}
 				}
-				result += "]";
+				result += "]]";
 				#ifdef TESTING
 					std::cout << "extDB: DEBUG INFO: RESULT:" + result << std::endl;
 				#endif

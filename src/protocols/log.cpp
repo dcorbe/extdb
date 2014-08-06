@@ -16,23 +16,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#pragma once
-
-#include <Poco/AutoPtr.h>
-#include <Poco/Data/Session.h>
-#include <Poco/Util/IniFileConfiguration.h>
+#include "log.h"
 
 
-class AbstractExt
+bool LOG::init(AbstractExt *extension)
 {
-	public:
-		virtual Poco::Data::Session getDBSession_mutexlock()=0;
-		virtual std::string getAPIKey()=0;
-		
-		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
-		
-		virtual void freeUniqueID_mutexlock(const int &unique_id)=0;
-		virtual int getUniqueID_mutexlock()=0;
-		
-		virtual std::string getDBType()=0;
-};
+	pLogger = &Poco::Logger::get("LOG");
+	return true;
+}
+
+
+void LOG::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+{
+	//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << input_str;
+	pLogger->information(input_str);
+	result = "[1]";
+}

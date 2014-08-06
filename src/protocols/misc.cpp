@@ -16,8 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#include "misc.h"
-
 #include <boost/thread/thread.hpp>
 
 #include <Poco/Checksum.h>
@@ -33,8 +31,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <cstdlib>
 #include <iostream>
 
-#include "../ext.h"
 #include "../sanitize.h"
+
+#include "abstract_ext.h"
+#include "misc.h"
+
 
 /*
 MISC::MISC(void)

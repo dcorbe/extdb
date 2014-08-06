@@ -16,22 +16,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #pragma once
 
-#include <Poco/Data/SessionPool.h>
-#include <boost/shared_ptr.hpp>
-
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sources/record_ostream.hpp>
-
-#include <iostream>
-#include <cstdlib>
-
 #include "abstract_ext.h"
+
+#include <Poco/Data/Session.h>
+#include <Poco/Data/SessionPool.h>
+#include <Poco/Logger.h>
+
+#include <cstdlib>
+#include <iostream>
+
 
 class AbstractProtocol
 {
@@ -40,9 +35,7 @@ class AbstractProtocol
 		virtual ~AbstractProtocol();
 		virtual void callProtocol(AbstractExt *extension, std::string input_str, std::string &result)=0;
 		virtual bool init(AbstractExt *extension);
-
-	#ifdef LOGGING
-		protected:
-			boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
-	#endif
+		
+	protected:
+		Poco::Logger *pLogger;
 };

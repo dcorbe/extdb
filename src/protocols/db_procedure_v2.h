@@ -18,21 +18,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include <Poco/AutoPtr.h>
-#include <Poco/Data/Session.h>
-#include <Poco/Util/IniFileConfiguration.h>
+#include <Poco/Data/SessionPool.h>
+
+#include <cstdlib>
+#include <iostream>
+
+#include "abstract_ext.h"
+#include "abstract_protocol.h"
 
 
-class AbstractExt
+class DB_PROCEDURE_V2: public AbstractProtocol
 {
 	public:
-		virtual Poco::Data::Session getDBSession_mutexlock()=0;
-		virtual std::string getAPIKey()=0;
+		void callProtocol(AbstractExt *extension, std::string input_str,std::string &result);
+		bool init(AbstractExt *extension);
 		
-		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
-		
-		virtual void freeUniqueID_mutexlock(const int &unique_id)=0;
-		virtual int getUniqueID_mutexlock()=0;
-		
-		virtual std::string getDBType()=0;
+	private:
+		bool isNumber(const std::string &input_str);
 };

@@ -16,7 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #pragma once
 
 #include <Poco/Data/Session.h>
@@ -27,6 +26,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
+
 #include "../sanitize.h"
 
 
@@ -38,8 +38,13 @@ class DB_BASIC: public AbstractProtocol
 		
 	private:
 		bool isNumber(std::string &input_str);
+
 		void getCharUID(Poco::Data::Session &db_session, std::string &steamid, std::string &result);
 		void getOptionAll(Poco::Data::Session &db_session, std::string &table, std::string &result);
+		
 		void getOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string &result);
+		void getCharOption(Poco::Data::Session &db_session, std::string &table, std::string &steamid, std::string &option, std::string &result);
+		
 		void setOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string value, std::string &result);
+		void setCharOption(Poco::Data::Session &db_session, std::string &table, std::string &steamid, std::string &option, std::string value, std::string &result);
 };

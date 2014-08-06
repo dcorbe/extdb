@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#include "db_raw_no_extra_quotes.h"
+#include "db_raw_no_extra_quotes_v2.h"
 
 #include <Poco/Data/Common.h>
 #include <Poco/Data/RecordSet.h>
@@ -36,9 +36,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 
 
-bool DB_RAW_NO_EXTRA_QUOTES::init(AbstractExt *extension)
+bool DB_RAW_NO_EXTRA_QUOTES_V2::init(AbstractExt *extension)
 {
-	pLogger = &Poco::Logger::get("DB_RAW_NO_EXTRA_QUOTES");
+	pLogger = &Poco::Logger::get("DB_RAW_NO_EXTRA_QUOTES_V2");
 	
 	if (extension->getDBType() == std::string("MySQL"))
 	{
@@ -56,7 +56,7 @@ bool DB_RAW_NO_EXTRA_QUOTES::init(AbstractExt *extension)
 	{
 		// DATABASE NOT SETUP YET
 		#ifdef TESTING
-			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: No Database Connection" << std::endl;
+			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES_V2: No Database Connection" << std::endl;
 		#endif
 		pLogger->warning("No Database Connection");
 		return false;
@@ -64,14 +64,12 @@ bool DB_RAW_NO_EXTRA_QUOTES::init(AbstractExt *extension)
 }
 
 
-void DB_RAW_NO_EXTRA_QUOTES::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void DB_RAW_NO_EXTRA_QUOTES_V2::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
     try
     {
-		pLogger = &Poco::Logger::get("DB_RAW_NO_EXTRA_QUOTES");
-		
 		#ifdef TESTING
-			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: DEBUG INFO: " + input_str << std::endl;
+			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES_V2: DEBUG INFO: " + input_str << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
 			pLogger->trace(" " + input_str);
@@ -83,7 +81,7 @@ void DB_RAW_NO_EXTRA_QUOTES::callProtocol(AbstractExt *extension, std::string in
 		sql.execute();
 		Poco::Data::RecordSet rs(sql);
 
-		result = "[";
+		result = "[1, [";
 		std::size_t cols = rs.columnCount();
 		if (cols >= 1)
 		{
@@ -113,9 +111,9 @@ void DB_RAW_NO_EXTRA_QUOTES::callProtocol(AbstractExt *extension, std::string in
 				}
 			}
 		}
-		result += "]";
+		result += "]]";
 		#ifdef TESTING
-			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: DEBUG INFO: RESULT:" + result << std::endl;
+			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES_V2: DEBUG INFO: RESULT:" + result << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
 			pLogger->trace(" RESULT:" + result);
