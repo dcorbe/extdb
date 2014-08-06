@@ -745,7 +745,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
     try
     {
 		#ifdef DEBUG_LOGGING
-			pLogger->trace("Extension Input from Server: " + function);
+			pLogger->trace("Extension Input from Server: " +  std::string(function));
 		#endif
 		const std::string input_str(function);
 		if (input_str.length() <= 2)

@@ -31,7 +31,6 @@ SET(SOURCES
 	../../src/memory_allocator.cpp
 	../../src/ext.cpp
 	../../src/uniqueid.cpp
-	../../src/rcon.cpp
 	../../src/sanitize.cpp
 	../../src/protocols/abstract_protocol.cpp
 	../../src/protocols/db_procedure.cpp
