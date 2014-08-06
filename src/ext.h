@@ -17,8 +17,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/unordered_map.hpp>
+
+#include <Poco/AsyncChannel.h>
+#include <Poco/FormattingChannel.h>
+#include <Poco/PatternFormatter.h>
+#include <Poco/SimpleFileChannel.h>
 
 #include "uniqueid.h"
 
