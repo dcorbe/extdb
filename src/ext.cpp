@@ -179,18 +179,68 @@ Ext::Ext(void) {
 		#ifdef TESTING
 			std::cout << "extDB: Loading Log Settings" << std::endl;
 		#endif
-/*
-		boost::log::core::get()->set_filter
-		(
-			boost::log::trivial::severity >= (pConf->getInt("Logging.Filter", 2))
-		);
-*/
+		
+		std::string level = pConf->getString("Logging.Level", "");
+		
+		if (boost::iequals(level, "none") == 1)
+		{
+			Poco::Logger::root().setLevel(0);
+			pLogger->setLevel(0);
+		}
+		else if (boost::iequals(level, "fatal") == 1)
+		{
+			Poco::Logger::root().setLevel(Poco::Message::PRIO_FATAL);
+			pLogger->setLevel(Poco::Message::PRIO_FATAL);
+		}
+		else if (boost::iequals(level, "critical") == 1)
+		{
+			Poco::Logger::root().setLevel(Poco::Message::PRIO_CRITICAL);
+			pLogger->setLevel(Poco::Message::PRIO_CRITICAL);
+		}
+		else if (boost::iequals(level, "error") == 1)
+		{
+			Poco::Logger::root().setLevel(Poco::Message::PRIO_ERROR);
+			pLogger->setLevel(Poco::Message::PRIO_ERROR);
+		}
+		else if (boost::iequals(level, "warning") == 1)
+		{
+			Poco::Logger::root().setLevel(Poco::Message::PRIO_WARNING);
+			pLogger->setLevel(Poco::Message::PRIO_WARNING);
+		}
+		else if (boost::iequals(level, "notice") == 1)
+		{
+			Poco::Logger::root().setLevel(Poco::Message::PRIO_NOTICE);
+			pLogger->setLevel(Poco::Message::PRIO_NOTICE);
+		}
+		else if (boost::iequals(level, "information") == 1)
+		{
+			Poco::Logger::root().setLevel(Poco::Message::PRIO_INFORMATION);
+			pLogger->setLevel(Poco::Message::PRIO_INFORMATION);
+		}
+		else if (boost::iequals(level, "debug") == 1)
+		{
+			Poco::Logger::root().setLevel(Poco::Message::PRIO_DEBUG);
+			pLogger->setLevel(Poco::Message::PRIO_DEBUG);
+		}
+		else if (boost::iequals(level, "trace") == 1)
+		{
+			Poco::Logger::root().setLevel(Poco::Message::PRIO_TRACE);
+			pLogger->setLevel(Poco::Message::PRIO_TRACE);
+		}
+		else
+		{
+			// Default Value
+			Poco::Logger::root().setLevel(Poco::Message::PRIO_INFORMATION);
+			pLogger->setLevel(Poco::Message::PRIO_INFORMATION);
+			pLogger->warning("No Config Option Logging - Level Found, Using Default Value -> Information");
+		}
+
 
 		#ifdef TESTING
 //			std::cout << "extDB: Loading Rcon Settings" << std::endl;
 //			rcon.init(pConf->getInt("Main.RconPort", 2302), pConf->getString("Main.RconPassword", "password"));
 		#endif
-		//BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Loading Rcon Settings";
+		//pLogger->information("Loading Rcon Settings");
 		
 		
 		if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
