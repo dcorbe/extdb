@@ -48,7 +48,6 @@ bool DB_BASIC_V2::init(AbstractExt *extension)
 {
 	pLogger = &Poco::Logger::get("DB_BASIC_V2");
 	
-	
 	if (extension->getDBType() == std::string("MySQL"))
 	{
 		return true;

@@ -38,6 +38,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bool DB_PROCEDURE_V2::init(AbstractExt *extension)
 {
+	pLogger = &Poco::Logger::get("DB_PROCEDURE_V2");
+	
 	if (extension->getDBType() == std::string("MySQL"))
 	{
 		return true;
@@ -52,7 +54,7 @@ bool DB_PROCEDURE_V2::init(AbstractExt *extension)
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE: Doesn't Support SQLite" << std::endl;
 		#endif
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE: Doesn't Support SQLite";
+		pLogger->warning("Doesn't Support SQLite");
 		return false;
 	}
 	else
@@ -61,7 +63,7 @@ bool DB_PROCEDURE_V2::init(AbstractExt *extension)
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE: No Database Connection" << std::endl;
 		#endif
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE: No Database Connection";
+		pLogger->warning("No Database Connection");
 		return false;
 	}
 }
@@ -94,7 +96,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		std::cout << "extDB: DEBUG INFO: " + input_str << std::endl;
 	#endif
 	#ifdef DEBUG_LOGGING
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE_V2: " + input_str;
+		pLogger->trace(" " + input_str);
 	#endif
 
     try
@@ -206,7 +208,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					std::cout << "extDB: DEBUG INFO: RESULT:" + result << std::endl;
 				#endif
 				#ifdef DEBUG_LOGGING
-					//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE_V2: RESULT:" + result;
+					pLogger->trace(" RESULT:" + result);
 				#endif
 			}
 			else
@@ -219,7 +221,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 			#ifdef TESTING
 				std::cout << "extDB: DEBUG INFO: Invalid Format" << std::endl;
 			#endif
-			//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE_V2: Invalid Format" + input_str;
+			pLogger->error(" Invalid Format: " + input_str;
 			result = "[0,\"Invalid Format\"]";
 		}
 	}
@@ -228,8 +230,8 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		#ifdef TESTING
 			std::cout << "extdb: Error: " << e.displayText() << std::endl;
 		#endif 
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_PROCEDURE_V2: Input: " + input_str;
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_PROCEDURE_V2: Error: " + e.displayText();
-        result = "[0,\"Error\"]";
+		pLogger->critical("Input: " + input_str);
+		pLogger->critical("Exception: " + e.displayText());
+		result = "[0,\"Error Exception\"]";
     }
 }
