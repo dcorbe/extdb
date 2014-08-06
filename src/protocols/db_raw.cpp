@@ -16,7 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #include "db_raw.h"
 
 #include <Poco/Data/Common.h>
@@ -36,7 +35,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <cstdlib>
 #include <iostream>
-
 
 
 bool DB_RAW::init(AbstractExt *extension)

@@ -16,13 +16,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #include "db_raw_v2.h"
 
 #include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/Session.h>
+
 #include <Poco/Exception.h>
 
 #include "Poco/Data/MySQL/Connector.h"
@@ -36,7 +36,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <cstdlib>
 #include <iostream>
-
 
 
 bool DB_RAW_V2::init(AbstractExt *extension)

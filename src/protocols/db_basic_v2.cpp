@@ -16,7 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #include "db_basic_v2.h"
 
 #include <Poco/DateTime.h>

@@ -16,7 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #include "db_procedure_v2.h"
 
 #include <Poco/Data/Common.h>
@@ -35,6 +34,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 
 #include "../sanitize.h"
+
 
 bool DB_PROCEDURE_V2::init(AbstractExt *extension)
 {
@@ -221,7 +221,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 			#ifdef TESTING
 				std::cout << "extDB: DEBUG INFO: Invalid Format" << std::endl;
 			#endif
-			pLogger->error(" Invalid Format: " + input_str;
+			pLogger->error(" Invalid Format: " + input_str);
 			result = "[0,\"Invalid Format\"]";
 		}
 	}

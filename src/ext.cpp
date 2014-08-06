@@ -15,6 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "ext.h"
+
 #include <Poco/Data/Session.h>
 #include <Poco/Data/SessionPool.h>
 #include <Poco/Data/MySQL/Connector.h>
@@ -70,9 +72,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/db_raw_no_extra_quotes_v2.h"
 #include "protocols/log.h"
 #include "protocols/misc.h"
-
-#include "ext.h"
-
 
 Ext::Ext(void) {
 	mgr.reset (new IdManager);

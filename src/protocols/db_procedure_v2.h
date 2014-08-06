@@ -16,7 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #pragma once
 
 #include <Poco/Data/SessionPool.h>
@@ -26,6 +25,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
+
 
 class DB_PROCEDURE_V2: public AbstractProtocol
 {

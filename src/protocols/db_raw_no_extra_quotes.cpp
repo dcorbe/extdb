@@ -16,7 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #include "db_raw_no_extra_quotes.h"
 
 #include <Poco/Data/Common.h>

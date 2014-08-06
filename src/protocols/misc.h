@@ -16,7 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #pragma once
 
 #include <boost/thread/thread.hpp>
@@ -32,6 +31,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
+
 
 class MISC: public AbstractProtocol
 {

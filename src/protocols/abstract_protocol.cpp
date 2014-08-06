@@ -16,8 +16,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #include "abstract_protocol.h"
+
 
 AbstractProtocol::AbstractProtocol()
 {
