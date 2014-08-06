@@ -17,26 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-#pragma once
+#include "log.h"
 
-#include <Poco/Data/Session.h>
-#include <Poco/Data/SessionPool.h>
 
-#include <Poco/Logger.h>
-
-#include <cstdlib>
-#include <iostream>
-
-#include "abstract_ext.h"
-
-class AbstractProtocol
+bool LOG::init(AbstractExt *extension)
 {
-	public:
-		AbstractProtocol();
-		virtual ~AbstractProtocol();
-		virtual void callProtocol(AbstractExt *extension, std::string input_str, std::string &result)=0;
-		virtual bool init(AbstractExt *extension);
-		
-	protected:
-		Poco::Logger *pLogger;
-};
+	pLogger = &Poco::Logger::get("LOG");
+	return true;
+}
+
+
+void LOG::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+{
+	//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << input_str;
+	pLogger->information(input_str);
+	result = "[1]";
+}

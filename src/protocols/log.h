@@ -1,4 +1,4 @@
-/*
+	/*
 Copyright (C) 2014 Declan Ireland <http://github.com/torndeco/extDB>
 
 This program is free software: you can redistribute it and/or modify
@@ -19,24 +19,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include <Poco/Data/Session.h>
-#include <Poco/Data/SessionPool.h>
+#include "abstract_ext.h"
+#include "abstract_protocol.h"
 
 #include <Poco/Logger.h>
 
-#include <cstdlib>
-#include <iostream>
-
-#include "abstract_ext.h"
-
-class AbstractProtocol
+class LOG: public AbstractProtocol
 {
 	public:
-		AbstractProtocol();
-		virtual ~AbstractProtocol();
-		virtual void callProtocol(AbstractExt *extension, std::string input_str, std::string &result)=0;
-		virtual bool init(AbstractExt *extension);
-		
-	protected:
-		Poco::Logger *pLogger;
+		bool init(AbstractExt *extension);
+		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 };

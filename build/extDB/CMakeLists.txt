@@ -42,8 +42,8 @@ SET(SOURCES
 	../../src/protocols/db_raw_v2.cpp
 	../../src/protocols/db_raw_no_extra_quotes.cpp
 	../../src/protocols/db_raw_no_extra_quotes_v2.cpp
-	../../src/protocols/misc_log.cpp
 	../../src/protocols/misc.cpp
+	../../src/protocols/log.cpp
 )
 
 if (COMPILE_TEST_APPLICATION)

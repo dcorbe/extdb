@@ -15,24 +15,33 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ext.h"
-
+#include <Poco/Data/Session.h>
 #include <Poco/Data/SessionPool.h>
-#include "Poco/Data/MySQL/Connector.h"
-#include "Poco/Data/MySQL/MySQLException.h"
-#include "Poco/Data/SQLite/Connector.h"
-#include "Poco/Data/SQLite/SQLiteException.h"
-#include "Poco/Data/SQLite/Connector.h"
-#include "Poco/Data/SQLite/SQLiteException.h"
-#include "Poco/Data/ODBC/Connector.h"
-#include "Poco/Data/ODBC/ODBCException.h"
+#include <Poco/Data/MySQL/Connector.h>
+#include <Poco/Data/MySQL/MySQLException.h>
+#include <Poco/Data/SQLite/Connector.h>
+#include <Poco/Data/SQLite/SQLiteException.h>
+#include <Poco/Data/SQLite/Connector.h>
+#include <Poco/Data/SQLite/SQLiteException.h>
+#include <Poco/Data/ODBC/Connector.h>
+#include <Poco/Data/ODBC/ODBCException.h>
 
+#include <Poco/AutoPtr.h>
 #include <Poco/DateTime.h>
 #include <Poco/DateTimeFormatter.h>
 #include <Poco/Exception.h>
 #include <Poco/NumberFormatter.h>
 #include <Poco/NumberParser.h>
 #include <Poco/Util/IniFileConfiguration.h>
+
+#include <Poco/AsyncChannel.h>
+#include <Poco/AutoPtr.h>
+#include <Poco/File.h>
+#include <Poco/FormattingChannel.h>
+#include <Poco/Logger.h>
+#include <Poco/Path.h>
+#include <Poco/PatternFormatter.h>
+#include <Poco/SimpleFileChannel.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -52,12 +61,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "uniqueid.h"
 
-#include "Poco/AutoPtr.h"
-#include "Poco/File.h"
-#include "Poco/Logger.h"
-#include "Poco/Path.h"
-#include "Poco/SimpleFileChannel.h"
-
 #include "protocols/abstract_protocol.h"
 #include "protocols/db_basic.h"
 #include "protocols/db_basic_v2.h"
@@ -67,8 +70,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/db_raw_v2.h"
 #include "protocols/db_raw_no_extra_quotes.h"
 #include "protocols/db_raw_no_extra_quotes_v2.h"
-#include "protocols/misc_log.h"
+#include "protocols/log.h"
 #include "protocols/misc.h"
+
+#include "ext.h"
 
 
 Ext::Ext(void) {
@@ -88,8 +93,14 @@ Ext::Ext(void) {
 	pChannel = new Poco::SimpleFileChannel;
 	pChannel->setProperty("path", log_path.toString());
 	pChannel->setProperty("rotation", "10 M");
+
+	pAsync = new Poco::AsyncChannel(pChannel);
 	
-	Poco::Logger::root().setChannel(pChannel);
+	pPF = new Poco::PatternFormatter;
+	pPF->setProperty("pattern", "%Y-%m-%d %H:%M:%S:%F %s: %p: %t");
+	pPFC = new Poco::FormattingChannel(pPF, pAsync);
+	
+	Poco::Logger::root().setChannel(pPFC);
 	pLogger = &Poco::Logger::get("extDB");
 
 	bool conf_found = false;
@@ -128,7 +139,7 @@ Ext::Ext(void) {
 		}
     }
 
-	pLogger->information("extDB: Version: " + version());
+	pLogger->information("Version: " + version());
 	
 	if (!conf_found) 
 	{
@@ -136,7 +147,7 @@ Ext::Ext(void) {
 			std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;
 		#endif
 
-		pLogger->information("extDB: Unable to find extdb-conf.ini");
+		pLogger->information("Unable to find extdb-conf.ini");
 		// Kill Server no config file found -- Evil
 		// TODO: See if we can extension limp along with bad config ?
         std::exit(EXIT_FAILURE);
@@ -147,7 +158,7 @@ Ext::Ext(void) {
 		#ifdef TESTING
 			std::cout << "extDB: Found extdb-conf.ini" << std::endl;
 		#endif
-		pLogger->information("extDB: Found extdb-conf.ini");
+		pLogger->information("Found extdb-conf.ini");
 
 		steam_api_key = pConf->getString("Main.Steam_WEB_API_KEY", "");
 
@@ -164,7 +175,7 @@ Ext::Ext(void) {
 			#ifdef TESTING
 				std::cout << "extDB: Creating Worker Thread +1" << std::endl ;
 			#endif
-			pLogger->information("extDB: Creating Worker Thread +1");
+			pLogger->information("Creating Worker Thread +1");
         }
 
 		// Load Logging Filter Options
@@ -214,7 +225,7 @@ void Ext::stop()
 	#ifdef TESTING
 		std::cout << "extDB: Stopping Please Wait..." << std::endl;
 	#endif
-	pLogger->information("extDB: Stopping Please Wait...");
+	pLogger->information("Stopping Please Wait...");
 
 	io_service.stop();
     threads.join_all();
@@ -227,7 +238,7 @@ void Ext::stop()
     else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
         Poco::Data::SQLite::Connector::unregisterConnector();
 
-	pLogger->information("extDB: Stopped");
+	pLogger->information("Stopped");
 }
 
 void Ext::connectDatabase(char *output, const int &output_size, const std::string &conf_option)
@@ -258,7 +269,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			#ifdef TESTING
 				std::cout << "extDB: Database Type: " << db_conn_info.db_type << std::endl;
 			#endif
-			pLogger->information("extDB: Database Type: " + db_conn_info.db_type);
+			pLogger->information("Database Type: " + db_conn_info.db_type);
 
             if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
             {
@@ -297,7 +308,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					#ifdef TESTING
 						std::cout << "extDB: Database Session Pool Started" << std::endl;
 					#endif
-					pLogger->information("extDB: Database Session Pool Started");
+					pLogger->information("Database Session Pool Started");
                     std::strcpy(output, "[1]");
                 }
                 else
@@ -305,7 +316,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					#ifdef TESTING
 						std::cout << "extDB: Database Session Pool Failed" << std::endl;
 					#endif
-					pLogger->information("extDB: Database Session Pool Failed");
+					pLogger->critical("Database Session Pool Failed");
 					std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
                 }
             }
@@ -330,7 +341,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					#ifdef TESTING
 						std::cout << "extDB: Database Session Pool Started" << std::endl;
 					#endif
-					pLogger->information("extDB: Database Session Pool Started");
+					pLogger->information("Database Session Pool Started");
                     std::strcpy(output, "[1]");
                 }
                 else
@@ -338,7 +349,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					#ifdef TESTING
 						std::cout << "extDB: Database Session Pool Failed" << std::endl;
 					#endif
-					pLogger->information("extDB: Database Session Pool Failed");
+					pLogger->critical("Database Session Pool Failed");
                     std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
                 }
             }
@@ -347,7 +358,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 				#ifdef TESTING
 					std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
 				#endif 
-				pLogger->information("extDB: No Database Engine Found for " + db_name + ".");
+				pLogger->error("No Database Engine Found for " + db_name + ".");
 				std::strcpy(output, "[0,\"Unknown Database Type\"]");
             }
         }
@@ -356,7 +367,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			#ifdef TESTING
 				std::cout << "extDB: WARNING No Config Option Found: " << conf_option << "." << std::endl;
 			#endif
-			pLogger->information("extDB: No Config Option Found: " + conf_option + ".");
+			pLogger->error("No Config Option Found: " + conf_option + ".");
 			std::strcpy(output, "[0,\"No Config Option Found\"]");
         }
     }
@@ -365,7 +376,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 		#ifdef TESTING
 			std::cout << "extDB: Database Setup Failed: " << e.displayText() << std::endl;
 		#endif
-		pLogger->information("extDB: Database Setup Failed: " + e.displayText());
+		pLogger->error("Database Setup Failed: " + e.displayText());
         std::exit(EXIT_FAILURE);
     }
 }
@@ -611,7 +622,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("LOG")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC_LOG());
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new LOG());
 			if (!unordered_map_protocol[protocol_name].get()->init(this))
 			// Remove Class Instance if Failed to Load
 			{
@@ -687,7 +698,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
     try
     {
 		#ifdef DEBUG_LOGGING
-			pLogger->information("extDB: Extension Input from Server: " + function);
+			pLogger->trace("Extension Input from Server: " + function);
 		#endif
 		const std::string input_str(function);
 		if (input_str.length() <= 2)
@@ -846,7 +857,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif
-		pLogger->information("extDB: Error: " + e.displayText());
+		pLogger->error("extDB: Error: " + e.displayText());
     }
 }
 

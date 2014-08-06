@@ -46,6 +46,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bool DB_BASIC_V2::init(AbstractExt *extension)
 {
+	pLogger = &Poco::Logger::get("DB_BASIC_V2");
+	
+	
 	if (extension->getDBType() == std::string("MySQL"))
 	{
 		return true;
@@ -64,7 +67,7 @@ bool DB_BASIC_V2::init(AbstractExt *extension)
 		#ifdef TESTING
 			std::cout << "extDB: DB_BASIC: No Database Connection" << std::endl;
 		#endif
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: No Database Connection";
+		pLogger->critical("No Database Connection");
 		return false;
 	}
 }
@@ -299,13 +302,13 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 			std::cout << "extDB: DB_BASIC_V2: DEBUG INFO: " + input_str << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
-			//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: " + input_str;
+			pLogger->trace(" " + input_str);
 		#endif
 		if (input_str.length() <= 4)
 		{
 			result = "[0,\"Error Message to Short\"]";
-			//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: Input: " + input_str;
-			//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: Error: Message to Short";
+			pLogger->warning("Input: " + input_str);
+			pLogger->warning("Error: Message to Short");
 		}
 		else
 		{
@@ -320,8 +323,8 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 			if (found==std::string::npos)
 			{
 				result = "[0,\"Error Invalid Format\"]";
-				//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: Input: " + input_str;
-				//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: Error: Invalid Format";
+				pLogger->warning("Input: " + input_str);
+				pLogger->warning("Error: Invalid Format");
 			}
 			else
 			{
@@ -454,15 +457,15 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 					default:
 					{
 						result = "[0,\"Error Unknown Option\"]";
-						//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: Input: " + input_str;
-						//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: Error: Unknown Option";
+						pLogger->warning("Input: " + input_str);
+						pLogger->warning("Error: Unknown Option");
 					}
 				}
 				#ifdef TESTING
 					std::cout << "extDB: DB_BASIC_V2: DEBUG INFO: RESULT:" + result << std::endl;
 				#endif
 				#ifdef DEBUG_LOGGING
-					//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: RESULT:" + result;
+					pLogger->trace("Result: " + result);
 				#endif
 			}
 		}
@@ -472,8 +475,8 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC_V2: Input: " + input_str;
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC_V2: Database Locked Exception: " << e.displayText();
+		pLogger->critical("Input: " + input_str);
+		pLogger->critical("Database Locked Exception: " + e.displayText());
 		result = "[0,\"Error DB Locked Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
@@ -481,8 +484,8 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC_V2: Input: " + input_str;
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC_V2: Data Exception: " << e.displayText();
+		pLogger->critical("Input: " + input_str);
+		pLogger->critical("Data Exception: " + e.displayText());
         result = "[0,\"Error Data Exception\"]";
     }
     catch (Poco::Exception& e)
@@ -490,8 +493,8 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC_V2: Input: " + input_str;
-		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_BASIC_V2: Exception: " << e.displayText();
+		pLogger->critical("Input: " + input_str);
+		pLogger->critical("Database Locked Exception: " + e.displayText());
 		result = "[0,\"Error Exception\"]";
 	}
 }
