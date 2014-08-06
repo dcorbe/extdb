@@ -59,7 +59,7 @@ bool DB_RAW_V2::init(AbstractExt *extension)
 		#ifdef TESTING
 			std::cout << "extDB: DB_RAW_V2: No Database Connection" << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW_V2: No Database Connection";
+		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW_V2: No Database Connection";
 		return false;
 	}
 }
@@ -129,7 +129,7 @@ void DB_RAW_V2::callProtocol(AbstractExt *extension, std::string input_str, std:
 			std::cout << "extDB: DB_RAW_V2: DEBUG INFO: RESULT:" + result << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW_V2: RESULT:" + result;
+			//BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW_V2: RESULT:" + result;
 		#endif
 	}
 	catch (Poco::Data::SQLite::DBLockedException& e)
@@ -137,8 +137,8 @@ void DB_RAW_V2::callProtocol(AbstractExt *extension, std::string input_str, std:
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Input: " + input_str;
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: DBLocked Exception: " << e.displayText();
+		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Input: " + input_str;
+		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: DBLocked Exception: " << e.displayText();
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
@@ -146,8 +146,8 @@ void DB_RAW_V2::callProtocol(AbstractExt *extension, std::string input_str, std:
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Input: " + input_str;
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Connection Exception: " << e.displayText();
+		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Input: " + input_str;
+		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Connection Exception: " << e.displayText();
 		result = "[0,\"Error Connection Exception\"]";
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
@@ -155,8 +155,8 @@ void DB_RAW_V2::callProtocol(AbstractExt *extension, std::string input_str, std:
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Input: " + input_str;
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Statement Exception: " << e.displayText();
+		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Input: " + input_str;
+		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Statement Exception: " << e.displayText();
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
@@ -164,8 +164,8 @@ void DB_RAW_V2::callProtocol(AbstractExt *extension, std::string input_str, std:
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Input: " + input_str;
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Data Exception: " << e.displayText();
+		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Input: " + input_str;
+		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Data Exception: " << e.displayText();
         result = "[0,\"Error Data Exception\"]";
     }
     catch (Poco::Exception& e)
@@ -173,8 +173,8 @@ void DB_RAW_V2::callProtocol(AbstractExt *extension, std::string input_str, std:
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Input: " + input_str;
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Exception: " << e.displayText();
+		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Input: " + input_str;
+		//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_RAW_V2: Exception: " << e.displayText();
 		result = "[0,\"Error Exception\"]";
 	}
 }
