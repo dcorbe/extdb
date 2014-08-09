@@ -44,6 +44,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Path.h>
 #include <Poco/PatternFormatter.h>
 #include <Poco/SimpleFileChannel.h>
+#include <Poco/StringTokenizer.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -536,7 +537,7 @@ void Ext::saveResult_mutexlock(const std::string &result, const int &unique_id)
 }
 
 
-void Ext::addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name)
+void Ext::addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name, const std::string &init_data)
 {
 	{
 		// TODO Implement Poco ClassLoader -- dayz hive ext has it to load database dll
@@ -544,21 +545,21 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		if (boost::iequals(protocol, std::string("MISC")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC());
-			if (unordered_map_protocol[protocol_name].get()->init(this))
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			// Remove Class Instance if Failed to Load
 			{
-				std::strcpy(output, "[1]");
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
 			}
 			else
 			{
-				// Remove Class Instance if Failed to Load
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				std::strcpy(output, "[1]");
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_BASIC")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_BASIC());
-			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
@@ -572,7 +573,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("DB_BASIC_V2")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_BASIC_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
@@ -586,7 +587,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("DB_PROCEDURE")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE());
-			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
@@ -600,7 +601,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
@@ -614,7 +615,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("DB_RAW")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW());
-			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
@@ -628,7 +629,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
@@ -642,7 +643,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_NO_EXTRA_QUOTES());
-			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
@@ -656,7 +657,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_NO_EXTRA_QUOTES_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
@@ -670,7 +671,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("LOG")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new LOG());
-			if (!unordered_map_protocol[protocol_name].get()->init(this))
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
@@ -692,7 +693,8 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 void Ext::syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data)
 // Sync callPlugin
 {
-    if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
+	boost::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
+    if (itr == unordered_map_protocol.end())
     {
         std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
     }
@@ -703,7 +705,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 		//   if >, then sends ID Message arma + stores rest. (mutex locks)
 		std::string result;
 		result.reserve(2000);
-        unordered_map_protocol[protocol].get()->callProtocol(this, data, result);
+        itr->second->callProtocol(this, data, result);
 		if (result.length() <= (output_size-9))
 		{
 			std::strcpy(output, ("[1, " + result + "]").c_str());
@@ -720,11 +722,12 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 void Ext::onewayCallProtocol(const std::string protocol, const std::string data)
 // ASync callProtocol
 {
-    if (unordered_map_protocol.find(protocol) != unordered_map_protocol.end())
+	boost::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
+    if (itr != unordered_map_protocol.end())
     {
 		std::string result;
 		result.reserve(2000);
-        unordered_map_protocol[protocol].get()->callProtocol(this, data, result);
+        itr->second->callProtocol(this, data, result);
     }
 }
 
@@ -847,48 +850,37 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					if (!extDB_lock)
 					{
 						// Protocol
-						std::string::size_type found = input_str.find(sep_char,2);
-						std::string command;
-						command.reserve(100);
-						std::string data;
-						if (found==std::string::npos)  // Check Invalid Format
+
+						Poco::StringTokenizer tokens(input_str, ":");
+						std::size_t token_count = tokens.count(); // TODO CHECK !!!!!!!!
+						
+						switch (token_count)
 						{
-							command = input_str.substr(2);
+							case 2:
+								// LOCK / VERSION
+								if (tokens[1] == "VERSION")
+								{
+									std::strcpy(output, version().c_str());
+								}
+								else if (tokens[1] == "LOCK")
+								{
+									extDB_lock = true;
+								}
+								break;
+								
+							case 3:
+								// DATABASE / ADD PROTOCOL
+								addProtocol(output, output_size, tokens[1], tokens[2], "");
+								break;
+							case 4:
+								// DATABASE / ADD PROTOCOL
+								addProtocol(output, output_size, tokens[1], tokens[2], tokens[3]);
+								break;
+							default:
+								// Invalid Format
+								std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+								break;
 						}
-						else
-						{
-							command = input_str.substr(2,(found-2));
-							data = input_str.substr(found+1);
-						}
-						if (command == "VERSION")
-						{
-							std::strcpy(output, version().c_str());
-						}
-						else if (command == "DATABASE")
-						{
-							connectDatabase(output, output_size, data);
-						}
-						else if (command == "ADD")
-						{
-							found = data.find(sep_char);
-							if (found==std::string::npos)  // Check Invalid Format
-							{
-								std::strcpy(output, ("[0,\"Error Missing Protocol Name\"]"));
-							}
-							else
-							{
-								addProtocol(output, output_size, data.substr(0,found), data.substr(found+1));
-							}
-						}
-						else if (command == "LOCK")
-						{
-							extDB_lock = true;
-						}
-						else
-						{
-							std::strcpy(output, ("[0,\"Error Invalid extDB Command\"]"));
-						}
-						break;
 					}
 				}
 				default:

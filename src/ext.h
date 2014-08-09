@@ -59,7 +59,6 @@ class Ext: public AbstractExt
 		int getUniqueID_mutexlock();
 		void freeUniqueID_mutexlock(const int &unique_id);
 
-
 	private:
 		Poco::Logger *pLogger;
 		bool extDB_lock;
@@ -107,7 +106,7 @@ class Ext: public AbstractExt
 		boost::mutex mutex_unique_id;
 
 		// Plugins
-		void addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name);
+		void addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name, const std::string &init_data);
 
 		void syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data);
 		void onewayCallProtocol(const std::string protocol, const std::string data);
