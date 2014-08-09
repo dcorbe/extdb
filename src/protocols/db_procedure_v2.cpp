@@ -124,12 +124,15 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 				const int num_of_inputs = t_arg_inputs.count();
 
 				for(int i = 0; i != num_of_inputs; ++i) {
-					if (!Sqf::check(t_arg_inputs[0]))
+					if (!Sqf::check(t_arg_inputs[i]))
 					{
 						sanitize_check = false;
 						break;
 					}
-					sql_str_procedure += t_arg_inputs[0] + ", ";
+					if (i < (num_of_inputs - 1))
+					{
+						sql_str_procedure += t_arg_inputs[i] + ", ";
+					}
 				}
 					
 				// Outputs
@@ -156,65 +159,72 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					
 				sql_str_procedure += ")";
 				
-				Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-				Poco::Data::Statement sql(db_session);
+				if (sanitize_check) {
+					Poco::Data::Session db_session = extension->getDBSession_mutexlock();
+					Poco::Data::Statement sql(db_session);
 
-				sql << sql_str_procedure, Poco::Data::now;  // TODO: See if can get any error message if unsuccessfull
-				
-				Poco::Data::Statement sql2(db_session);
-				sql2 << sql_str_select, Poco::Data::now;
-				
-				extension->freeUniqueID_mutexlock(unique_id); // No longer need id
-				
-				Poco::Data::RecordSet rs(sql2);
-				
-				result = "[1, [";
-				std::size_t cols = rs.columnCount();
-				if (cols >= 1)
-				{
-					bool more = rs.moveFirst();
-					while (more)
+					sql << sql_str_procedure, Poco::Data::now;  // TODO: See if can get any error message if unsuccessfull
+					
+					Poco::Data::Statement sql2(db_session);
+					sql2 << sql_str_select, Poco::Data::now;
+					
+					extension->freeUniqueID_mutexlock(unique_id); // No longer need id
+					
+					Poco::Data::RecordSet rs(sql2);
+					
+					result = "[1, [";
+					std::size_t cols = rs.columnCount();
+					if (cols >= 1)
 					{
-						result += " [";
-						for (std::size_t col = 0; col < cols; ++col)
+						bool more = rs.moveFirst();
+						while (more)
 						{
-							if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+							result += " [";
+							for (std::size_t col = 0; col < cols; ++col)
 							{
-								result += "\"" + (rs[col].convert<std::string>() + "\"");
+								if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+								{
+									result += "\"" + (rs[col].convert<std::string>() + "\"");
+								}
+								else
+								{
+									result += rs[col].convert<std::string>();
+								}
+								if (col < (cols - 1))
+								{
+									result += ", ";
+								}
+							}
+
+							more = rs.moveNext();
+							if (more)
+							{
+								result += "],";
 							}
 							else
 							{
-								result += rs[col].convert<std::string>();
+								result += "]";
 							}
-							if (col < (cols - 1))
-							{
-								result += ", ";
-							}
-						}
-
-						more = rs.moveNext();
-						if (more)
-						{
-							result += "],";
-						}
-						else
-						{
-							result += "]";
 						}
 					}
+					result += "]]";
+					#ifdef TESTING
+						std::cout << "extDB: DEBUG INFO: RESULT:" + result << std::endl;
+					#endif
+					#ifdef DEBUG_LOGGING
+						pLogger->trace(" RESULT:" + result);
+					#endif
 				}
-				result += "]]";
-				#ifdef TESTING
-					std::cout << "extDB: DEBUG INFO: RESULT:" + result << std::endl;
-				#endif
-				#ifdef DEBUG_LOGGING
-					pLogger->trace(" RESULT:" + result);
-				#endif
+				else
+				{
+					result = "[0,\"Invalid Value\"]";
+				}
 			}
 			else
 			{
 				result = "[0,\"Invalid Value\"]";
 			}
+			
 		}
 		else
 		{
