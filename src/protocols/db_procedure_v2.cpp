@@ -129,15 +129,11 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 						sanitize_check = false;
 						break;
 					}
-					if (i < (num_of_inputs - 1))
-					{
-						sql_str_procedure += t_arg_inputs[i] + ", ";
-					}
 				}
 					
 				// Outputs
 				const int num_of_outputs = Poco::NumberParser::parse(t_arg[3]);
-				if ((num_of_inputs > 0) && (num_of_outputs > 0))
+				if ((num_of_inputs > 0) && (num_of_outputs <= 0))
 				{
 					sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 2));  // Remove the trailing ", " if no outputs
 				}
