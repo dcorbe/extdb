@@ -124,7 +124,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 	for (int x=1; x < token_count; x++)
 	{
 		std::string input_variable = "$INPUT_" + Poco::NumberFormatter::format(x);
-		Poco::replaceInPlace(input_str, input_variable, tokens[(x+1)]);
+		Poco::replaceInPlace(input_str, input_variable, tokens[x]);
 	}
 		
 	try 
