@@ -61,7 +61,7 @@ class Ext: public AbstractExt
 
 	private:
 		Poco::Logger *pLogger;
-		bool extDB_lock;
+		bool extDB_lock = false;
 		int max_threads;
 
 		std::string steam_api_key;

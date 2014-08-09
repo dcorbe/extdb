@@ -65,6 +65,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/abstract_protocol.h"
 #include "protocols/db_basic.h"
 #include "protocols/db_basic_v2.h"
+#include "protocols/db_custom_v2.h"
 #include "protocols/db_procedure.h"
 #include "protocols/db_procedure_v2.h"
 #include "protocols/db_raw.h"
@@ -668,6 +669,20 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 				std::strcpy(output, "[1]");
 			}
 		}
+		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V2")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V2());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
+		}
 		else if (boost::iequals(protocol, std::string("LOG")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new LOG());
@@ -753,7 +768,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		const std::string input_str(function);
 		if (input_str.length() <= 2)
 		{
-			std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
+			std::strcpy(output, ("[0,\"Error Invalid Message, (Message to short)\"]"));
 		}
 		else
 		{
@@ -867,21 +882,24 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 									extDB_lock = true;
 								}
 								break;
-								
 							case 3:
-								// DATABASE / ADD PROTOCOL
-								addProtocol(output, output_size, tokens[1], tokens[2], "");
+								// DATABASE
+								connectDatabase(output, output_size, tokens[2]);
 								break;
 							case 4:
-								// DATABASE / ADD PROTOCOL
-								addProtocol(output, output_size, tokens[1], tokens[2], tokens[3]);
+								// ADD PROTOCOL
+								addProtocol(output, output_size, tokens[2], tokens[3], "");
+								break;
+							case 5:
+								//ADD PROTOCOL
+								addProtocol(output, output_size, tokens[2], tokens[3], tokens[4]);
 								break;
 							default:
 								// Invalid Format
 								std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-								break;
 						}
 					}
+					break;
 				}
 				default:
 				{

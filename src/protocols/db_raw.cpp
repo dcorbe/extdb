@@ -37,7 +37,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 
 
-bool DB_RAW::init(AbstractExt *extension)
+bool DB_RAW::init(AbstractExt *extension, const std::string init_str)
 {
 	pLogger = &Poco::Logger::get("DB_RAW");
 	
