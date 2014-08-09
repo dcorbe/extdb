@@ -80,41 +80,48 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 	Poco::DateTime now;
 	Poco::Path template_path;
 	template_path.pushDirectory("extDB");
-	template_path.pushDirectory("templates");
+	template_path.pushDirectory("db_custom");
 	Poco::File(template_path).createDirectories();
 	template_path.setFileName(init_str + ".ini");
-	template_ini = (new Poco::Util::IniFileConfiguration(template_path.toString()));
 	
-	//std::vector < std::string > calls = template_ini->createView("");
-	std::vector < std::string > custom_calls;
-	template_ini->keys(custom_calls);
+	std::string template_fullpath = template_path.toString();
 	
-	for(std::vector<std::string>::iterator it = custom_calls.begin(); it != custom_calls.end(); ++it) 
+	if (Poco::File("extdb-conf.ini").exists())
 	{
-		std::string call_name = *it;
-		std::string sql;
+		template_ini = (new Poco::Util::IniFileConfiguration(template_fullpath));
 		
-		int sql_count = 1;
-		std::string sql_count_str = "1";
-		while (template_ini->has(call_name + ".SQL" + sql_count_str))
+		//std::vector < std::string > calls = template_ini->createView("");
+		std::vector < std::string > custom_calls;
+		template_ini->keys(custom_calls);
+		
+		for(std::vector<std::string>::iterator it = custom_calls.begin(); it != custom_calls.end(); ++it) 
 		{
-			sql = sql + template_ini->getString(call_name + ".SQL1");
-			sql_count++;
-			sql_count_str = Poco::NumberFormatter::format(sql_count);
+			std::string call_name = *it;
+			std::string sql;
+			
+			int sql_count = 1;
+			std::string sql_count_str = "1";
+			while (template_ini->has(call_name + ".SQL_" + sql_count_str))
+			{
+				sql = sql + template_ini->getString(call_name + ".SQL_" + sql_count_str);
+				sql_count++;
+				sql_count_str = Poco::NumberFormatter::format(sql_count);
+			}
+			custom_protocol[call_name].sql = sql;
+			custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", 0);
+			custom_protocol[call_name].sanitize_inputs = template_ini->getBool(call_name + ".Sanitize Input", true);
+			custom_protocol[call_name].sanitize_outputs = template_ini->getBool(call_name + ".Sanitize Output", true);
 		}
-		custom_protocol[call_name].sql = sql;
-		custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs");
-		custom_protocol[call_name].sanitize_inputs = template_ini->getBool(call_name + ".Sanitize Input");
-		custom_protocol[call_name].sanitize_outputs = template_ini->getBool(call_name + ".Sanitize Output");
+	} else {
+		status = false;
 	}
-	
 	return status;
 }
 
 void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, int &token_count, std::string &result)
 {
 	std::string input_str(itr->second.sql);
-	for (int x=0; x < token_count; x++)
+	for (int x=1; x < token_count; x++)
 	{
 		std::string input_variable = "$INPUT_" + Poco::NumberFormatter::format(x);
 		Poco::replaceInPlace(input_str, input_variable, tokens[(x+1)]);
@@ -255,10 +262,12 @@ void DB_CUSTOM_V2::callProtocol(AbstractExt *extension, std::string input_str, s
 				bool sanitize_check = true;
 				if (itr->second.sanitize_inputs)
 				{
-					for(int i = 0; i != token_count; ++i) {
+					for(int i = 1; i < token_count; ++i) {
 						if (!Sqf::check(tokens[i]))
 						{
+							std::cout << tokens[i] << std::endl;
 							sanitize_check = false;
+							result = "[0,\"Error Value Input is not sanitized\"]";
 							break;
 						}
 					}
