@@ -138,18 +138,17 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 				{
 					sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 2));  // Remove the trailing ", " if no outputs
 				}
-					
 				// Generate Output Values
 				const int unique_id = extension->getUniqueID_mutexlock(); // Using this to make sure no clashing of Output Values
-				
-				for(int i = 0; i != num_of_outputs; ++i) {
-					const std::string temp_str = "@Output" + Poco::NumberFormatter::format(i) + "_" + Poco::NumberFormatter::format(unique_id) +  t_arg[0] + ", ";
-					sql_str_procedure += temp_str;
-					sql_str_select += temp_str;
-				}
-				
+						
 				if (num_of_outputs > 0)
 				{
+					for(int i = 0; i != num_of_outputs; ++i) {
+						const std::string temp_str = "@Output" + Poco::NumberFormatter::format(i) + "_" + Poco::NumberFormatter::format(unique_id) +  t_arg[0] + ", ";
+						sql_str_procedure += temp_str;
+						sql_str_select += temp_str;
+					}
+
 					sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 2));  // Remove the trailing ", " if there is outputs
 					sql_str_select = sql_str_select.substr(0,(sql_str_select.length() - 2));
 				}
@@ -161,45 +160,50 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 					Poco::Data::Statement sql(db_session);
 
 					sql << sql_str_procedure, Poco::Data::now;  // TODO: See if can get any error message if unsuccessfull
+
+					result = "[1, [";
 					
-					Poco::Data::Statement sql2(db_session);
-					sql2 << sql_str_select, Poco::Data::now;
-					
-					extension->freeUniqueID_mutexlock(unique_id); // No longer need id
-					
-					Poco::Data::RecordSet rs(sql2);
-					
-					std::size_t cols = rs.columnCount();
-					if (cols >= 1)
+					if (num_of_outputs > 0)
 					{
-						bool more = rs.moveFirst();
-						while (more)
+						Poco::Data::Statement sql2(db_session);
+						sql2 << sql_str_select, Poco::Data::now;
+						
+						extension->freeUniqueID_mutexlock(unique_id); // No longer need id
+						
+						Poco::Data::RecordSet rs(sql2);
+						
+						std::size_t cols = rs.columnCount();
+						if (cols >= 1)
 						{
-							result += " [";
-							for (std::size_t col = 0; col < cols; ++col)
+							bool more = rs.moveFirst();
+							while (more)
 							{
-								if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+								result += " [";
+								for (std::size_t col = 0; col < cols; ++col)
 								{
-									result += "\"" + (rs[col].convert<std::string>() + "\"");
+									if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+									{
+										result += "\"" + (rs[col].convert<std::string>() + "\"");
+									}
+									else
+									{
+										result += rs[col].convert<std::string>();
+									}
+									if (col < (cols - 1))
+									{
+										result += ", ";
+									}
+								}
+
+								more = rs.moveNext();
+								if (more)
+								{
+									result += "],";
 								}
 								else
 								{
-									result += rs[col].convert<std::string>();
+									result += "]";
 								}
-								if (col < (cols - 1))
-								{
-									result += ", ";
-								}
-							}
-
-							more = rs.moveNext();
-							if (more)
-							{
-								result += "],";
-							}
-							else
-							{
-								result += "]";
 							}
 						}
 					}
