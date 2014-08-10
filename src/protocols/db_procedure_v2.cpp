@@ -102,24 +102,17 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
     {
 		Poco::StringTokenizer t_arg(input_str, "|");
 		const int num_of_inputs = t_arg.count();
-		bool sanitize_check = true;
 		if ((num_of_inputs == 4) && (t_arg[1].length() >= 3) && (isNumber(t_arg[0])))
 		{
 			std::string sql_str_procedure = "call " + t_arg[1].substr(1, (t_arg[1].length() - 2)) + "(";
-			sql_str_procedure.reserve(2000);
 			std::string sql_str_select = "SELECT ";
-			sql_str_select.reserve(2000);
-			if ( (!Sqf::check(t_arg[0])) && (!Sqf::check(t_arg[1])) )
-			{
-				sanitize_check = false;
-			}
 
-			if (sanitize_check)
+			if ( (Sqf::check(t_arg[0])) && (Sqf::check(t_arg[1])) )
 			{
 				// Inputs
+				bool sanitize_check = true;
 				Poco::StringTokenizer t_arg_inputs(t_arg[2], ":");
 				const int num_of_inputs = t_arg_inputs.count();
-
 				for(int i = 0; i != num_of_inputs; ++i) {
 					if (!Sqf::check(t_arg_inputs[i]))
 					{
@@ -128,44 +121,52 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					}
 					sql_str_procedure += t_arg_inputs[i] + ", ";
 				}
-				// Outputs
-				const int num_of_outputs = Poco::NumberParser::parse(t_arg[3]);
-				if ((num_of_inputs > 0) && (num_of_outputs <= 0))
+				
+				if (sanitize_check)
 				{
-					sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 2));  // Remove the trailing ", " if no outputs
-				}
-				// Generate Output Values
-				const int unique_id = extension->getUniqueID_mutexlock(); // Using this to make sure no clashing of Output Values
-						
-				if (num_of_outputs > 0)
-				{
-					for(int i = 0; i != num_of_outputs; ++i) {
-						const std::string temp_str = "@Output" + Poco::NumberFormatter::format(i) + "_" + Poco::NumberFormatter::format(unique_id) +  t_arg[0] + ", ";
-						sql_str_procedure += temp_str;
-						sql_str_select += temp_str;
+					// Outputs
+					const int num_of_outputs = Poco::NumberParser::parse(t_arg[3]);
+					if (num_of_outputs <= 0)
+					{
+						if (num_of_inputs > 0)
+						{
+							// Remove the trailing ", " if no outputs
+							sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 2));  
+						}
+						sql_str_procedure += ")";
+					}
+					else
+					{
+						// Generate Output Values
+						unique_id = extension->getUniqueID_mutexlock(); // Using this to make sure no clashing of Output Values
+						for(int i = 0; i != num_of_outputs; ++i) {
+							const std::string temp_str = "@Output" + Poco::NumberFormatter::format(i) + "_" + Poco::NumberFormatter::format(unique_id) +  + "_" + t_arg[0] + ", ";
+							sql_str_procedure += temp_str;
+							sql_str_select += temp_str;
+						}
+						// Remove the trailing ", "
+						sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 2));  // Remove the trailing ", " if there is outputs
+						sql_str_select = sql_str_select.substr(0,(sql_str_select.length() - 2));
+						sql_str_procedure += ")";
 					}
 
-					sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 2));  // Remove the trailing ", " if there is outputs
-					sql_str_select = sql_str_select.substr(0,(sql_str_select.length() - 2));
-				}
-					
-				sql_str_procedure += ")";
-				
-				if (sanitize_check) {
+					// SQL Call Statement
 					Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 					Poco::Data::Statement sql(db_session);
 
 					sql << sql_str_procedure, Poco::Data::now;  // TODO: See if can get any error message if unsuccessfull
-					
+
 					result = "[1, [";
-					
+
 					if (num_of_outputs > 0)
 					{
+						// If Outputs.. SQL SELECT Statement to get Results
+						
 						Poco::Data::Statement sql2(db_session);
 						sql2 << sql_str_select, Poco::Data::now;
-						
-						extension->freeUniqueID_mutexlock(unique_id); // No longer need id
-						
+							
+						extension->freeUniqueID_mutexlock(unique_id); // Free Unique ID
+							
 						Poco::Data::RecordSet rs(sql2);
 						
 						std::size_t cols = rs.columnCount();
@@ -213,14 +214,14 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 				}
 				else
 				{
-					result = "[0,\"Invalid Value\"]";
+					result = "[0,\"Invalid Value for Unique Server ID / Procedure Name \"]";
 				}
 			}
 			else
 			{
-				result = "[0,\"Invalid Value\"]";
+				// Sanitize Check for Procedure Name + Unique ID for Serveer
+				result = "[0,\"Invalid Value for Unique Server ID / Procedure Name \"]";
 			}
-			
 		}
 		else
 		{

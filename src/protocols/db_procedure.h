@@ -35,4 +35,5 @@ class DB_PROCEDURE: public AbstractProtocol
 		
 	private:
 		bool isNumber(const std::string &input_str);
+		int unique_id;
 };
