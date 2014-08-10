@@ -36,7 +36,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "../sanitize.h"
 
 
-bool DB_PROCEDURE_V2::init(AbstractExt *extension)
+bool DB_PROCEDURE_V2::init(AbstractExt *extension, std::string init_str)
 {
 	pLogger = &Poco::Logger::get("DB_PROCEDURE_V2");
 	
@@ -91,7 +91,6 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 //  Input
 //   |
 //  Output Count
-
 	#ifdef TESTING
 		std::cout << "extDB: DEBUG INFO: " + input_str << std::endl;
 	#endif
@@ -104,14 +103,12 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		Poco::StringTokenizer t_arg(input_str, "|");
 		const int num_of_inputs = t_arg.count();
 		bool sanitize_check = true;
-		
 		if ((num_of_inputs == 4) && (t_arg[1].length() >= 3) && (isNumber(t_arg[0])))
 		{
 			std::string sql_str_procedure = "call " + t_arg[1].substr(1, (t_arg[1].length() - 2)) + "(";
 			sql_str_procedure.reserve(2000);
 			std::string sql_str_select = "SELECT ";
 			sql_str_select.reserve(2000);
-			
 			if ( (!Sqf::check(t_arg[0])) && (!Sqf::check(t_arg[1])) )
 			{
 				sanitize_check = false;
@@ -130,14 +127,12 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 						break;
 					}
 				}
-					
 				// Outputs
 				const int num_of_outputs = Poco::NumberParser::parse(t_arg[3]);
 				if ((num_of_inputs > 0) && (num_of_outputs <= 0))
 				{
 					sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 2));  // Remove the trailing ", " if no outputs
 				}
-					
 				// Generate Output Values
 				const int unique_id = extension->getUniqueID_mutexlock(); // Using this to make sure no clashing of Output Values
 				

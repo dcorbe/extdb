@@ -30,8 +30,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class DB_PROCEDURE_V2: public AbstractProtocol
 {
 	public:
-		void callProtocol(AbstractExt *extension, std::string input_str,std::string &result);
-		bool init(AbstractExt *extension);
+		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
+		bool init(AbstractExt *extension, const std::string init_str);
 		
 	private:
 		bool isNumber(const std::string &input_str);
