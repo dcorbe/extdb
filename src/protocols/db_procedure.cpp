@@ -129,6 +129,7 @@ void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, s
 						sanitize_check = false;
 						break;
 					}
+					sql_str_procedure += t_arg_inputs[i] + ", ";
 				}
 					
 				// Outputs

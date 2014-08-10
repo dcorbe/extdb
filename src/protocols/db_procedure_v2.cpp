@@ -126,6 +126,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 						sanitize_check = false;
 						break;
 					}
+					sql_str_procedure += t_arg_inputs[i] + ", ";
 				}
 				// Outputs
 				const int num_of_outputs = Poco::NumberParser::parse(t_arg[3]);
