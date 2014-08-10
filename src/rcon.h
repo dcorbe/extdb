@@ -22,23 +22,33 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include <boost/thread/thread.hpp>
+#include <boost/thread/recursive_mutex.hpp>
+
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketAddress.h>
 #include <Poco/Net/NetException.h>
 
+#include <Poco/Stopwatch.h>
+
 //#include <boost/thread/thread.hpp>
 
-class Rcon
+class Rcon: public Poco::Runnable
 {
 	public:
-		void sendCommand(std::string command);
-		void init(int port, std::string password);
+		Rcon(int port, std::string password);
+
+		void run();
+		void disconnect();
+		
+		void addCommand(std::string command);
 
 	private:
 		struct RconPacket {
 			char cmd_char_workaround;
 			char *cmd;
 			unsigned char packetCode;
+			std::string packet;
 		};
 
 		struct RconLogin {
@@ -53,7 +63,8 @@ class Rcon
 		RconLogin rcon_login;
 		RconPacket rcon_packet;
 
-		std::clock_t start_time;
+		Poco::Stopwatch rcon_timer;
+		
 		char buffer[1024];  //TODO Change so not hardcoded limit
 		int buffer_size;
 
@@ -61,11 +72,17 @@ class Rcon
 		bool cmd_sent;
 		bool cmd_response;
 		int size;
+		int elapsed_seconds;
 		
-		//boost::mutex mutex_rcon_global; // TODO:: Look @ changing Rcon Code to avoid this
+		boost::recursive_mutex mutex_rcon_run_flag;
+		bool rcon_run_flag;
+		
+		boost::recursive_mutex mutex_rcon_commands;
+		std::vector< std::string > rcon_commands;
 
 		void connect();
-		void sendCommand(std::string &command, std::string &response);
-		void makePacket(RconPacket rcon, std::string &cmdPacket);
+		void mainLoop();
+
+		void makePacket(RconPacket &rcon);
 		void extractData(int pos, std::string data, std::string &result);
 };
