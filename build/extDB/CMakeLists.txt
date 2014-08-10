@@ -165,3 +165,12 @@ else()
 		)
 	endif()
 endif()
+
+#check for 32bit vs. 64bit system
+if (CMAKE_SIZEOF_VOID_P EQUAL 8) #64bit
+	message(STATUS "Warning: You are on a 64-bit system, make sure you are pulling in the appropriate 32-bit libraries.")
+elseif (CMAKE_SIZEOF_VOID_P EQUAL 4) #32bit
+	message(STATUS "You are on a 32-bit system.")
+else()
+	message(STATUS "CMake wasn't able to identify if you are on 32-bit or 64-bit...")
+endif()
