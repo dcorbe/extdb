@@ -574,6 +574,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
+				pLogger->warning("DB_BASIC is Deprecated... Update SQF code for DB_BASIC_V2");
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_BASIC_V2")) == 1)
@@ -602,6 +603,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
+				pLogger->warning("DB_PROCEDURE is Deprecated... Update SQF code for DB_PROCEDURE_V2");
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
@@ -630,6 +632,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
+				pLogger->warning("DB_RAW is Deprecated... Update SQF code for DB_RAW_V2");
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
@@ -658,6 +661,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
+				pLogger->warning("DB_RAW_NO_EXTRA_QUOTES is Deprecated... Update SQF code for DB_RAW_NO_EXTRA_QUOTES_V2");
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
