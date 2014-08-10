@@ -433,7 +433,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "15";
+    return "15 - dev build 10/08/14";
 }
 
 
