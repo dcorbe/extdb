@@ -235,7 +235,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
     catch (Poco::Exception& e)
     {
 		#ifdef TESTING
-			std::cout << "extdb: Error: " << e.displayText() << std::endl;
+			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
 		pLogger->critical("Input: " + input_str);
 		pLogger->critical("Exception: " + e.displayText());
