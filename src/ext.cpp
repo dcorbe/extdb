@@ -75,6 +75,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/log.h"
 #include "protocols/misc.h"
 
+
+void DBPool::customizeSession (Poco::Data::Session& session)
+{
+	try
+	{
+		session.setProperty("maxRetryAttempts", 100);
+	}
+	catch (Poco::Data::NotSupportedException&)
+	{
+	}
+}
+
+
 Ext::Ext(void) {
 	mgr.reset (new IdManager);
 	extDB_lock = false;
@@ -346,7 +359,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
                     Poco::Data::ODBC::Connector::registerConnector();
 				}
 
-                db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
+                db_pool.reset(new DBPool(db_conn_info.db_type, 
 															db_conn_info.connection_str, 
 															db_conn_info.min_sessions, 
 															db_conn_info.max_sessions, 
@@ -379,7 +392,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 				db_path.setFileName(db_name);
                 db_conn_info.connection_str = db_path.toString();
 
-                db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
+                db_pool.reset(new DBPool(db_conn_info.db_type, 
 															db_conn_info.connection_str, 
 															db_conn_info.min_sessions, 
 															db_conn_info.max_sessions, 
@@ -463,21 +476,13 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 	{
 		boost::lock_guard<boost::mutex> lock(mutex_db_pool);
 		Poco::Data::Session free_session =  db_pool->get();
-		if (db_conn_info.db_type == "SQLite")
-		{
-			free_session.setProperty("maxRetryAttempts", 100); // TODO: Add Exceptional Handling for rare scenario where retrys fail
-		}
 		return free_session;
 	}
 	catch (Poco::Data::SessionPoolExhaustedException&)
-		//		Exceptiontal Handling in event of scenario if all asio worker threads are busy using all db connections
-		//			And there is SYNC call using db & db_pool = exhausted
+	//	Exceptiontal Handling in event of scenario if all asio worker threads are busy using all db connections
+	//		And there is SYNC call using db & db_pool = exhausted
 	{
 		Poco::Data::Session new_session(db_conn_info.db_type, db_conn_info.connection_str);
-		if (db_conn_info.db_type == "SQLite")
-		{
-			new_session.setProperty("maxRetryAttempts", 100); // TODO: Add Exceptional Handling for rare scenario where retrys fail
-		}
 		return new_session;
 	}
 }
@@ -734,6 +739,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
     }
 }
 
+
 void Ext::onewayCallProtocol(const std::string protocol, const std::string data)
 // ASync callProtocol
 {
@@ -917,6 +923,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		pLogger->error("extDB: Error: " + e.displayText());
     }
 }
+
 
 #ifdef TEST_APP
 int main(int nNumberofArgs, char* pszArgs[])

@@ -32,6 +32,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/abstract_protocol.h"
 
 
+class DBPool : public Poco::Data::SessionPool
+{
+	public:
+		DBPool(const std::string& sessionKey, const std::string& connectionString, int minSessions, int maxSessions, int idleTime): Poco::Data::SessionPool(sessionKey, connectionString, minSessions, maxSessions, idleTime)
+		{
+		}
+		virtual ~DBPool()
+		{
+		}
+		
+		
+	protected:
+		void customizeSession (Poco::Data::Session& session);
+};
+
 class Ext: public AbstractExt
 {
 	public:
@@ -84,7 +99,7 @@ class Ext: public AbstractExt
 		boost::thread_group threads;
 
 		// Database Session Pool
-		boost::shared_ptr<Poco::Data::SessionPool> db_pool;
+		boost::shared_ptr<DBPool> db_pool;
 		boost::mutex mutex_db_pool;
 
 		void connectDatabase(char *output, const int &output_size, const std::string &conf_option);
