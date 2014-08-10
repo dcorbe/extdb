@@ -54,7 +54,8 @@ class Rcon
 		RconPacket rcon_packet;
 
 		std::clock_t start_time;
-		char buffer[1024];
+		char buffer[1024];  //TODO Change so not hardcoded limit
+		int buffer_size;
 
 		bool logged_in;
 		bool cmd_sent;
@@ -66,5 +67,5 @@ class Rcon
 		void connect();
 		void sendCommand(std::string &command, std::string &response);
 		void makePacket(RconPacket rcon, std::string &cmdPacket);
-		void extractData(int pos, std::string &data);
+		void extractData(int pos, std::string data, std::string &result);
 };

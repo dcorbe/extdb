@@ -29,6 +29,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Exception.h>
 #include <Poco/Timespan.h>
 
+#include <Poco/NumberFormatter.h>
+
 #include <sstream>
 #include <iomanip>
 #include <iostream>
@@ -105,10 +107,11 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 			std::cout << "Waited more than 10 secs Exiting" << std::endl;
 			break;
 		}
-//		try 
-//		{
+		try 
+		{
 			size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
 			buffer[size] = '\0';
+			buffer_size = size;
 
 			if (buffer[7] == 0x02)
 			{
@@ -119,16 +122,17 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 				}
 				else
 				{
+					std::string result;
+					extractData(9, std::string(buffer), result);
+					std::cout << "CHAT: " << result << std::endl;
+					
 					// Respond to Server Msgs i.e chat messages, to prevent timeout
 					rcon_packet.packetCode = 0x02;
 					rcon_packet.cmd_char_workaround = buffer[8];
+
 					std::string packet;
 					makePacket(rcon_packet, packet);
 					dgs.sendBytes(packet.data(), packet.size());
-
-					std::string data;
-					extractData(9, data);
-					//std::cout << data << std::endl;
 				}
 			}
 
@@ -144,13 +148,25 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 					break;
 				}
 			}
-			else if (cmd_sent)   // FINISH !!!!!
+			else if (cmd_sent)
 			{
+				/*
+				std::cout << "-----------------------------------------------------" << std::endl;
+				std::cout << "DEBUG: " << Poco::NumberFormatter::format(int(buffer[7])) << std::endl;
+				std::cout << "DEBUG: " << Poco::NumberFormatter::format(int(buffer[8])) << std::endl;
+				std::cout << "DEBUG: " << Poco::NumberFormatter::format(int(buffer[9])) << std::endl;
+				std::cout << "DEBUG: " << Poco::NumberFormatter::format(int(buffer[10])) << std::endl;
+				std::cout << "DEBUG: " << Poco::NumberFormatter::format(int(buffer[11])) << std::endl;
+				std::cout << "DEBUG: BUFFER SIZE: " << Poco::NumberFormatter::format(buffer_size) << std::endl;
+				*/
+				
 				if (buffer[7] == 0x01)
 				{
-					int sequenceNum = buffer[8]; /*this app only sends 0x00, so only 0x00 is received*/ // TODO: Add recieve Chat from Server  http://www.battleye.com/downloads/BERConProtocol.txt
-					if (buffer[9] == 0x00)
+					std::cout << "Buffer 7 = 0x01" << std::endl;
+					int sequenceNum = buffer[8];
+					if ((buffer[9] == 0x00) && (buffer_size > 9))
 					{
+						std::cout << "Buffer 9 = 0x00" << std::endl;
 						int numPackets = buffer[10];
 						int packetsReceived = 0;
 						int packetNum = buffer[11];
@@ -158,12 +174,14 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 						if ((numPackets - packetNum) == 0x01)
 						{
 							cmd_response = true;
+							std::cout << "Command response received" << std::endl;
 						}
 					}
 					else
 					{
 						/*received command response. nothing left to do now*/
 						cmd_response = true;
+						std::cout << "Command response received" << std::endl;
 					}
 				}
 				if (cmd_response)
@@ -172,6 +190,7 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 					std::cout << "Command response received. Exiting" << std::endl;
 					break;
 				}
+				//std::cout << "-----------------------------------------------------" << std::endl;
 			}
 			else if (logged_in)
 			{
@@ -189,17 +208,17 @@ void Rcon::sendCommand(std::string &command, std::string &response)
 				//std::cout << packet << std::endl;
 				cmd_sent = true;
 			}
-//		}
-//		catch (Poco::TimeoutException&)
-//		{
-//			std::cout << "Sending KeepAlive" << std::endl;
-//			rcon_packet.packetCode = 0x01;
-//			rcon_packet.cmd = '\0';
-//			std::string packet;
-//			makePacket(rcon_packet, packet);
-//			dgs.sendBytes(packet.data(), packet.size());
-//			std::cout << "Sent KeepAlive" << std::endl;
-//		}
+		}
+		catch (Poco::TimeoutException&)
+		{
+			std::cout << "Sending KeepAlive" << std::endl;
+			rcon_packet.packetCode = 0x01;
+			rcon_packet.cmd = '\0';
+			std::string packet;
+			makePacket(rcon_packet, packet);
+			dgs.sendBytes(packet.data(), packet.size());
+			std::cout << "Sent KeepAlive" << std::endl;
+		}
 	}
 }
 
@@ -225,15 +244,14 @@ void Rcon::sendCommand(std::string command)
 }
 
 
-void Rcon::extractData(int pos, std::string &data)
+void Rcon::extractData(int pos, std::string data, std::string &result)
 {
 	std::stringstream ss;
 	for(size_t i = pos; i < size; ++i)
 	{
 	  ss << buffer[i];
 	}
-	std::string s = ss.str();
-	//std::cout << s << std::endl;
+	result = ss.str();
 }
 
 
