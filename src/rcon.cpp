@@ -32,9 +32,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Exception.h>
 #include <Poco/Stopwatch.h>
 
+#include <Poco/AbstractCache.h>
+#include <Poco/ExpireCache.h>
+#include <Poco/SharedPtr.h>
+
 #include <Poco/NumberFormatter.h>
 #include <Poco/Thread.h>
-
 
 #include <sstream>
 #include <iomanip>
@@ -167,48 +170,67 @@ void Rcon::mainLoop()
 				
 				if (buffer[7] == 0x01)
 				{
+					Poco::ExpireCache<int, RconMultiPartMsg > rcon_msg_cache(120000); 
+					
 					//std::cout << "Buffer 7 = 0x01" << std::endl;
-					int sequenceNum = buffer[8];
+					int sequenceNum = buffer[8]; // Store in Poco Map Expire time based vector  <Packets Received> / <Number of Packets> / array[num of packets] of std::string>
 					if ((buffer[9] == 0x00) && (buffer_size > 9))
 					{
 						//std::cout << "Buffer 9 = 0x00" << std::endl;
 						int numPackets = buffer[10];
 						int packetsReceived = 0;
 						int packetNum = buffer[11];
-
-						if ((numPackets - packetNum) == 0x01)
+						
+						std::string partial_msg;
+						extractData(12, std::string(buffer), partial_msg);
+						
+						RconMultiPartMsg rcon_mp_msg;
+						
+						if !(rcon_msg_cache.has(sequenceNum))  //SharedPtr::isNull()
+							// Has Seq in Buffer
 						{
-							cmd_response = true;
-							//std::cout << "Command response received" << std::endl;
-							//std::cout << "reset timer" << std::endl;
-							rcon_timer.restart();
+							std::cout << "Multi Msg Message part" << std::endl;
+							Poco::SharedPtr<RconMultiPartMsg> ptrElem = rcon_msg_cache.get(sequenceNum);
+							ptrElem->first =+ 1; // packetsReceived
+							ptrElem->second[packetNum] = partial_msg;
+							
+							if (packetsReceived == numPackets)
+							{
+								// Build String together
+								std::string result;
+								for (std::vector<std::string>::iterator it = ptrElem->second.begin(); it != ptrElem->second.end(); ++it)
+								{
+									result =+ it->c_str();
+								}
+								std::cout << "Multi Msg Message Built" << std::endl;
+								rcon_msg_cache.remove(sequenceNum);
+								cmd_response = true;
+							}
 						}
+						rcon_timer.restart();
 					}
 					else
 					{
-						/*received command response. nothing left to do now*/
-						cmd_response = true;
+						/*received command response.*/
 						//std::cout << "Command response received" << std::endl;
-						//std::cout << "reset timer" << std::endl;
+						cmd_response = true;
 						rcon_timer.restart();
 					}
 				}
 				if (cmd_response)
 				{
-					/*We're done! Can exit now*/
-					//std::cout << "Command response received. Exiting" << std::endl;
-					//break;
-					//std::cout << "reset timer" << std::endl;
+					/*received command response.*/
+					//std::cout << "Command response received" << std::endl;
 					rcon_timer.restart();
 				}
 				//std::cout << "-----------------------------------------------------" << std::endl;
 			}
 			else if (logged_in)
 			{
-				//Mutex Lock
+				// Mutex Lock
 				boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
 
-				// Commands
+				// Commands To Send
 				for(std::vector<std::string>::iterator it = rcon_commands.begin(); it != rcon_commands.end(); ++it) 
 				{
 					char *cmd = new char[it->size()+1] ;
@@ -285,7 +307,6 @@ void Rcon::mainLoop()
 		{
 			std::cout << "extDB: rcon Failed: " << e.displayText() << std::endl;
 		}
-
 	}
 }
 

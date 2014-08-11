@@ -31,7 +31,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <Poco/Stopwatch.h>
 
-//#include <boost/thread/thread.hpp>
+#include <Poco/ExpireCache.h>
+
 
 class Rcon: public Poco::Runnable
 {
@@ -44,28 +45,35 @@ class Rcon: public Poco::Runnable
 		void addCommand(std::string command);
 
 	private:
+		typedef std::pair< int, std::vector < std::string > > RconMultiPartMsg;
+		//typedef std::vector<int, std::vector< std::string > > RconMultiPartMsg;
+		
 		struct RconPacket {
 			char cmd_char_workaround;
 			char *cmd;
 			unsigned char packetCode;
 			std::string packet;
 		};
+		
+		RconPacket rcon_packet;
 
 		struct RconLogin {
 			int port;
 			char *password;
 		};
 
+		RconLogin rcon_login;
 
 		Poco::Net::SocketAddress sa;
 		Poco::Net::DatagramSocket dgs;
 
-		RconLogin rcon_login;
-		RconPacket rcon_packet;
-
 		Poco::Stopwatch rcon_timer;
 		
-		char buffer[1024];  //TODO Change so not hardcoded limit
+		// Cache   Seq Number  [Num of Packets Received, String]
+		//Poco::ExpireCache<int, RconMultiPartMsg > rcon_msg_cache; //int 120000); // Expire Entries after 2 mins
+
+		// Variables
+		char buffer[4096];  //TODO Change so not hardcoded limit
 		int buffer_size;
 
 		bool logged_in;
@@ -74,12 +82,14 @@ class Rcon: public Poco::Runnable
 		int size;
 		int elapsed_seconds;
 		
+		// Mutex Locks
 		boost::recursive_mutex mutex_rcon_run_flag;
 		bool rcon_run_flag;
 		
 		boost::recursive_mutex mutex_rcon_commands;
 		std::vector< std::string > rcon_commands;
 
+		// Functions
 		void connect();
 		void mainLoop();
 

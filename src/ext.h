@@ -26,6 +26,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/PatternFormatter.h>
 #include <Poco/SimpleFileChannel.h>
 
+#include <Poco/Thread.h>
+
 #include "uniqueid.h"
 
 #include "protocols/abstract_ext.h"
