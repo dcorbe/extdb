@@ -24,6 +24,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
+#include <boost/unordered_map.hpp>
 
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketAddress.h>
@@ -45,7 +46,7 @@ class Rcon: public Poco::Runnable
 		void addCommand(std::string command);
 
 	private:
-		typedef std::pair< int, std::vector < std::string > > RconMultiPartMsg;
+		typedef std::pair< int, boost::unordered_map < int, std::string > > RconMultiPartMsg;
 		//typedef std::vector<int, std::vector< std::string > > RconMultiPartMsg;
 		
 		struct RconPacket {

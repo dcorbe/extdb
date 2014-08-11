@@ -21,6 +21,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
+#include <boost/unordered_map.hpp>
 
 #include <Poco/Checksum.h>
 #include <Poco/Net/DatagramSocket.h>
@@ -46,6 +47,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 
 #include "rcon.h"
+
 
 void Rcon::makePacket(RconPacket &rcon)
 {
@@ -181,15 +183,32 @@ void Rcon::mainLoop()
 						int packetsReceived = 0;
 						int packetNum = buffer[11];
 						
+						std::cout << "DEBUG: " << Poco::NumberFormatter::format(packetNum) << std::endl;
+						
 						std::string partial_msg;
 						extractData(12, std::string(buffer), partial_msg);
 						
 						RconMultiPartMsg rcon_mp_msg;
-						
-						if !(rcon_msg_cache.has(sequenceNum))  //SharedPtr::isNull()
+
+						if (!(rcon_msg_cache.has(sequenceNum)))  //SharedPtr::isNull()
+						{
+							std::cout << "Multi Msg Message First Part" << std::endl;
+							rcon_mp_msg.first=1;
+							rcon_msg_cache.add(sequenceNum, rcon_mp_msg);
+							Poco::SharedPtr<RconMultiPartMsg> ptrElem = rcon_msg_cache.get(sequenceNum);
+							
+							std::cout << "Multi Msg Message First Part 3" << std::endl;
+							std::cout << partial_msg << std::endl;
+							
+							//ptrElem->second[packetNum] = partial_msg;
+							ptrElem->second[packetNum] = partial_msg;
+							
+							std::cout << "Multi Msg Message First Part 4" << std::endl;
+						}
+						else
 							// Has Seq in Buffer
 						{
-							std::cout << "Multi Msg Message part" << std::endl;
+							std::cout << "Multi Msg Message Part" << std::endl;
 							Poco::SharedPtr<RconMultiPartMsg> ptrElem = rcon_msg_cache.get(sequenceNum);
 							ptrElem->first =+ 1; // packetsReceived
 							ptrElem->second[packetNum] = partial_msg;
@@ -198,9 +217,9 @@ void Rcon::mainLoop()
 							{
 								// Build String together
 								std::string result;
-								for (std::vector<std::string>::iterator it = ptrElem->second.begin(); it != ptrElem->second.end(); ++it)
+								for (int i = 0; i < numPackets; ++i)
 								{
-									result =+ it->c_str();
+									result = result + ptrElem->second[i];
 								}
 								std::cout << "Multi Msg Message Built" << std::endl;
 								rcon_msg_cache.remove(sequenceNum);
