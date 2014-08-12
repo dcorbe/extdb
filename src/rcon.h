@@ -47,7 +47,6 @@ class Rcon: public Poco::Runnable
 
 	private:
 		typedef std::pair< int, boost::unordered_map < int, std::string > > RconMultiPartMsg;
-		//typedef std::vector<int, std::vector< std::string > > RconMultiPartMsg;
 		
 		struct RconPacket {
 			char cmd_char_workaround;
@@ -70,18 +69,8 @@ class Rcon: public Poco::Runnable
 
 		Poco::Stopwatch rcon_timer;
 		
-		// Cache   Seq Number  [Num of Packets Received, String]
-		//Poco::ExpireCache<int, RconMultiPartMsg > rcon_msg_cache; //int 120000); // Expire Entries after 2 mins
-
-		// Variables
 		char buffer[4096];  //TODO Change so not hardcoded limit
 		int buffer_size;
-
-		bool logged_in;
-		bool cmd_sent;
-		bool cmd_response;
-		int size;
-		int elapsed_seconds;
 		
 		// Mutex Locks
 		boost::recursive_mutex mutex_rcon_run_flag;

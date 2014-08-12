@@ -106,16 +106,33 @@ void Rcon::makePacket(RconPacket &rcon)
 }
 
 
+void Rcon::extractData(int pos, std::string data, std::string &result)
+{
+	std::stringstream ss;
+	for(size_t i = pos; i < buffer_size; ++i)
+	{
+	  ss << buffer[i];
+	}
+	result = ss.str();
+}
+
 void Rcon::mainLoop()
 {
+	int elapsed_seconds;
+	
+	bool cmd_sent = false;
+	bool cmd_response = false;
+	bool logged_in = false;
+	
+	Poco::ExpireCache<int, RconMultiPartMsg > rcon_msg_cache(120000);
+	
 	dgs.setReceiveTimeout(Poco::Timespan(1, 0));
 	while (true)
 	{
 		try 
 		{
-			size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
-			buffer[size] = '\0';
-			buffer_size = size;
+			buffer_size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
+			buffer[buffer_size] = '\0';
 			
 			if (buffer[7] == 0x02)
 			{
@@ -172,56 +189,44 @@ void Rcon::mainLoop()
 				
 				if (buffer[7] == 0x01)
 				{
-					Poco::ExpireCache<int, RconMultiPartMsg > rcon_msg_cache(120000); 
-					
 					//std::cout << "Buffer 7 = 0x01" << std::endl;
 					int sequenceNum = buffer[8]; // Store in Poco Map Expire time based vector  <Packets Received> / <Number of Packets> / array[num of packets] of std::string>
 					if ((buffer[9] == 0x00) && (buffer_size > 9))
 					{
 						//std::cout << "Buffer 9 = 0x00" << std::endl;
 						int numPackets = buffer[10];
-						int packetsReceived = 0;
 						int packetNum = buffer[11];
-						
-						std::cout << "DEBUG: " << Poco::NumberFormatter::format(packetNum) << std::endl;
 						
 						std::string partial_msg;
 						extractData(12, std::string(buffer), partial_msg);
 						
 						RconMultiPartMsg rcon_mp_msg;
 
-						if (!(rcon_msg_cache.has(sequenceNum)))  //SharedPtr::isNull()
+						if (!(rcon_msg_cache.has(sequenceNum)))
 						{
-							std::cout << "Multi Msg Message First Part" << std::endl;
-							rcon_mp_msg.first=1;
+							// Doesn't have sequenceNum in Buffer
+							rcon_mp_msg.first = 1;
 							rcon_msg_cache.add(sequenceNum, rcon_mp_msg);
+							
 							Poco::SharedPtr<RconMultiPartMsg> ptrElem = rcon_msg_cache.get(sequenceNum);
-							
-							std::cout << "Multi Msg Message First Part 3" << std::endl;
-							std::cout << partial_msg << std::endl;
-							
-							//ptrElem->second[packetNum] = partial_msg;
 							ptrElem->second[packetNum] = partial_msg;
-							
-							std::cout << "Multi Msg Message First Part 4" << std::endl;
 						}
 						else
-							// Has Seq in Buffer
 						{
-							std::cout << "Multi Msg Message Part" << std::endl;
+							// Has sequenceNum in Buffer
 							Poco::SharedPtr<RconMultiPartMsg> ptrElem = rcon_msg_cache.get(sequenceNum);
-							ptrElem->first =+ 1; // packetsReceived
+							ptrElem->first = ptrElem->first + 1;
 							ptrElem->second[packetNum] = partial_msg;
 							
-							if (packetsReceived == numPackets)
+							if (ptrElem->first == numPackets)
 							{
-								// Build String together
+								// All packets Received, re-construct message
 								std::string result;
 								for (int i = 0; i < numPackets; ++i)
 								{
 									result = result + ptrElem->second[i];
 								}
-								std::cout << "Multi Msg Message Built" << std::endl;
+								std::cout << result << std::endl;
 								rcon_msg_cache.remove(sequenceNum);
 								cmd_response = true;
 							}
@@ -330,17 +335,6 @@ void Rcon::mainLoop()
 }
 
 
-void Rcon::extractData(int pos, std::string data, std::string &result)
-{
-	std::stringstream ss;
-	for(size_t i = pos; i < size; ++i)
-	{
-	  ss << buffer[i];
-	}
-	result = ss.str();
-}
-
-
 void Rcon::connect()
 {
 	Poco::Net::SocketAddress sa("localhost", rcon_login.port);
@@ -360,10 +354,6 @@ void Rcon::connect()
 	dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
 
 	rcon_timer.start();
-
-	logged_in = false;
-	cmd_sent = false;
-	cmd_response = false;
 }
 
 
