@@ -138,62 +138,67 @@ void Rcon::mainLoop()
 			{
 				if (!logged_in)
 				{
+					// Already Logged In 
 					logged_in = true;
-					//std::cout << "Already logged in" << std::endl;
-					//std::cout << "reset timer" << std::endl;
+					// Reset Timer
 					rcon_timer.restart();
 				}
 				else
 				{
+					// Recieved Chat Messages
 					std::string result;
 					extractData(9, std::string(buffer), result);
-					//std::cout << "CHAT: " << result << std::endl;
+					std::cout << "CHAT: " << result << std::endl;
 					
 					// Respond to Server Msgs i.e chat messages, to prevent timeout
 					rcon_packet.packetCode = 0x02;
 					rcon_packet.cmd_char_workaround = buffer[8];
 					rcon_packet.packet.clear();
-
 					makePacket(rcon_packet);
 					dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
-					//std::cout << "reset timer" << std::endl;
+					
+					// Reset Timer
 					rcon_timer.restart();
 				}
 			}
 
 			if (!logged_in)
 			{
-				if (buffer[8] == 0x01) // Login Successful
+				if (buffer[8] == 0x01)
 				{
+					// Login Successful
 					logged_in = true;
-					//std::cout << "reset timer" << std::endl;
+					
+					// Reset Timer
 					rcon_timer.restart();
 				}
 				else if (buffer[8] == 0x00) // Login Failed
 				{
+					// Login Failed
 					std::cout << "Failed Login" << std::endl;
+					
+					// TODO !!!!!!!
 					break;
 				}
 			}
 			else if (cmd_sent)
 			{
-				/*
-				std::cout << "-----------------------------------------------------" << std::endl;
-				std::cout << "DEBUG: " << Poco::NumberFormatter::format(int(buffer[7])) << std::endl;
-				std::cout << "DEBUG: " << Poco::NumberFormatter::format(int(buffer[8])) << std::endl;
-				std::cout << "DEBUG: " << Poco::NumberFormatter::format(int(buffer[9])) << std::endl;
-				std::cout << "DEBUG: " << Poco::NumberFormatter::format(int(buffer[10])) << std::endl;
-				std::cout << "DEBUG: " << Poco::NumberFormatter::format(int(buffer[11])) << std::endl;
-				std::cout << "DEBUG: BUFFER SIZE: " << Poco::NumberFormatter::format(buffer_size) << std::endl;
-				*/
-				
 				if (buffer[7] == 0x01)
 				{
-					//std::cout << "Buffer 7 = 0x01" << std::endl;
-					int sequenceNum = buffer[8]; // Store in Poco Map Expire time based vector  <Packets Received> / <Number of Packets> / array[num of packets] of std::string>
-					if ((buffer[9] == 0x00) && (buffer_size > 9))
+					// Rcon Server Ack Message Received
+					int sequenceNum = buffer[8];
+					
+					// Reset Timer
+					rcon_timer.restart();
+					
+					if (!((buffer[9] == 0x00) && (buffer_size > 9)))
 					{
-						//std::cout << "Buffer 9 = 0x00" << std::endl;
+						// Server Received Command Msg
+						cmd_response = true;
+					}
+					else
+					{
+						// Rcon Multi-Part Message Recieved
 						int numPackets = buffer[10];
 						int packetNum = buffer[11];
 						
@@ -228,40 +233,34 @@ void Rcon::mainLoop()
 								}
 								std::cout << result << std::endl;
 								rcon_msg_cache.remove(sequenceNum);
+
+								// Server Received Command Msg
 								cmd_response = true;
 							}
 						}
-						rcon_timer.restart();
-					}
-					else
-					{
-						/*received command response.*/
-						//std::cout << "Command response received" << std::endl;
-						cmd_response = true;
-						rcon_timer.restart();
 					}
 				}
+
 				if (cmd_response)
 				{
-					/*received command response.*/
-					//std::cout << "Command response received" << std::endl;
+					// Server Received Command Msg
 					rcon_timer.restart();
 				}
-				//std::cout << "-----------------------------------------------------" << std::endl;
 			}
 			else if (logged_in)
 			{
-				// Mutex Lock
+				// Checking for Commands to Send
 				boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
 
-				// Commands To Send
 				for(std::vector<std::string>::iterator it = rcon_commands.begin(); it != rcon_commands.end(); ++it) 
 				{
 					char *cmd = new char[it->size()+1] ;
 					std::strcpy(cmd, it->c_str());
 					
 					rcon_packet.packet.clear();
+					delete []rcon_packet.cmd;
 					rcon_packet.cmd = cmd;
+					
 					rcon_packet.packetCode = 0x01;
 					makePacket(rcon_packet);
 					
@@ -269,9 +268,13 @@ void Rcon::mainLoop()
 					dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
 					cmd_sent = true;
 				}
+				// Clear Comands
 				rcon_commands.clear();
 			}
+			
 			{
+				// Check if Run Flag Still Set
+				//		Done here instead of while due to need of mutex lock
 				boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
 				if (!rcon_run_flag)
 				{
@@ -299,17 +302,17 @@ void Rcon::mainLoop()
 			}
 			else if (logged_in)
 			{
-				//Mutex Lock
+				// Checking for Commands to Send
+				
 				boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
-				// Commands
 				if (rcon_commands.size() > 0)
 				{
 					for(std::vector<std::string>::iterator it = rcon_commands.begin(); it != rcon_commands.end(); ++it) 
 					{
 						char *cmd = new char[it->size()+1] ;
 						std::strcpy(cmd, it->c_str());
-						
 						rcon_packet.packet.clear();
+						delete []rcon_packet.cmd;
 						rcon_packet.cmd = cmd;
 						rcon_packet.packetCode = 0x01;
 						makePacket(rcon_packet);
@@ -337,22 +340,19 @@ void Rcon::mainLoop()
 
 void Rcon::connect()
 {
+	// Connect
 	Poco::Net::SocketAddress sa("localhost", rcon_login.port);
-
 	dgs.connect(sa);
 
-	std::cout << "Password: " << std::string(rcon_login.password) << std::endl;
-
+	// Login Packet
 	rcon_packet.cmd = rcon_login.password;
 	rcon_packet.packetCode = 0x00;
 	rcon_packet.packet.clear();
-
 	makePacket(rcon_packet);
-
-	std::cout << "Sending login info" << std::endl;
-
 	dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
-
+	std::cout << "Sent login info" << std::endl;
+	
+	// Reset Timer
 	rcon_timer.start();
 }
 
@@ -362,6 +362,7 @@ Rcon::Rcon(int port, std::string password)
 	char *passwd = new char[password.size()+1] ;
 	std::strcpy(passwd, password.c_str());
 	rcon_login.port = port;
+	delete []rcon_login.password;
 	rcon_login.password = passwd;
 	
 	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);

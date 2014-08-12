@@ -308,7 +308,6 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 	// TODO ADD Code to check for database already initialized !!!!!!!!!!!
     try
     {
-        //Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf(new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
         if (pConf->hasOption(conf_option + ".Type"))
         {
             // Database
