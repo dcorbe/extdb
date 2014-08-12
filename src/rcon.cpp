@@ -106,7 +106,7 @@ void Rcon::makePacket(RconPacket &rcon)
 }
 
 
-void Rcon::extractData(int pos, std::string data, std::string &result)
+void Rcon::extractData(int pos, std::string &result)
 {
 	std::stringstream ss;
 	for(size_t i = pos; i < buffer_size; ++i)
@@ -124,6 +124,7 @@ void Rcon::mainLoop()
 	bool cmd_response = false;
 	bool logged_in = false;
 	
+	// 2 Min Cache for UDP Multi-Part Messages
 	Poco::ExpireCache<int, RconMultiPartMsg > rcon_msg_cache(120000);
 	
 	dgs.setReceiveTimeout(Poco::Timespan(1, 0));
@@ -147,7 +148,7 @@ void Rcon::mainLoop()
 				{
 					// Recieved Chat Messages
 					std::string result;
-					extractData(9, std::string(buffer), result);
+					extractData(9, result);
 					std::cout << "CHAT: " << result << std::endl;
 					
 					// Respond to Server Msgs i.e chat messages, to prevent timeout
@@ -176,8 +177,8 @@ void Rcon::mainLoop()
 				{
 					// Login Failed
 					std::cout << "Failed Login" << std::endl;
-					
-					// TODO !!!!!!!
+					std::cout << "Disconnecting..." << std::endl;
+					disconnect();
 					break;
 				}
 			}
@@ -203,7 +204,7 @@ void Rcon::mainLoop()
 						int packetNum = buffer[11];
 						
 						std::string partial_msg;
-						extractData(12, std::string(buffer), partial_msg);
+						extractData(12, partial_msg);
 						
 						RconMultiPartMsg rcon_mp_msg;
 
@@ -284,55 +285,67 @@ void Rcon::mainLoop()
 		}
 		catch (Poco::TimeoutException&)
 		{
-			elapsed_seconds = rcon_timer.elapsedSeconds();
-			if (elapsed_seconds >= 45)
+			boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
+			if (!rcon_run_flag)  // Checking Run Flag
 			{
-				std::cout << "TIMED OUT" << std::endl;
+				break;
 			}
-			else if (elapsed_seconds >= 30)
+			else
 			{
-				// Keep Alive
-				std::cout << "Keep Alive Sending" << std::endl;
-				rcon_packet.packetCode = 0x01;
-				rcon_packet.cmd = '\0';
-				rcon_packet.packet.clear();
-				makePacket(rcon_packet);
-				dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
-				std::cout << "Keep Alive Sent" << std::endl;
-			}
-			else if (logged_in)
-			{
-				// Checking for Commands to Send
-				
-				boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
-				if (rcon_commands.size() > 0)
+				elapsed_seconds = rcon_timer.elapsedSeconds();
+				if (elapsed_seconds >= 45)
 				{
-					for(std::vector<std::string>::iterator it = rcon_commands.begin(); it != rcon_commands.end(); ++it) 
+					std::cout << "TIMED OUT...." << std::endl;
+					std::cout << "Attempting to Log Back onto Server...." << std::endl;
+					connect();
+				}
+				else if (elapsed_seconds >= 30)
+				{
+					// Keep Alive
+					std::cout << "Keep Alive Sending" << std::endl;
+					rcon_timer.restart();
+					rcon_packet.packetCode = 0x01;
+					rcon_packet.cmd = '\0';
+					rcon_packet.packet.clear();
+					makePacket(rcon_packet);
+					dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
+					std::cout << "Keep Alive Sent" << std::endl;
+				}
+				else if (logged_in)
+				{
+					// Checking for Commands to Send
+					
+					boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
+					if (rcon_commands.size() > 0)
 					{
-						char *cmd = new char[it->size()+1] ;
-						std::strcpy(cmd, it->c_str());
-						rcon_packet.packet.clear();
-						delete []rcon_packet.cmd;
-						rcon_packet.cmd = cmd;
-						rcon_packet.packetCode = 0x01;
-						makePacket(rcon_packet);
-						
-						// Send Command
-						dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
-						cmd_sent = true;
+						for(std::vector<std::string>::iterator it = rcon_commands.begin(); it != rcon_commands.end(); ++it) 
+						{
+							char *cmd = new char[it->size()+1] ;
+							std::strcpy(cmd, it->c_str());
+							rcon_packet.packet.clear();
+							delete []rcon_packet.cmd;
+							rcon_packet.cmd = cmd;
+							rcon_packet.packetCode = 0x01;
+							makePacket(rcon_packet);
+							
+							// Send Command
+							dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
+							cmd_sent = true;
+						}
+						rcon_commands.clear();
 					}
-					rcon_commands.clear();
 				}
 			}
 		}
 		catch (Poco::Net::ConnectionRefusedException& e)
 		{
-			std::cout << "extDB: rcon connect Failed: " << e.displayText() << std::endl;
-			//ADD CODE TO ATTEMPT RECONNECTS
+			disconnect();
+			std::cout << "extDB: error rcon connect: " << e.displayText() << std::endl;
 		}
 		catch (Poco::Exception& e)
 		{
-			std::cout << "extDB: rcon Failed: " << e.displayText() << std::endl;
+			disconnect();
+			std::cout << "extDB: error rcon: " << e.displayText() << std::endl;
 		}
 	}
 }
@@ -341,7 +354,7 @@ void Rcon::mainLoop()
 void Rcon::connect()
 {
 	// Connect
-	Poco::Net::SocketAddress sa("localhost", rcon_login.port);
+	Poco::Net::SocketAddress sa(rcon_login.address, rcon_login.port);
 	dgs.connect(sa);
 
 	// Login Packet
@@ -357,11 +370,13 @@ void Rcon::connect()
 }
 
 
-Rcon::Rcon(int port, std::string password)
+Rcon::Rcon(std::string address, int port, std::string password)
 {
+	rcon_login.address = address;
+	rcon_login.port = port;
+	
 	char *passwd = new char[password.size()+1] ;
 	std::strcpy(passwd, password.c_str());
-	rcon_login.port = port;
 	delete []rcon_login.password;
 	rcon_login.password = passwd;
 	
@@ -377,6 +392,7 @@ void Rcon::run()
 	mainLoop();
 }
 
+
 void Rcon::disconnect()
 {
 	{
@@ -385,40 +401,33 @@ void Rcon::disconnect()
 	}
 }
 
+
 void Rcon::addCommand(std::string command)
 {
 	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
 	rcon_commands.push_back(command);
 }
 
-//mutex_rcon_global
 
 #ifdef RCON_APP
 int main(int nNumberofArgs, char* pszArgs[])
 {
 	Rcon *rcon;
-	int port = atoi(pszArgs[1]);
-	std::string password = pszArgs[2];
-	
-	
-	//rcon = (new Rcon()); 
-	//rcon->init(port, password);
-	//rcon->sendCommand(pszArgs[3]);
-	
-	Rcon rcon_runnable(port, password);
+	std::string address = pszArgs[1];
+	int port = atoi(pszArgs[2]);
+	std::string password = pszArgs[3];
+
+	Rcon rcon_runnable(address, port, password);
 	
 	Poco::Thread thread;
 	thread.start(rcon_runnable);
-	//thread.join();
-	
-	char result[255];
 	
 	for (;;) {
-		char input_str[100];
+		char input_str[4096];
 		std::cin.getline(input_str, sizeof(input_str));
 		if (std::string(input_str) == "quit")
 		{
-			std::cout << "Quiting Please Wait" << std::endl;
+			std::cout << "Quitting Please Wait" << std::endl;
 			rcon_runnable.disconnect();
 			thread.join();
 			break;
@@ -428,7 +437,7 @@ int main(int nNumberofArgs, char* pszArgs[])
 			rcon_runnable.addCommand(input_str);
 		}
 	}
-	std::cout << "quitting" << std::endl;
+	std::cout << "Quitting" << std::endl;
 	return 0;
 }
 #endif

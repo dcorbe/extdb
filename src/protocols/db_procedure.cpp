@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#include "db_procedure_v2.h"
+#include "db_procedure.h"
 
 #include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>
@@ -36,9 +36,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "../sanitize.h"
 
 
-bool DB_PROCEDURE_V2::init(AbstractExt *extension, std::string init_str)
+bool DB_PROCEDURE::init(AbstractExt *extension, std::string init_str)
 {
-	pLogger = &Poco::Logger::get("DB_PROCEDURE_V2");
+	pLogger = &Poco::Logger::get("DB_PROCEDURE");
 	
 	if (extension->getDBType() == std::string("MySQL"))
 	{
@@ -68,7 +68,7 @@ bool DB_PROCEDURE_V2::init(AbstractExt *extension, std::string init_str)
 	}
 }
 
-bool DB_PROCEDURE_V2::isNumber(const std::string &input_str)
+bool DB_PROCEDURE::isNumber(const std::string &input_str)
 {
 bool status = true;
 	for (unsigned int index=0; index < input_str.length(); index++)
@@ -82,7 +82,7 @@ bool status = true;
 return status;
 }
 
-void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void DB_PROCEDURE::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
 //  Unique ID
 //   |

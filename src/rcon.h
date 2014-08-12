@@ -38,7 +38,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class Rcon: public Poco::Runnable
 {
 	public:
-		Rcon(int port, std::string password);
+		Rcon(std::string address, int port, std::string password);
 
 		void run();
 		void disconnect();
@@ -58,6 +58,7 @@ class Rcon: public Poco::Runnable
 		RconPacket rcon_packet;
 
 		struct RconLogin {
+			std::string address;
 			int port;
 			char *password;
 		};
@@ -84,5 +85,5 @@ class Rcon: public Poco::Runnable
 		void mainLoop();
 
 		void makePacket(RconPacket &rcon);
-		void extractData(int pos, std::string data, std::string &result);
+		void extractData(int pos, std::string &result);
 };
