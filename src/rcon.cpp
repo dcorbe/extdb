@@ -203,7 +203,14 @@ void Rcon::mainLoop()
 						cmd_response = true;
 						std::string result;
 						extractData(9, result);
-						std::cout << result << std::endl;
+						if (result.empty())
+						{
+							std::cout << "EMPTY" << std::endl;
+						}
+						else
+						{
+							std::cout << result << std::endl;
+						}
 					}
 					else
 					{

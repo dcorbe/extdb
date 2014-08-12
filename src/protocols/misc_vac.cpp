@@ -80,14 +80,12 @@ From Frank https://gist.github.com/Fank/11127158
 	}
 
 
-	std::string DB_VAC::convertSteamIDtoBEGUID(std::string &steamid)
+	std::string DB_VAC::convertSteamIDtoBEGUID(std::string &input_str)
 	// From Frank https://gist.github.com/Fank/11127158
 	// Modified to use libpoco
 	{
-		Poco::Int64 steamID = Poco::NumberParser::parse64(steamid);
-		//long long int steamID = Poco::NumberParser::parse64(steamid);
+		Poco::Int64 steamID = Poco::NumberParser::parse64(input_str);
 		Poco::Int8 i = 0, parts[8] = { 0 };
-		//short int i = 0, parts[8] = { 0 };
 
 		do
 		{

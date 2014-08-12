@@ -13,6 +13,11 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
+ 
+getGUID --
+Code to Convert SteamID -> BEGUID 
+From Frank https://gist.github.com/Fank/11127158
+
 */
 
 
@@ -89,6 +94,28 @@ void MISC::getMD5(std::string &input_str, std::string &result)
 	result = ("\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"");
 }
 
+void MISC::getGUID(std::string &input_str, std::string &result)
+// From Frank https://gist.github.com/Fank/11127158
+// Modified to use libpoco
+{
+	Poco::Int64 steamID = Poco::NumberParser::parse64(input_str);
+	Poco::Int8 i = 0, parts[8] = { 0 };
+
+	do
+	{
+		parts[i++] = steamID & 0xFFu;
+	} while (steamID >>= 8);
+
+	std::stringstream bestring;
+	bestring << "BE";
+	for (int i = 0; i < sizeof(parts); i++) {
+		bestring << char(parts[i]);
+	}
+
+	md5.update(bestring.str());
+	result = Poco::DigestEngine::digestToHex(md5.digest());
+}
+
 void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
 	// Protocol
@@ -126,17 +153,21 @@ void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::stri
 		result = getAdler32(data);
 	}
 */
+	else if (command == "GUID")
+	{
+		getGUID(data, result);
+	}
 	else if (command == "CRC32")
 	{
 		getCrc32(data, result);
 	}
 	else if (command == "MD4")
 	{
-		getMD4(data, result);;
+		getMD4(data, result);
 	}
 	else if (command == "MD5")
 	{
-		getMD5(data, result);;
+		getMD5(data, result);
 	}
 	else if (command == "TEST")
 	{

@@ -62,4 +62,5 @@ private:
 		void getCrc32(std::string &input_str, std::string &result);
 		void getMD4(std::string &input_str, std::string &result);
 		void getMD5(std::string &input_str, std::string &result);
+		void getGUID(std::string &input_str, std::string &result);
 };
