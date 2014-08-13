@@ -36,7 +36,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "../sanitize.h"
 
 
-bool DB_PROCEDURE::init(AbstractExt *extension, std::string init_str)
+bool DB_PROCEDURE::init(AbstractExt *extension, const std::string init_str)
 {
 	pLogger = &Poco::Logger::get("DB_PROCEDURE");
 	

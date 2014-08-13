@@ -153,7 +153,6 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					// SQL Call Statement
 					Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 					Poco::Data::Statement sql(db_session);
-
 					sql << sql_str_procedure, Poco::Data::now;  // TODO: See if can get any error message if unsuccessfull
 
 					result = "[1, [";
@@ -161,7 +160,6 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					if (num_of_outputs > 0)
 					{
 						// If Outputs.. SQL SELECT Statement to get Results
-						
 						Poco::Data::Statement sql2(db_session);
 						sql2 << sql_str_select, Poco::Data::now;
 							
