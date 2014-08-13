@@ -38,7 +38,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class Rcon: public Poco::Runnable
 {
 	public:
-		Rcon(std::string address, int port, std::string password);
+		Rcon(std::string address, int port, std::string password, bool auto_reconnect);
 
 		void run();
 		void disconnect();
@@ -61,6 +61,7 @@ class Rcon: public Poco::Runnable
 			std::string address;
 			int port;
 			char *password;
+			bool auto_reconnect;
 		};
 
 		RconLogin rcon_login;

@@ -125,8 +125,6 @@ void Rcon::mainLoop()
 {
 	int elapsed_seconds;
 	
-	bool cmd_sent = false;
-	bool cmd_response = false;
 	bool logged_in = false;
 	
 	// 2 Min Cache for UDP Multi-Part Messages
@@ -140,7 +138,107 @@ void Rcon::mainLoop()
 			buffer_size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
 			buffer[buffer_size] = '\0';
 			
-			if (buffer[7] == 0x02)
+			if (!logged_in)
+			{
+				if ((buffer[7] == 0x00) and (buffer[8] == 0x01))
+				{
+					// Login Successful
+					logged_in = true;
+					
+					// Reset Timer
+					rcon_timer.restart();
+				}
+				else if ((buffer[7] == 0x00) and (buffer[8] == 0x00)) // Login Failed
+				{
+					// Login Failed
+					std::cout << "Failed Login" << std::endl;
+					std::cout << "Disconnecting..." << std::endl;
+					disconnect();
+					break;
+				}
+			}
+			
+			if (buffer[7] == 0x00)
+			{
+				if (buffer[8] == 0x01)
+				{
+					logged_in = true;
+					rcon_timer.restart();
+				}
+				else
+				{
+					// Login Failed
+					std::cout << "Failed Login" << std::endl;
+					std::cout << "Disconnecting..." << std::endl;
+					logged_in = false;
+					disconnect();
+					break;
+				}
+			}
+			else if ((buffer[7] == 0x01) and logged_in)
+			{
+				// Rcon Server Ack Message Received
+				int sequenceNum = buffer[8];
+				
+				// Reset Timer
+				rcon_timer.restart();
+				
+				if (!((buffer[9] == 0x00) && (buffer_size > 9)))
+				{
+					// Server Received Command Msg
+					std::string result;
+					extractData(9, result);
+					if (result.empty())
+					{
+						std::cout << "EMPTY" << std::endl;
+					}
+					else
+					{
+						std::cout << result << std::endl;
+					}
+				}
+				else
+				{
+					// Rcon Multi-Part Message Recieved
+					int numPackets = buffer[10];
+					int packetNum = buffer[11];
+					
+					std::string partial_msg;
+					extractData(12, partial_msg);
+					
+					RconMultiPartMsg rcon_mp_msg;
+
+					if (!(rcon_msg_cache.has(sequenceNum)))
+					{
+						// Doesn't have sequenceNum in Buffer
+						rcon_mp_msg.first = 1;
+						rcon_msg_cache.add(sequenceNum, rcon_mp_msg);
+						
+						Poco::SharedPtr<RconMultiPartMsg> ptrElem = rcon_msg_cache.get(sequenceNum);
+						ptrElem->second[packetNum] = partial_msg;
+					}
+					else
+					{
+						// Has sequenceNum in Buffer
+						Poco::SharedPtr<RconMultiPartMsg> ptrElem = rcon_msg_cache.get(sequenceNum);
+						ptrElem->first = ptrElem->first + 1;
+						ptrElem->second[packetNum] = partial_msg;
+						
+						if (ptrElem->first == numPackets)
+						{
+							// All packets Received, re-construct message
+							std::string result;
+							for (int i = 0; i < numPackets; ++i)
+							{
+								result = result + ptrElem->second[i];
+							}
+							std::cout << result << std::endl;
+							rcon_msg_cache.remove(sequenceNum);
+						}
+					}
+				}
+			}
+			else if (buffer[7] == 0x02)
 			{
 				if (!logged_in)
 				{
@@ -168,102 +266,7 @@ void Rcon::mainLoop()
 				}
 			}
 
-			if (!logged_in)
-			{
-				if (buffer[8] == 0x01)
-				{
-					// Login Successful
-					logged_in = true;
-					
-					// Reset Timer
-					rcon_timer.restart();
-				}
-				else if (buffer[8] == 0x00) // Login Failed
-				{
-					// Login Failed
-					std::cout << "Failed Login" << std::endl;
-					std::cout << "Disconnecting..." << std::endl;
-					disconnect();
-					break;
-				}
-			}
-			else if (cmd_sent)
-			{
-				if (buffer[7] == 0x01)
-				{
-					// Rcon Server Ack Message Received
-					int sequenceNum = buffer[8];
-					
-					// Reset Timer
-					rcon_timer.restart();
-					
-					if (!((buffer[9] == 0x00) && (buffer_size > 9)))
-					{
-						// Server Received Command Msg
-						cmd_response = true;
-						std::string result;
-						extractData(9, result);
-						if (result.empty())
-						{
-							std::cout << "EMPTY" << std::endl;
-						}
-						else
-						{
-							std::cout << result << std::endl;
-						}
-					}
-					else
-					{
-						// Rcon Multi-Part Message Recieved
-						int numPackets = buffer[10];
-						int packetNum = buffer[11];
-						
-						std::string partial_msg;
-						extractData(12, partial_msg);
-						
-						RconMultiPartMsg rcon_mp_msg;
-
-						if (!(rcon_msg_cache.has(sequenceNum)))
-						{
-							// Doesn't have sequenceNum in Buffer
-							rcon_mp_msg.first = 1;
-							rcon_msg_cache.add(sequenceNum, rcon_mp_msg);
-							
-							Poco::SharedPtr<RconMultiPartMsg> ptrElem = rcon_msg_cache.get(sequenceNum);
-							ptrElem->second[packetNum] = partial_msg;
-						}
-						else
-						{
-							// Has sequenceNum in Buffer
-							Poco::SharedPtr<RconMultiPartMsg> ptrElem = rcon_msg_cache.get(sequenceNum);
-							ptrElem->first = ptrElem->first + 1;
-							ptrElem->second[packetNum] = partial_msg;
-							
-							if (ptrElem->first == numPackets)
-							{
-								// All packets Received, re-construct message
-								std::string result;
-								for (int i = 0; i < numPackets; ++i)
-								{
-									result = result + ptrElem->second[i];
-								}
-								std::cout << result << std::endl;
-								rcon_msg_cache.remove(sequenceNum);
-
-								// Server Received Command Msg
-								cmd_response = true;
-							}
-						}
-					}
-				}
-
-				if (cmd_response)
-				{
-					// Server Received Command Msg
-					rcon_timer.restart();
-				}
-			}
-			else if (logged_in)
+			if (logged_in)
 			{
 				// Checking for Commands to Send
 				boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
@@ -282,7 +285,6 @@ void Rcon::mainLoop()
 					
 					// Send Command
 					dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
-					cmd_sent = true;
 				}
 				// Clear Comands
 				rcon_commands.clear();
@@ -311,8 +313,7 @@ void Rcon::mainLoop()
 				if (elapsed_seconds >= 45)
 				{
 					std::cout << "TIMED OUT...." << std::endl;
-					std::cout << "Attempting to Log Back onto Server...." << std::endl;
-					connect();
+					disconnect();
 				}
 				else if (elapsed_seconds >= 30)
 				{
@@ -329,26 +330,25 @@ void Rcon::mainLoop()
 				else if (logged_in)
 				{
 					// Checking for Commands to Send
-					
 					boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
-					if (rcon_commands.size() > 0)
+
+					for(std::vector<std::string>::iterator it = rcon_commands.begin(); it != rcon_commands.end(); ++it) 
 					{
-						for(std::vector<std::string>::iterator it = rcon_commands.begin(); it != rcon_commands.end(); ++it) 
-						{
-							char *cmd = new char[it->size()+1] ;
-							std::strcpy(cmd, it->c_str());
-							rcon_packet.packet.clear();
-							delete []rcon_packet.cmd;
-							rcon_packet.cmd = cmd;
-							rcon_packet.packetCode = 0x01;
-							makePacket(rcon_packet);
-							
-							// Send Command
-							dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
-							cmd_sent = true;
-						}
-						rcon_commands.clear();
+						char *cmd = new char[it->size()+1] ;
+						std::strcpy(cmd, it->c_str());
+						
+						rcon_packet.packet.clear();
+						delete []rcon_packet.cmd;
+						rcon_packet.cmd = cmd;
+						
+						rcon_packet.packetCode = 0x01;
+						makePacket(rcon_packet);
+						
+						// Send Command
+						dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
 					}
+					// Clear Comands
+					rcon_commands.clear();
 				}
 			}
 		}
@@ -363,6 +363,20 @@ void Rcon::mainLoop()
 			std::cout << "extDB: error rcon: " << e.displayText() << std::endl;
 		}
 	}
+}
+
+
+void Rcon::addCommand(std::string command)
+{
+	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
+	rcon_commands.push_back(command);
+}
+
+
+void Rcon::run()
+{
+	connect();
+	mainLoop();
 }
 
 
@@ -385,10 +399,25 @@ void Rcon::connect()
 }
 
 
-Rcon::Rcon(std::string address, int port, std::string password)
+void Rcon::disconnect()
+{
+	if (rcon_login.auto_reconnect)
+	{
+		connect();
+	}
+	else
+	{
+		boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
+		rcon_run_flag = false;
+	}
+}
+
+
+Rcon::Rcon(std::string address, int port, std::string password, bool auto_reconnect)
 {
 	rcon_login.address = address;
 	rcon_login.port = port;
+	rcon_login.auto_reconnect;
 	
 	char *passwd = new char[password.size()+1] ;
 	std::strcpy(passwd, password.c_str());
@@ -397,29 +426,6 @@ Rcon::Rcon(std::string address, int port, std::string password)
 	
 	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
 	rcon_run_flag = true;
-}
-
-
-void Rcon::run()
-{
-	connect();
-	mainLoop();
-}
-
-
-void Rcon::disconnect()
-{
-	{
-		boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
-		rcon_run_flag = false;
-	}
-}
-
-
-void Rcon::addCommand(std::string command)
-{
-	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
-	rcon_commands.push_back(command);
 }
 
 
@@ -465,7 +471,7 @@ int main(int nNumberofArgs, char* pszArgs[])
 
 	Rcon *rcon;
 
-	Rcon rcon_runnable(options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>());
+	Rcon rcon_runnable(options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>(), false);
 	
 	Poco::Thread thread;
 	thread.start(rcon_runnable);
