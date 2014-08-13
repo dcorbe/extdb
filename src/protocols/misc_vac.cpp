@@ -145,6 +145,7 @@ From Frank https://gist.github.com/Fank/11127158
 		}
 	}
 
+
 	void DB_VAC::updateVAC(Rcon &rcon, std::string steam_web_api_key, Poco::Data::Session &db_session, std::string &steam_id)
 	{
 		SteamVacInfo vac_info;
@@ -169,6 +170,7 @@ From Frank https://gist.github.com/Fank/11127158
 			#endif
 		}
 	}
+	
 	
 	bool DB_VAC::getFriends(std::string &steam_web_api_key, std::string &steam_id, SteamVacInfo &vac_info)
 	{
@@ -228,6 +230,7 @@ From Frank https://gist.github.com/Fank/11127158
 		}
 	}
 
+
 	void MISC_VAC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 	{
 		Poco::StringTokenizer t_arg(input_str, ":");
@@ -252,7 +255,7 @@ From Frank https://gist.github.com/Fank/11127158
 		}
 	}
 		
-		
+/*
 		t_arg[0]
 		if (isNumber(input_str))
 		{
@@ -282,5 +285,5 @@ From Frank https://gist.github.com/Fank/11127158
 		{
 			return ("[0,\"Error Invalid SteamID\"]");
 		}
-	}
+*/
 #endif
