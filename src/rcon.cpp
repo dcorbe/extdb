@@ -137,27 +137,7 @@ void Rcon::mainLoop()
 		{
 			buffer_size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
 			buffer[buffer_size] = '\0';
-			
-			if (!logged_in)
-			{
-				if ((buffer[7] == 0x00) and (buffer[8] == 0x01))
-				{
-					// Login Successful
-					logged_in = true;
-					
-					// Reset Timer
-					rcon_timer.restart();
-				}
-				else if ((buffer[7] == 0x00) and (buffer[8] == 0x00)) // Login Failed
-				{
-					// Login Failed
-					std::cout << "Failed Login" << std::endl;
-					std::cout << "Disconnecting..." << std::endl;
-					disconnect();
-					break;
-				}
-			}
-			
+
 			if (buffer[7] == 0x00)
 			{
 				if (buffer[8] == 0x01)
