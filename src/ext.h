@@ -43,7 +43,7 @@ class DBPool : public Poco::Data::SessionPool
 		virtual ~DBPool()
 		{
 		}
-		
+
 		
 	protected:
 		void customizeSession (Poco::Data::Session& session);

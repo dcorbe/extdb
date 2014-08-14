@@ -67,16 +67,6 @@ void MISC::getDateTime(int hours, std::string &result)
 }
 
 
-/*
-std::string MISC::getAdler32(std::string &input_str)
-{
-	boost::lock_guard<boost::mutex> lock(mutex_checksum_adler32);
-	checksum_adler32.update(input_str);
-	return Poco::NumberFormatter::format(checksum_adler32.checksum());
-}
-*/
-
-
 void MISC::getCrc32(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_checksum_crc32);
@@ -157,7 +147,6 @@ void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::stri
 		command = input_str.substr(0,found);
 		data = input_str.substr(found+1);
 	}
-
 	if (command == "TIME")
 	{
 		if (data.length() > 0)
@@ -169,12 +158,6 @@ void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::stri
 			getDateTime(result);
 		}
 	}
-/*
-	else if (command == "ADLER32")
-	{
-		result = getAdler32(data);
-	}
-*/
 	else if (command == "BEGUID")
 	{
 		getBEGUID(data, result);
@@ -197,6 +180,6 @@ void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::stri
 	}
 	else
 	{
-		result = ("[false,\"Error Invalid Command\"]");
+		result = ("[0,\"Error Invalid Command\"]");
 	}
 }
