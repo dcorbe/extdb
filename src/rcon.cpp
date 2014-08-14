@@ -155,7 +155,7 @@ void Rcon::mainLoop()
 					break;
 				}
 			}
-			else if ((buffer[7] == 0x01) and logged_in)
+			else if ((buffer[7] == 0x01) && logged_in)
 			{
 				// Rcon Server Ack Message Received
 				int sequenceNum = buffer[8];
@@ -448,8 +448,6 @@ int main(int nNumberofArgs, char* pszArgs[])
 		std::cout << desc << std::endl;
 		return 1;
 	}
-
-	Rcon *rcon;
 
 	Rcon rcon_runnable(options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>(), false);
 	
