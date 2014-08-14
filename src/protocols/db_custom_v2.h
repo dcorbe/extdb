@@ -18,7 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include <boost/unordered_map.hpp>
+
 #include <Poco/Data/SessionPool.h>
+
+#include <Poco/StringTokenizer.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -27,13 +31,22 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_protocol.h"
 
 
-class DB_PROCEDURE_V2: public AbstractProtocol
+class DB_CUSTOM_V2: public AbstractProtocol
 {
 	public:
 		bool init(AbstractExt *extension, const std::string init_str);
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 		
 	private:
-		bool isNumber(const std::string &input_str);
-		int unique_id;
+		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
+		
+		struct Template_Calls {
+			std::string sql;
+			int number_of_inputs;
+			bool sanitize_inputs;
+			bool sanitize_outputs;
+		};
+		boost::unordered_map<std::string, Template_Calls> custom_protocol;
+
+		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, int &token_count, std::string &result);
 };

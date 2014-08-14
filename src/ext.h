@@ -26,11 +26,28 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/PatternFormatter.h>
 #include <Poco/SimpleFileChannel.h>
 
+#include <Poco/Thread.h>
+
 #include "uniqueid.h"
 
 #include "protocols/abstract_ext.h"
 #include "protocols/abstract_protocol.h"
 
+
+class DBPool : public Poco::Data::SessionPool
+{
+	public:
+		DBPool(const std::string& sessionKey, const std::string& connectionString, int minSessions, int maxSessions, int idleTime): Poco::Data::SessionPool(sessionKey, connectionString, minSessions, maxSessions, idleTime)
+		{
+		}
+		virtual ~DBPool()
+		{
+		}
+		
+		
+	protected:
+		void customizeSession (Poco::Data::Session& session);
+};
 
 class Ext: public AbstractExt
 {
@@ -59,7 +76,6 @@ class Ext: public AbstractExt
 		int getUniqueID_mutexlock();
 		void freeUniqueID_mutexlock(const int &unique_id);
 
-
 	private:
 		Poco::Logger *pLogger;
 		bool extDB_lock;
@@ -85,7 +101,7 @@ class Ext: public AbstractExt
 		boost::thread_group threads;
 
 		// Database Session Pool
-		boost::shared_ptr<Poco::Data::SessionPool> db_pool;
+		boost::shared_ptr<DBPool> db_pool;
 		boost::mutex mutex_db_pool;
 
 		void connectDatabase(char *output, const int &output_size, const std::string &conf_option);
@@ -107,7 +123,7 @@ class Ext: public AbstractExt
 		boost::mutex mutex_unique_id;
 
 		// Plugins
-		void addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name);
+		void addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name, const std::string &init_data);
 
 		void syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data);
 		void onewayCallProtocol(const std::string protocol, const std::string data);

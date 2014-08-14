@@ -34,8 +34,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 	class DB_VAC: public AbstractProtocol
 	{
 		public:
+			void init(AbstractExt *extension, const std::string init_str);
 			std::string callProtocol(AbstractExt *extension, std::string input_str);
-			void init(AbstractExt *extension);
+			
 			
 		private:
 			struct SteamVacInfo {

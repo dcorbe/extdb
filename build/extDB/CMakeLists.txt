@@ -90,7 +90,7 @@ if(${WIN32})
 else()
 	add_definitions(-DBOOST_LOG_DYN_LINK)
 endif()
-find_package(Boost REQUIRED COMPONENTS chrono date_time random regex system thread)
+find_package(Boost REQUIRED COMPONENTS chrono date_time program_options random regex system thread)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
 	target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
@@ -164,4 +164,13 @@ else()
 			COMMAND ${CMAKE_COMMAND} -E rename libextDB.so extDB.so
 		)
 	endif()
+endif()
+
+#check for 32bit vs. 64bit system
+if (CMAKE_SIZEOF_VOID_P EQUAL 8) #64bit
+	message(STATUS "Warning: You are on a 64-bit system, make sure you are pulling in the appropriate 32-bit libraries.")
+elseif (CMAKE_SIZEOF_VOID_P EQUAL 4) #32bit
+	message(STATUS "You are on a 32-bit system.")
+else()
+	message(STATUS "CMake wasn't able to identify if you are on 32-bit or 64-bit...")
 endif()

@@ -57,7 +57,8 @@ From Frank https://gist.github.com/Fank/11127158
 	using namespace Poco::Data::Keywords;
 
 
-	void DB_VAC::init(AbstractExt *extension) {
+	void DB_VAC::init(AbstractExt *extension, const std::string init_str) 
+	{
 		vac_ban_check.NumberOfVACBans = extension->pConf->getInt("VAC.NumberOfVACBans", 1);
 		vac_ban_check.DaysSinceLastBan = extension->pConf->getInt("VAC.DaysSinceLastBan", 0);
 		vac_ban_check.BanDuration = extension->pConf->getString("VAC.BanDuration", "0");
@@ -80,14 +81,12 @@ From Frank https://gist.github.com/Fank/11127158
 	}
 
 
-	std::string DB_VAC::convertSteamIDtoBEGUID(std::string &steamid)
+	std::string DB_VAC::convertSteamIDtoBEGUID(std::string &input_str)
 	// From Frank https://gist.github.com/Fank/11127158
 	// Modified to use libpoco
 	{
-		Poco::Int64 steamID = Poco::NumberParser::parse64(steamid);
-		//long long int steamID = Poco::NumberParser::parse64(steamid);
+		Poco::Int64 steamID = Poco::NumberParser::parse64(input_str);
 		Poco::Int8 i = 0, parts[8] = { 0 };
-		//short int i = 0, parts[8] = { 0 };
 
 		do
 		{
@@ -147,6 +146,7 @@ From Frank https://gist.github.com/Fank/11127158
 		}
 	}
 
+
 	void DB_VAC::updateVAC(Rcon &rcon, std::string steam_web_api_key, Poco::Data::Session &db_session, std::string &steam_id)
 	{
 		SteamVacInfo vac_info;
@@ -171,6 +171,7 @@ From Frank https://gist.github.com/Fank/11127158
 			#endif
 		}
 	}
+	
 	
 	bool DB_VAC::getFriends(std::string &steam_web_api_key, std::string &steam_id, SteamVacInfo &vac_info)
 	{
@@ -230,6 +231,7 @@ From Frank https://gist.github.com/Fank/11127158
 		}
 	}
 
+
 	void MISC_VAC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 	{
 		Poco::StringTokenizer t_arg(input_str, ":");
@@ -254,7 +256,7 @@ From Frank https://gist.github.com/Fank/11127158
 		}
 	}
 		
-		
+/*
 		t_arg[0]
 		if (isNumber(input_str))
 		{
@@ -284,5 +286,5 @@ From Frank https://gist.github.com/Fank/11127158
 		{
 			return ("[0,\"Error Invalid SteamID\"]");
 		}
-	}
+*/
 #endif

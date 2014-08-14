@@ -19,9 +19,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "log.h"
 
 
-bool LOG::init(AbstractExt *extension)
+bool LOG::init(AbstractExt *extension, const std::string init_str)
 {
-	pLogger = &Poco::Logger::get("LOG");
+	if (init_str.empty())
+	{
+		pLogger = &Poco::Logger::get("LOG");
+	}
+	else
+	{
+		pLogger = &Poco::Logger::get(init_str);
+	}
 	return true;
 }
 

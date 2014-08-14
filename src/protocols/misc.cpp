@@ -13,6 +13,11 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
+ 
+getGUID --
+Code to Convert SteamID -> BEGUID 
+From Frank https://gist.github.com/Fank/11127158
+
 */
 
 
@@ -37,6 +42,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "misc.h"
 
 
+
 /*
 MISC::MISC(void)
 {
@@ -50,6 +56,7 @@ void MISC::getDateTime(std::string &result)
 	result = ("[" + Poco::DateTimeFormatter::format(now, "%Y, %n, %d, %H, %M") + "]");
 }
 
+
 void MISC::getDateTime(int hours, std::string &result)
 {
 	Poco::DateTime now;
@@ -58,6 +65,7 @@ void MISC::getDateTime(int hours, std::string &result)
 
 	result = ("[" + Poco::DateTimeFormatter::format(newtime, "%Y, %n, %d, %H, %M") + "]");
 }
+
 
 /*
 std::string MISC::getAdler32(std::string &input_str)
@@ -68,12 +76,14 @@ std::string MISC::getAdler32(std::string &input_str)
 }
 */
 
+
 void MISC::getCrc32(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_checksum_crc32);
 	checksum_crc32.update(input_str);
 	result = ("\"" + Poco::NumberFormatter::format(checksum_crc32.checksum()) + "\"");
 }
+
 
 void MISC::getMD4(std::string &input_str, std::string &result)
 {
@@ -82,12 +92,51 @@ void MISC::getMD4(std::string &input_str, std::string &result)
 	result = ("\"" + Poco::DigestEngine::digestToHex(md4.digest()) + "\"");
 }
 
+
 void MISC::getMD5(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_md5);
 	md5.update(input_str);
 	result = ("\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"");
 }
+
+
+void MISC::getBEGUID(std::string &input_str, std::string &result)
+// From Frank https://gist.github.com/Fank/11127158
+// Modified to use libpoco
+{
+	bool status = true;
+	for (unsigned int index=0; index < input_str.length(); index++)
+	{
+		if (!std::isdigit(input_str[index]))
+		{
+			status = false;
+			result = "Invalid SteamID";
+			break;
+		}
+	}
+	
+	if (status)
+	{
+		Poco::Int64 steamID = Poco::NumberParser::parse64(input_str);
+		Poco::Int8 i = 0, parts[8] = { 0 };
+
+		do
+		{
+			parts[i++] = steamID & 0xFFu;
+		} while (steamID >>= 8);
+
+		std::stringstream bestring;
+		bestring << "BE";
+		for (int i = 0; i < sizeof(parts); i++) {
+			bestring << char(parts[i]);
+		}
+
+		md5.update(bestring.str());
+		result = ("\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"");
+	}
+}
+
 
 void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
@@ -126,17 +175,21 @@ void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::stri
 		result = getAdler32(data);
 	}
 */
+	else if (command == "BEGUID")
+	{
+		getBEGUID(data, result);
+	}
 	else if (command == "CRC32")
 	{
 		getCrc32(data, result);
 	}
 	else if (command == "MD4")
 	{
-		getMD4(data, result);;
+		getMD4(data, result);
 	}
 	else if (command == "MD5")
 	{
-		getMD5(data, result);;
+		getMD5(data, result);
 	}
 	else if (command == "TEST")
 	{

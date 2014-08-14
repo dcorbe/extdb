@@ -1,10 +1,25 @@
+15 = Added Deprecated Warnings in Log Files for V1 Protocols (be like a month or more before i remove them).
+	Added New DB_Custom_V2 Protocol allows u to define SQL commands to run in a foo.ini file. 
+		Basicly gives u freedom of Raw SQL commands without the added security risk, also option to use sanitize code or not.
+	DB_Procedure Fixes, now working --- IMPORTANT Procedures Support == limited, doesn't support Outputs anymore (with Poco 1.4)
+	Added MISC -> BEGUID, now u can get players BEGUID from their SteamID
+	Log Class you can now define the ID for the log entries (minor change really)
+	Sanitize Code now changed back to original code, exact same as DayZ Hive, less strict.
+	Some minor Code Cleanup
+	
+	Rcon Test APP, is now a useable Rcon Chat Console App. Main use is for linux users for automated warnings. (Windows Users got BEC)
+		Windows Test Rcon app packaged for testing purposes atm.
+	
+	CMake Changes New Warnings for detection of 64bit libraries  (thx firefly2442), for linux users that try to compile 64bit version.
+
 14 = V2 Protocols, screwed up the logic in return values. V2 Protocol so wouldn't break any sqf code.
-		Will deprecated Original Protocols in next version & remove sometime in the future.
-		Its only a minor Change more info in Wiki soon.
+	Will deprecated Original Protocols in next version & remove sometime in the future.
+	Its only a minor Change more info in Wiki soon.
+		
 	Changed over to Poco Library for Filesystem & Logging  (Should compile on Debian now without having to update Boost)
-		Log Format == slightly different.
-		Log Files are now sub divided on Days aswell (directories).
-		Replace Log Filter Option with Log Level Option (has different values)
+	Log Format == slightly different.
+	Log Files are now sub divided on Days aswell (directories).
+	Replace Log Filter Option with Log Level Option (has different values)
 13 = CMake Build System Updates + Fixes
 	ADDED: MySQL compress config option
 	ADDED: WIP Rcon Code (just used in rcon app atm)
