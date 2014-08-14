@@ -2,7 +2,8 @@
 	ADDED: Deprecated Warnings in Log Files for V1 Protocols (be like a month or more before i remove them).
 	ADDED: DB_Custom_V2 Protocol allows u to define SQL commands to run in a foo.ini file. 
 		Basicly gives u freedom of Raw SQL commands without the added security risk, also option to use sanitize code or not.
-	ADDED: MISC -> BEGUID, now u can get players BEGUID from their SteamID
+			https://github.com/Torndeco/extdb/blob/stable/windows_release/15%20Debug%20Logging/extDB/db_custom/example.ini
+	ADDED: MISC -> BEGUID, now you can get players BEGUID from their SteamID
 	
 	UPDATED: Log Class you can now define the ID for the log entries (minor change really)
 	UPDATED: Sanitize Code now changed back to original code, exact same as DayZ Hive, less strict.
