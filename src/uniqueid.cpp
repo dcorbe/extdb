@@ -16,7 +16,7 @@
 IdManager::IdManager()
 {
 	// Smaller Range of Unique ID 65536 is still loads
-	#ifdef TESTING
+	#ifdef TEST_APP
 		// Normal ID for Test APP, easier to work with if ID =! random
 		free_.insert(id_interval(1, std::numeric_limits<int>::max()));
 	#else
