@@ -1,3 +1,15 @@
+16  
+	UPDATED: DB_CUSTOM_V2 you can define sql statements with 0 inputs  
+
+	FIXED: DB_CUSTOM_V2 issue when input had same (sub-)string as $INPUT_x in it.  
+	FIXED: MISC Protocol returning false instead of 0  
+
+	MISC: Just some minor code cleanup..  
+
+Note: if u have any issues with DB_CUSTOM_V2, please report them,  
+you can downgrade to V16 until i get issue fixed. DB_CUSTOM_V2 Code was rewritten.  
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 15
 	ADDED: Deprecated Warnings in Log Files for V1 Protocols (be like a month or more before i remove them).
 	ADDED: DB_Custom_V2 Protocol allows u to define SQL commands to run in a foo.ini file. 
