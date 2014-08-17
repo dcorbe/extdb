@@ -132,21 +132,13 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 						std::string tmp_str;
 						while(true)
 						{
-							//std::cout << "---------------------------" << std::endl;
-							//std::cout << input_val_str << std::endl;
-							//std::cout <<  "||" << work_str << "||" << std::endl;
-							
 							pos = work_str.find(input_val_str);
 							if (pos != std::string::npos)
 							{
 								tmp_str = work_str.substr(0, pos);
 								work_str = work_str.substr((pos + input_val_len), std::string::npos);
-
-								//std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, tmp_str);
-								//new_it_sql_vector = sql_list.insert(new_it_sql_vector, x);
 								
 								std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, x);
-								//std::cout << "Added Integer " << Poco::NumberFormatter::format(x) << std::endl;
 								new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
 							}
 							else
@@ -160,7 +152,6 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 								break;
 							}
 						}
-						//std::cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 					}
 				}
 			}
@@ -174,25 +165,20 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 	return status;
 }
 
-void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, int &token_count, std::string &result)
+void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, std::string &result)
 {
 	std::string sql_str;
 	
 	for(std::list<Poco::DynamicAny>::const_iterator it_sql_list = (itr->second.sql).begin(); it_sql_list != (itr->second.sql).end(); ++it_sql_list) 
 	{
-		//std::cout << "---------------------------" << std::endl;
-		//std::cout <<  "||" << it_sql_list->convert<std::string>() << "||" << std::endl;
 		if (it_sql_list->isString())  // Check for Input Variable
 		{
-			//std::cout << "string detected" << std::endl;
 			sql_str += it_sql_list->convert<std::string>();
 		}
 		else
 		{
-			//std::cout << "integer detected" << std::endl;
 			sql_str += tokens[*it_sql_list];
 		}
-		//std::cout << "---------------------------" << std::endl;
 	}
 
 	try 
@@ -308,42 +294,35 @@ void DB_CUSTOM_V2::callProtocol(AbstractExt *extension, std::string input_str, s
 	Poco::StringTokenizer tokens(input_str, ":");
 	
 	int token_count = tokens.count();
-	if (token_count == 0)
+	boost::unordered_map<std::string, Template_Calls>::const_iterator itr = custom_protocol.find(tokens[0]);
+	if (itr == custom_protocol.end())
 	{
-		result = "[0,\"Error WTF\"]"; // TODO:: Go through code + check if this error is possible
+		result = "[0,\"Error No Custom Call Not Found\"]";
 	}
 	else
 	{
-		boost::unordered_map<std::string, Template_Calls>::const_iterator itr = custom_protocol.find(tokens[0]);
-		if (itr == custom_protocol.end())
+		if (itr->second.number_of_inputs != (token_count - 1))
 		{
-			result = "[0,\"Error No Custom Call Not Found\"]";
+			result = "[0,\"Error Incorrect Number of Inputs\"]";
 		}
 		else
 		{
-			if (itr->second.number_of_inputs != (token_count - 1))
+			bool sanitize_check = true;
+			if (itr->second.sanitize_inputs)
 			{
-				result = "[0,\"Error Incorrect Number of Inputs\"]";
-			}
-			else
-			{
-				bool sanitize_check = true;
-				if (itr->second.sanitize_inputs)
-				{
-					for(int i = 1; i < token_count; ++i) {
-						if (!Sqf::check(tokens[i]))
-						{
-							std::cout << tokens[i] << std::endl;
-							sanitize_check = false;
-							result = "[0,\"Error Value Input is not sanitized\"]";
-							break;
-						}
+				for(int i = 1; i < token_count; ++i) {
+					if (!Sqf::check(tokens[i]))
+					{
+						std::cout << tokens[i] << std::endl;
+						sanitize_check = false;
+						result = "[0,\"Error Value Input is not sanitized\"]";
+						break;
 					}
 				}
-				if (sanitize_check)
-				{
-					callCustomProtocol(extension, itr, tokens, token_count, result);
-				}
+			}
+			if (sanitize_check)
+			{
+				callCustomProtocol(extension, itr, tokens, token_count, result);
 			}
 		}
 	}
