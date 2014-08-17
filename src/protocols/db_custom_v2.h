@@ -21,8 +21,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/unordered_map.hpp>
 
 #include <Poco/Data/SessionPool.h>
-
 #include <Poco/StringTokenizer.h>
+
+#include <Poco/DynamicAny.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -41,12 +42,12 @@ class DB_CUSTOM_V2: public AbstractProtocol
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
 		
 		struct Template_Calls {
-			std::string sql;
+			std::list<Poco::DynamicAny> sql;
 			int number_of_inputs;
 			bool sanitize_inputs;
 			bool sanitize_outputs;
 		};
 		boost::unordered_map<std::string, Template_Calls> custom_protocol;
 
-		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, int &token_count, std::string &result);
+		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, std::string &result);
 };

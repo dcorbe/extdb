@@ -43,7 +43,7 @@ class DBPool : public Poco::Data::SessionPool
 		virtual ~DBPool()
 		{
 		}
-		
+
 		
 	protected:
 		void customizeSession (Poco::Data::Session& session);
@@ -55,7 +55,6 @@ class Ext: public AbstractExt
 		Ext();
 		~Ext();
 
-	
 		Poco::AutoPtr<Poco::SimpleFileChannel> pChannel;
 		Poco::AutoPtr<Poco::AsyncChannel> pAsync;
 		Poco::AutoPtr<Poco::PatternFormatter> pPF;

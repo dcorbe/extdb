@@ -19,14 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <Poco/Data/Session.h>
 #include <Poco/Data/SessionPool.h>
+
 #include <Poco/Data/MySQL/Connector.h>
 #include <Poco/Data/MySQL/MySQLException.h>
 #include <Poco/Data/SQLite/Connector.h>
 #include <Poco/Data/SQLite/SQLiteException.h>
-#include <Poco/Data/SQLite/Connector.h>
-#include <Poco/Data/SQLite/SQLiteException.h>
-#include <Poco/Data/ODBC/Connector.h>
-#include <Poco/Data/ODBC/ODBCException.h>
+#include "Poco/Data/ODBC/Connector.h"
+#include "Poco/Data/ODBC/ODBCException.h"
 
 #include <Poco/AutoPtr.h>
 #include <Poco/DateTime.h>
@@ -352,7 +351,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 						db_conn_info.connection_str = db_conn_info.connection_str + "compress=true";
 					}
                 }
-                else
+				else
                 {
 					db_conn_info.db_type = "ODBC";
                     Poco::Data::ODBC::Connector::registerConnector();
@@ -363,7 +362,6 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 															db_conn_info.min_sessions, 
 															db_conn_info.max_sessions, 
 															db_conn_info.idle_time));
-
                 if (db_pool->get().isConnected())
                 {
 					#ifdef TESTING
@@ -445,7 +443,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "15";
+    return "16";
 }
 
 

@@ -27,8 +27,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "Poco/Data/MySQL/MySQLException.h"
 #include "Poco/Data/SQLite/Connector.h"
 #include "Poco/Data/SQLite/SQLiteException.h"
-#include "Poco/Data/SQLite/Connector.h"
-#include "Poco/Data/SQLite/SQLiteException.h"
 #include "Poco/Data/ODBC/Connector.h"
 #include "Poco/Data/ODBC/ODBCException.h"
 
@@ -37,6 +35,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/File.h>
 #include <Poco/Path.h>
 #include <Poco/String.h>
+
+#include <Poco/DynamicAny.h>
 
 #include <Poco/StringTokenizer.h>
 #include <Poco/Util/AbstractConfiguration.h>
@@ -97,41 +97,91 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 		for(std::vector<std::string>::iterator it = custom_calls.begin(); it != custom_calls.end(); ++it) 
 		{
 			std::string call_name = *it;
-			std::string sql;
+			std::string sql_str;
 			
 			int sql_count = 1;
 			std::string sql_count_str = "1";
 			while (template_ini->has(call_name + ".SQL_" + sql_count_str))
 			{
-				sql = sql + template_ini->getString(call_name + ".SQL_" + sql_count_str);
+				sql_str += template_ini->getString(call_name + ".SQL_" + sql_count_str);
 				sql_count++;
 				sql_count_str = Poco::NumberFormatter::format(sql_count);
 			}
-			custom_protocol[call_name].sql = sql;
 			custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", 0);
 			custom_protocol[call_name].sanitize_inputs = template_ini->getBool(call_name + ".Sanitize Input", true);
 			custom_protocol[call_name].sanitize_outputs = template_ini->getBool(call_name + ".Sanitize Output", true);
+			
+			std::list<Poco::DynamicAny> sql_list;
+			sql_list.push_back(Poco::DynamicAny(sql_str));
+
+			for (int x=1; x <= custom_protocol[call_name].number_of_inputs; ++x)
+			{
+				std::string input_val_str = "$INPUT_" + Poco::NumberFormatter::format(x);
+				size_t input_val_len = input_val_str.length();
+
+				for(std::list<Poco::DynamicAny>::iterator it_sql_list = sql_list.begin(); it_sql_list != sql_list.end(); ++it_sql_list) 
+				{
+					if (it_sql_list->isString())
+					{
+						size_t pos;
+						std::string work_str = *it_sql_list;
+						std::string tmp_str;
+						while(true)
+						{
+							pos = work_str.find(input_val_str);
+							if (pos != std::string::npos)
+							{
+								tmp_str = work_str.substr(0, pos);
+								work_str = work_str.substr((pos + input_val_len), std::string::npos);
+								
+								std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, x);
+								new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
+							}
+							else
+							{
+								if (!work_str.empty())
+								{
+									sql_list.insert(it_sql_list, work_str);
+									it_sql_list = sql_list.erase(it_sql_list);
+									--it_sql_list;
+								}
+								break;
+							}
+						}
+					}
+				}
+			}
+			custom_protocol[call_name].sql = sql_list;
 		}
-	} else {
+	} 
+	else 
+	{
 		status = false;
 	}
 	return status;
 }
 
-void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, int &token_count, std::string &result)
+void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, std::string &result)
 {
-	std::string input_str(itr->second.sql);
-	for (int x=1; x < token_count; x++)
+	std::string sql_str;
+	
+	for(std::list<Poco::DynamicAny>::const_iterator it_sql_list = (itr->second.sql).begin(); it_sql_list != (itr->second.sql).end(); ++it_sql_list) 
 	{
-		std::string input_variable = "$INPUT_" + Poco::NumberFormatter::format(x);
-		Poco::replaceInPlace(input_str, input_variable, tokens[x]);
+		if (it_sql_list->isString())  // Check for Input Variable
+		{
+			sql_str += it_sql_list->convert<std::string>();
+		}
+		else
+		{
+			sql_str += tokens[*it_sql_list];
+		}
 	}
-		
+
 	try 
 	{
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 		Poco::Data::Statement sql(db_session);
-		sql << input_str;
+		sql << sql_str;
 		sql.execute();
 		Poco::Data::RecordSet rs(sql);
 
@@ -192,7 +242,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		pLogger->critical("Input: " + input_str);
+		pLogger->critical("Input: " + sql_str);
 		pLogger->critical("Database Locked Exception: " + e.displayText());
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
@@ -201,7 +251,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		pLogger->critical("Input: " + input_str);
+		pLogger->critical("Input: " + sql_str);
 		pLogger->critical("Connection Exception: " + e.displayText());
 		result = "[0,\"Error Connection Exception\"]";
 	}
@@ -210,7 +260,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif 
-		pLogger->critical("Input: " + input_str);
+		pLogger->critical("Input: " + sql_str);
 		pLogger->critical("Statement Exception: " + e.displayText());
 		result = "[0,\"Error Statement Exception\"]";
 	}
@@ -219,7 +269,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif
-		pLogger->critical("Input: " + input_str);
+		pLogger->critical("Input: " + sql_str);
 		pLogger->critical("Data Exception: " + e.displayText());
         result = "[0,\"Error Data Exception\"]";
     }
@@ -228,7 +278,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif
-		pLogger->critical("Input: " + input_str);
+		pLogger->critical("Input: " + sql_str);
 		pLogger->critical("Exception: " + e.displayText());
 		result = "[0,\"Error Exception\"]";
 	}
@@ -240,42 +290,35 @@ void DB_CUSTOM_V2::callProtocol(AbstractExt *extension, std::string input_str, s
 	Poco::StringTokenizer tokens(input_str, ":");
 	
 	int token_count = tokens.count();
-	if (token_count == 0)
+	boost::unordered_map<std::string, Template_Calls>::const_iterator itr = custom_protocol.find(tokens[0]);
+	if (itr == custom_protocol.end())
 	{
-		result = "[0,\"Error WTF\"]"; // TODO:: Go through code + check if this error is possible
+		result = "[0,\"Error No Custom Call Not Found\"]";
 	}
 	else
 	{
-		boost::unordered_map<std::string, Template_Calls>::const_iterator itr = custom_protocol.find(tokens[0]);
-		if (itr == custom_protocol.end())
+		if (itr->second.number_of_inputs != (token_count - 1))
 		{
-			result = "[0,\"Error No Custom Call Not Found\"]";
+			result = "[0,\"Error Incorrect Number of Inputs\"]";
 		}
 		else
 		{
-			if (itr->second.number_of_inputs != (token_count - 1))
+			bool sanitize_check = true;
+			if (itr->second.sanitize_inputs)
 			{
-				result = "[0,\"Error Incorrect Number of Inputs\"]";
-			}
-			else
-			{
-				bool sanitize_check = true;
-				if (itr->second.sanitize_inputs)
-				{
-					for(int i = 1; i < token_count; ++i) {
-						if (!Sqf::check(tokens[i]))
-						{
-							std::cout << tokens[i] << std::endl;
-							sanitize_check = false;
-							result = "[0,\"Error Value Input is not sanitized\"]";
-							break;
-						}
+				for(int i = 1; i < token_count; ++i) {
+					if (!Sqf::check(tokens[i]))
+					{
+						std::cout << tokens[i] << std::endl;
+						sanitize_check = false;
+						result = "[0,\"Error Value Input is not sanitized\"]";
+						break;
 					}
 				}
-				if (sanitize_check)
-				{
-					callCustomProtocol(extension, itr, tokens, token_count, result);
-				}
+			}
+			if (sanitize_check)
+			{
+				callCustomProtocol(extension, itr, tokens, result);
 			}
 		}
 	}
