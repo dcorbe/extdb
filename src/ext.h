@@ -55,7 +55,6 @@ class Ext: public AbstractExt
 		Ext();
 		~Ext();
 
-	
 		Poco::AutoPtr<Poco::SimpleFileChannel> pChannel;
 		Poco::AutoPtr<Poco::AsyncChannel> pAsync;
 		Poco::AutoPtr<Poco::PatternFormatter> pPF;

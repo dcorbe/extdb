@@ -22,14 +22,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <Poco/Data/MySQL/Connector.h>
 #include <Poco/Data/MySQL/MySQLException.h>
-
 #include <Poco/Data/SQLite/Connector.h>
 #include <Poco/Data/SQLite/SQLiteException.h>
-
-#ifdef ODBC
-	#include <Poco/Data/ODBC/Connector.h>
-	#include <Poco/Data/ODBC/ODBCException.h>
-#endif
+#include "Poco/Data/ODBC/Connector.h"
+#include "Poco/Data/ODBC/ODBCException.h"
 
 #include <Poco/AutoPtr.h>
 #include <Poco/DateTime.h>
@@ -298,10 +294,8 @@ void Ext::stop()
 
     if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
         Poco::Data::MySQL::Connector::unregisterConnector();
-	#ifdef ODBC
     else if (boost::iequals(db_conn_info.db_type, std::string ("ODBC")) == 1)
         Poco::Data::ODBC::Connector::unregisterConnector();
-	#endif
     else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
         Poco::Data::SQLite::Connector::unregisterConnector();
 
@@ -337,11 +331,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			#endif
 			pLogger->information("Database Type: " + db_conn_info.db_type);
 
-			#ifdef ODBC
             if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
-			#else
-			if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
-			#endif
             {
                 std::string username = pConf->getString(conf_option + ".Username");
                 std::string password = pConf->getString(conf_option + ".Password");
@@ -361,20 +351,17 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 						db_conn_info.connection_str = db_conn_info.connection_str + "compress=true";
 					}
                 }
-				#ifdef ODBC
-                else
+				else
                 {
 					db_conn_info.db_type = "ODBC";
                     Poco::Data::ODBC::Connector::registerConnector();
 				}
-				#endif
 
                 db_pool.reset(new DBPool(db_conn_info.db_type, 
 															db_conn_info.connection_str, 
 															db_conn_info.min_sessions, 
 															db_conn_info.max_sessions, 
 															db_conn_info.idle_time));
-
                 if (db_pool->get().isConnected())
                 {
 					#ifdef TESTING
@@ -456,7 +443,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-    return "15";
+    return "16";
 }
 
 

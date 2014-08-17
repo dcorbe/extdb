@@ -15,8 +15,6 @@ set(CMAKE_CONFIGURATION_TYPES Release CACHE TYPE
 INTERNAL FORCE )
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
-# ODBC defaults to ON
-SET(ODBC TRUE CACHE BOOL "Enables or disables ODBC.")
 # Logging defaults to OFF
 SET(DEBUG_LOGGING FALSE CACHE BOOL "Enables or disables Debug Logging.")
 # Compile test application defaults to OFF
@@ -124,14 +122,12 @@ else()
 endif()
 
 # ODBC
-if(ODBC)
-	include(FindODBC)
-	if(ODBC_FOUND)
-		include_directories(${ODBC_INCLUDE_DIR})
-		target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
-	else()
-		message(FATAL_ERROR "\nODBC not found")
-	endif()
+include(FindODBC)
+if(ODBC_FOUND)
+	include_directories(${ODBC_INCLUDE_DIR})
+	target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
+else()
+	message(FATAL_ERROR "\nODBC not found")
 endif()
 
 # Look for Intel Threading Building Blocks (TBB)
@@ -170,7 +166,6 @@ else()
 		)
 	endif()
 endif()
-
 
 #check for 32bit vs. 64bit system
 if (CMAKE_SIZEOF_VOID_P EQUAL 8) #64bit
