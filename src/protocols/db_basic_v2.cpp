@@ -25,7 +25,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/Session.h>
-#include <Poco/Exception.h>
 
 #include <Poco/Data/MySQL/Connector.h>
 #include <Poco/Data/MySQL/MySQLException.h>
@@ -33,6 +32,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/SQLite/SQLiteException.h>
 #include <Poco/Data/ODBC/Connector.h>
 #include <Poco/Data/ODBC/ODBCException.h>
+
+#include <Poco/Exception.h>
 
 #include <cctype>
 #include <cstdlib>
@@ -475,8 +476,8 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 		#ifdef TESTING
 			std::cout << "extDB: DB_BASIC: Error Database Locked Exception: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Database Locked Exception: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "eextDB: DB_BASIC_V2: Error Database Locked Exception: Input:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error DBLockedException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error DBLockedException: Input:" + input_str;
 		result = "[0,\"Error DB Locked Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
@@ -485,7 +486,7 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 			std::cout << "extDB: DB_BASIC_V2: Error Data Exception: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Data Exception: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "eextDB: DB_BASIC_V2: Error Data Exception: Input:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Data Exception: Input:" + input_str;
 		result = "[0,\"Error Data Exception\"]";
 	}
 	catch (Poco::Exception& e)

@@ -18,11 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include <Poco/Data/SessionPool.h>
-
-#include <cstdlib>
-#include <iostream>
-
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
 

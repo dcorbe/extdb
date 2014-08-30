@@ -25,7 +25,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/Session.h>
-#include <Poco/Exception.h>
 
 #include <Poco/Data/MySQL/Connector.h>
 #include <Poco/Data/MySQL/MySQLException.h>
@@ -33,6 +32,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/SQLite/SQLiteException.h>
 #include <Poco/Data/ODBC/Connector.h>
 #include <Poco/Data/ODBC/ODBCException.h>
+
+#include <Poco/Exception.h>
 
 #include <cctype>
 #include <cstdlib>
@@ -199,7 +200,7 @@ void DB_BASIC::getOption(Poco::Data::Session &db_session, std::string &table, st
 }
 
 
-void DB_BASIC_V2::getCharOption(Poco::Data::Session &db_session, std::string &steamid, std::string &option, std::string &result)
+void DB_BASIC::getCharOption(Poco::Data::Session &db_session, std::string &steamid, std::string &option, std::string &result)
 {
 	if (isNumber(steamid))
 	{
@@ -476,7 +477,7 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 			std::cout << "extDB: DB_BASIC: Error Database Locked Exception: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC: Error Database Locked Exception: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "eextDB: DB_BASIC: Error Database Locked Exception: Input:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC: Error Database Locked Exception: Input:" + input_str;
 		result = "[0,\"Error DB Locked Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
@@ -485,7 +486,7 @@ void DB_BASIC::callProtocol(AbstractExt *extension, std::string input_str, std::
 			std::cout << "extDB: DB_BASIC: Error Data Exception: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC: Error Data Exception: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "eextDB: DB_BASIC: Error Data Exception: Input:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC: Error Data Exception: Input:" + input_str;
 		result = "[0,\"Error Data Exception\"]";
 	}
 	catch (Poco::Exception& e)

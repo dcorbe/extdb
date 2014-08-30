@@ -18,14 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <boost/asio.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <Poco/AsyncChannel.h>
-#include <Poco/FormattingChannel.h>
-#include <Poco/PatternFormatter.h>
-#include <Poco/SimpleFileChannel.h>
+#include <Poco/Data/SessionPool.h>
 
 #include "uniqueid.h"
 
@@ -70,7 +67,6 @@ class Ext: public AbstractExt
 		void freeUniqueID_mutexlock(const int &unique_id);
 
 	private:
-		Poco::Logger *pLogger;
 		bool extDB_lock;
 		int max_threads;
 
@@ -87,7 +83,7 @@ class Ext: public AbstractExt
 		DBConnectionInfo db_conn_info;
 
 		// ASIO Thread Queue
-		boost::scoped_ptr<boost::asio::io_service::work> io_work_ptr;
+		boost::shared_ptr<boost::asio::io_service::work> io_work_ptr;
 		boost::asio::io_service io_service;
 		boost::mutex mutex_io_service;
 
@@ -95,7 +91,7 @@ class Ext: public AbstractExt
 
 		// Database Session Pool
 		//boost::shared_ptr<DBPool> db_pool;
-		boost::scoped_ptr<DBPool> db_pool;
+		boost::shared_ptr<DBPool> db_pool;
 		boost::mutex mutex_db_pool;
 
 		void connectDatabase(char *output, const int &output_size, const std::string &conf_option);
@@ -104,7 +100,7 @@ class Ext: public AbstractExt
 		void sendResult_mutexlock(const std::string &result, char *output, const int &output_size);
 
 		// boost::unordered_map + mutex -- for Plugin Loaded
-		boost::unordered_map< std::string, boost::scoped_ptr<AbstractProtocol> > unordered_map_protocol;
+		boost::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> > unordered_map_protocol;
 		boost::mutex mutex_unordered_map_protocol;
 
 		// boost::unordered_map + mutex -- for Stored Results to long for outputsize
@@ -113,7 +109,7 @@ class Ext: public AbstractExt
 		boost::mutex mutex_unordered_map_results;  // Using Same Lock for Wait / Results / Plugins
 
 		// Unique ID for key for ^^
-		boost::scoped_ptr<IdManager> mgr;
+		boost::shared_ptr<IdManager> mgr;
 		boost::mutex mutex_unique_id;
 
 		// Plugins

@@ -19,7 +19,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <Poco/Data/Session.h>
-#include <Poco/Data/SessionPool.h>
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
@@ -40,8 +39,8 @@ class DB_BASIC: public AbstractProtocol
 		void getOptionAll(Poco::Data::Session &db_session, std::string &table, std::string &result);
 		
 		void getOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string &result);
-		void getCharOption(Poco::Data::Session &db_session, std::string &table, std::string &steamid, std::string &option, std::string &result);
+		void getCharOption(Poco::Data::Session &db_session, std::string &steamid, std::string &option, std::string &result);
 		
 		void setOption(Poco::Data::Session &db_session, std::string &table, std::string &uid, std::string &option, std::string value, std::string &result);
-		void setCharOption(Poco::Data::Session &db_session, std::string &table, std::string &steamid, std::string &option, std::string value, std::string &result);
+		void setCharOption(Poco::Data::Session &db_session, std::string &steamid, std::string &option, std::string value, std::string &result);
 };

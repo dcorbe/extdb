@@ -39,11 +39,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/random/random_device.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/regex.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/sources/record_ostream.hpp>
 
 #include <cstring>
 
@@ -91,7 +99,7 @@ Ext::Ext(void) {
 	boost::log::add_file_log
 	(
 		boost::log::keywords::auto_flush = true, 
-		boost::log::keywords::file_name = log_file_name,
+		boost::log::keywords::file_name = log_filename,
 		boost::log::keywords::format = "[%TimeStamp%]: %Message%"
 	);
 	boost::log::core::get()->set_filter
@@ -198,7 +206,7 @@ Ext::Ext(void) {
 				randomized_filename += chars[index_dist(rng)];
 			}
 			randomized_filename += ".ini";
-			Poco::File("extdb-conf.ini").renameTo(randomized_filename);
+			boost::filesystem::rename("extdb-conf.ini", randomized_filename);
 		}
 	}
 }

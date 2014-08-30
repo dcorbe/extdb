@@ -37,6 +37,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Util/AbstractConfiguration.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
+#include <boost/filesystem.hpp>
+
 #ifdef TESTING
 	#include <iostream>
 #endif
@@ -68,7 +70,7 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 		#ifdef TESTING
 			std::cout << "extDB: DB_CUSTOM_V2: No Database Connection" << std::endl;
 		#endif
-		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: No Database Connection";
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: No Database Connection";
 		return false;
 	}
 	
@@ -235,7 +237,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 			std::cout << "extDB: DB_CUSTOM_V2: Error DBLockedException: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error DBLockedException: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error DBLockedException: Input:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error DBLockedException: SQL:" + sql_str;
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
@@ -244,8 +246,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 			std::cout << "extDB: DB_CUSTOM_V2: Error ConnectionException: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error ConnectionException: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error ConnectionException: Input:" + input_str;
-		result = "[0,\"Error Connection Exception\"]";
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error ConnectionException: SQL:" + sql_str;
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
 	{
@@ -253,7 +254,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 			std::cout << "extDB: DB_CUSTOM_V2: Error StatementException: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error StatementException: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error StatementException: Input:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error StatementException: SQL:" + sql_str;
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
@@ -262,7 +263,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 			std::cout << "extDB: DB_CUSTOM_V2: Error DataException: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error DataException: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error DataException: Input:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error DataException: SQL:" + sql_str;
         result = "[0,\"Error Data Exception\"]";
     }
     catch (Poco::Exception& e)
@@ -271,7 +272,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 			std::cout << "extDB: DB_CUSTOM_V2: Error Exception: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error Exception: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error Exception: Input:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error Exception: SQL:" + sql_str;
 		result = "[0,\"Error Exception\"]";
 	}
 }
