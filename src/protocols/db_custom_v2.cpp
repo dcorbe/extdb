@@ -30,28 +30,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/ODBC/Connector.h>
 #include <Poco/Data/ODBC/ODBCException.h>
 
-#include <Poco/Exception.h>
-
-#include <Poco/File.h>
-#include <Poco/Path.h>
-#include <Poco/String.h>
-
 #include <Poco/DynamicAny.h>
-
+#include <Poco/Exception.h>
+#include <Poco/String.h>
 #include <Poco/StringTokenizer.h>
 #include <Poco/Util/AbstractConfiguration.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
-
-#include <cstdlib>
-#include <iostream>
+#ifdef TESTING
+	#include <iostream>
+#endif
 
 #include "../sanitize.h"
 
 
 bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 {
-	pLogger = &Poco::Logger::get(("DB_CUSTOM_V2:" + init_str));
+	db_custom_name = init_str;
 	
 	bool status = false;
 	
@@ -73,22 +68,18 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 		#ifdef TESTING
 			std::cout << "extDB: DB_CUSTOM_V2: No Database Connection" << std::endl;
 		#endif
-		pLogger->warning("No Database Connection");
+		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: No Database Connection";
 		return false;
 	}
 	
-	Poco::DateTime now;
-	Poco::Path template_path;
-	template_path.pushDirectory("extDB");
-	template_path.pushDirectory("db_custom");
-	Poco::File(template_path).createDirectories();
-	template_path.setFileName(init_str + ".ini");
+	std::string db_custom_dir = boost::filesystem::path("extDB/db_custom").make_preferred().string();
+	boost::filesystem::create_directories(db_custom_dir); // Creating Directory if missing
+	std::string db_template_file = boost::filesystem::path(db_custom_dir + init_str + ".ini").make_preferred().string();
+
 	
-	std::string template_fullpath = template_path.toString();
-	
-	if (Poco::File("extdb-conf.ini").exists())
+	if (boost::filesystem::exists(db_template_file))
 	{
-		template_ini = (new Poco::Util::IniFileConfiguration(template_fullpath));
+		template_ini = (new Poco::Util::IniFileConfiguration(db_template_file));
 		
 		//std::vector < std::string > calls = template_ini->createView("");
 		std::vector < std::string > custom_calls;
@@ -231,55 +222,53 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		}
 		result += "]]";
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V2: DEBUG INFO: RESULT:" + result << std::endl;
+			std::cout << "extDB: DB_CUSTOM_V2: Trace: Result: " + result << std::endl;
 		#endif
-		#ifdef DEBUG_LOGGING
-			pLogger->trace(" RESULT:" + result);
-		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_CUSTOM_V2: Trace: Result: " + result;
 	}
 	catch (Poco::Data::SQLite::DBLockedException& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: Error: " << e.displayText() << std::endl;
-		#endif 
-		pLogger->critical("Input: " + sql_str);
-		pLogger->critical("Database Locked Exception: " + e.displayText());
+			std::cout << "extDB: DB_CUSTOM_V2: Error DBLockedException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error DBLockedException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error DBLockedException: Input:" + input_str;
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: Error: " << e.displayText() << std::endl;
-		#endif 
-		pLogger->critical("Input: " + sql_str);
-		pLogger->critical("Connection Exception: " + e.displayText());
+			std::cout << "extDB: DB_CUSTOM_V2: Error ConnectionException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error ConnectionException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error ConnectionException: Input:" + input_str;
 		result = "[0,\"Error Connection Exception\"]";
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: Error: " << e.displayText() << std::endl;
-		#endif 
-		pLogger->critical("Input: " + sql_str);
-		pLogger->critical("Statement Exception: " + e.displayText());
+			std::cout << "extDB: DB_CUSTOM_V2: Error StatementException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error StatementException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error StatementException: Input:" + input_str;
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
     {
 		#ifdef TESTING
-			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+			std::cout << "extDB: DB_CUSTOM_V2: Error DataException: " + e.displayText() << std::endl;
 		#endif
-		pLogger->critical("Input: " + sql_str);
-		pLogger->critical("Data Exception: " + e.displayText());
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error DataException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error DataException: Input:" + input_str;
         result = "[0,\"Error Data Exception\"]";
     }
     catch (Poco::Exception& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+			std::cout << "extDB: DB_CUSTOM_V2: Error Exception: " + e.displayText() << std::endl;
 		#endif
-		pLogger->critical("Input: " + sql_str);
-		pLogger->critical("Exception: " + e.displayText());
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error Exception: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: Error Exception: Input:" + input_str;
 		result = "[0,\"Error Exception\"]";
 	}
 }
@@ -287,6 +276,13 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 
 void DB_CUSTOM_V2::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
+	#ifdef TESTING
+		std::cout << "extDB: DB_CUSTOM_V2: Trace: " + input_str << std::endl;
+	#endif
+	#ifdef DEBUG_LOGGING
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_CUSTOM_V2: Trace: Input:" + input_str;
+	#endif
+
 	Poco::StringTokenizer tokens(input_str, ":");
 	
 	int token_count = tokens.count();
@@ -322,12 +318,4 @@ void DB_CUSTOM_V2::callProtocol(AbstractExt *extension, std::string input_str, s
 			}
 		}
 	}
-	
-	
-	#ifdef TESTING
-		std::cout << "extDB: DB_CUSTOM_V2: DEBUG INFO: " + input_str << std::endl;
-	#endif
-	#ifdef DEBUG_LOGGING
-		pLogger->trace(" " + input_str);
-	#endif
 }

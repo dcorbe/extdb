@@ -36,7 +36,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <cctype>
 #include <cstdlib>
-#include <iostream>
+
+#ifdef TEST_APP
+	#include <iostream>
+#endif
 
 #include "../sanitize.h"
 
@@ -59,10 +62,9 @@ bool DB_BASIC_V2::init(AbstractExt *extension, const std::string init_str)
 	{
 		// DATABASE NOT SETUP YET
 		#ifdef TESTING
-			std::cout << "extDB: DB_BASIC: No Database Connection" << std::endl;
+			std::cout << "extDB: DB_BASIC_V2: No Database Connection" << std::endl;
 		#endif
-		
-		BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: DB_BASIC_V2: No Database Connection";
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: No Database Connection";
 		return false;
 	}
 }
@@ -295,7 +297,7 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 			std::cout << "extDB: DB_BASIC_V2: DEBUG INFO: " + input_str << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Trace: Input:" + input_str;
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Trace: Input:" + input_str;
 		#endif
 		if (input_str.length() <= 4)
 		{
@@ -303,7 +305,7 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 			#ifdef TESTING
 				std::cout << "extDB: DB_BASIC_V2: Error Message to Short: Input: " + input_str << std::endl;
 			#endif
-			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Message to Short: Input: " + input_str;
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Message to Short: Input: " + input_str;
 		}
 		else
 		{
@@ -321,7 +323,7 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 				#ifdef TESTING
 					std::cout << "extDB: DB_BASIC_V2: Error Invalid Format: Input: " + input_str << std::endl;
 				#endif
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC: Error Invalid Format: Input: " + input_str;
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC: Error Invalid Format: Input: " + input_str;
 			}
 			else
 			{
@@ -455,14 +457,14 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 						#ifdef TESTING
 							std::cout << "extDB: DB_BASIC_V2: Error Unknown Option: Input: " + input_str << std::endl;
 						#endif
-						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC: Error Unknown Option: Input: " + input_str;
+						BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC: Error Unknown Option: Input: " + input_str;
 					}
 				}
 				#ifdef TESTING
 					std::cout << "extDB: DB_BASIC_V2: Trace: Result:" + result << std::endl;
 				#endif
 				#ifdef DEBUG_LOGGING
-					BOOST_LOG_SEV(logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: Trace: Result: " + input_str;
+					BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: Trace: Result: " + input_str;
 				#endif
 			}
 		}
@@ -472,8 +474,8 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 		#ifdef TESTING
 			std::cout << "extDB: DB_BASIC: Error Database Locked Exception: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Database Locked Exception: " + e.displayText();
-		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "eextDB: DB_BASIC_V2: Error Database Locked Exception: Input:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Database Locked Exception: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "eextDB: DB_BASIC_V2: Error Database Locked Exception: Input:" + input_str;
 		result = "[0,\"Error DB Locked Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
@@ -481,8 +483,8 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 		#ifdef TESTING
 			std::cout << "extDB: DB_BASIC_V2: Error Data Exception: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Data Exception: " + e.displayText();
-		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "eextDB: DB_BASIC_V2: Error Data Exception: Input:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Data Exception: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "eextDB: DB_BASIC_V2: Error Data Exception: Input:" + input_str;
         result = "[0,\"Error Data Exception\"]";
     }
     catch (Poco::Exception& e)
@@ -490,8 +492,8 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 		#ifdef TESTING
 			std::cout << "extDB: DB_BASIC_V2: Error Exception: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Exception: " + e.displayText();
-		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Exception: Input:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Exception: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Exception: Input:" + input_str;
 		result = "[0,\"Error Exception\"]";
 	}
 }

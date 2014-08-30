@@ -25,9 +25,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <Poco/DynamicAny.h>
 
-#include <cstdlib>
-#include <iostream>
-
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
 
@@ -39,6 +36,7 @@ class DB_CUSTOM_V2: public AbstractProtocol
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 		
 	private:
+		std::string db_custom_name;
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
 		
 		struct Template_Calls {

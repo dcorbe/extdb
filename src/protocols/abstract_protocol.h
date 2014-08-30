@@ -20,13 +20,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_ext.h"
 
-#include <Poco/Data/Session.h>
-#include <Poco/Data/SessionPool.h>
-
-#include <cstdlib>
-#include <iostream>
-
-
 class AbstractProtocol
 {
 	public:

@@ -27,8 +27,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/PatternFormatter.h>
 #include <Poco/SimpleFileChannel.h>
 
-#include <Poco/Thread.h>
-
 #include "uniqueid.h"
 
 #include "protocols/abstract_ext.h"
@@ -55,11 +53,6 @@ class Ext: public AbstractExt
 	public:
 		Ext();
 		~Ext();
-
-		Poco::AutoPtr<Poco::SimpleFileChannel> pChannel;
-		Poco::AutoPtr<Poco::AsyncChannel> pAsync;
-		Poco::AutoPtr<Poco::PatternFormatter> pPF;
-		Poco::AutoPtr<Poco::FormattingChannel> pPFC;
 
 		void callExtenion(char *output, const int &output_size, const char *function);
 		std::string version() const;
@@ -94,7 +87,6 @@ class Ext: public AbstractExt
 		DBConnectionInfo db_conn_info;
 
 		// ASIO Thread Queue
-		//boost::shared_ptr<boost::asio::io_service::work> io_work_ptr;
 		boost::scoped_ptr<boost::asio::io_service::work> io_work_ptr;
 		boost::asio::io_service io_service;
 		boost::mutex mutex_io_service;
@@ -112,7 +104,6 @@ class Ext: public AbstractExt
 		void sendResult_mutexlock(const std::string &result, char *output, const int &output_size);
 
 		// boost::unordered_map + mutex -- for Plugin Loaded
-		//boost::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> > unordered_map_protocol;
 		boost::unordered_map< std::string, boost::scoped_ptr<AbstractProtocol> > unordered_map_protocol;
 		boost::mutex mutex_unordered_map_protocol;
 
@@ -122,7 +113,6 @@ class Ext: public AbstractExt
 		boost::mutex mutex_unordered_map_results;  // Using Same Lock for Wait / Results / Plugins
 
 		// Unique ID for key for ^^
-		//boost::shared_ptr<IdManager> mgr;
 		boost::scoped_ptr<IdManager> mgr;
 		boost::mutex mutex_unique_id;
 

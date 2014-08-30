@@ -33,7 +33,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Exception.h>
 #include <Poco/NumberFormatter.h>
 #include <Poco/NumberParser.h>
-#include <Poco/Path.h>
 #include <Poco/StringTokenizer.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
@@ -46,13 +45,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/regex.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include <cstdlib>
 #include <cstring>
-#include <iostream>
-#include <iterator>
+
+#ifdef TEST_APP
+	#include <iostream>
+#endif
 
 #include "uniqueid.h"
-
 #include "protocols/abstract_protocol.h"
 #include "protocols/db_basic.h"
 #include "protocols/db_basic_v2.h"
@@ -104,7 +103,7 @@ Ext::Ext(void) {
 	bool conf_found = false;
 	bool conf_randomized = false;
 	
-	if (!boost::filesystem::exists("extdb-conf.ini"))
+	if (boost::filesystem::exists("extdb-conf.ini"))
 	{
 		conf_found = true;
 		pConf = (new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
@@ -312,11 +311,9 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
             {
 				db_conn_info.db_type = "SQLite";
                 Poco::Data::SQLite::Connector::registerConnector();
-				Poco::Path db_path;
-				db_path.pushDirectory("extDB");
-				db_path.pushDirectory("sqlite");
-				db_path.setFileName(db_name);
-                db_conn_info.connection_str = db_path.toString();
+
+				std::string sqlite_file = boost::filesystem::path("extDB/sqlite/" + db_name).make_preferred().string();
+                db_conn_info.connection_str = sqlite_file;
 
                 db_pool.reset(new DBPool(db_conn_info.db_type, 
 															db_conn_info.connection_str, 
