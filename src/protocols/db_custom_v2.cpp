@@ -152,6 +152,7 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 	return status;
 }
 
+
 void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, std::string &result)
 {
 	std::string sql_str;
@@ -224,7 +225,9 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		#ifdef TESTING
 			std::cout << "extDB: DB_CUSTOM_V2: Trace: Result: " + result << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_CUSTOM_V2: Trace: Result: " + result;
+		#ifdef DEBUG_LOGGING
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_CUSTOM_V2: Trace: Result: " + result;
+		#endif
 	}
 	catch (Poco::Data::SQLite::DBLockedException& e)
 	{

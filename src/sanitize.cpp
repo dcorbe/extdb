@@ -75,16 +75,21 @@ namespace Sqf
 		std::string::iterator first = input_str.begin();
 		std::string::iterator last = input_str.end();
 
-        bool r = boost::spirit::qi::phrase_parse(
-            first,
-            last,
+		bool r = boost::spirit::qi::phrase_parse(
+			first,
+			last,
 			SqfParametersParser<iter_t,boost::spirit::qi::space_type>(),
-            boost::spirit::qi::space_type()
-        );
-        if (first != last) // fail if we did not get a full match
-            return false;
-        return r;
-    };
+			boost::spirit::qi::space_type()
+		);
+		if (first != last) // fail if we did not get a full match
+		{
+			return false;
+		}
+		else
+		{
+			return r;
+		}
+	};
 }
 
 
@@ -93,16 +98,16 @@ int main(int nNumberofArgs, char* pszArgs[])
 {
 	//SqfValueParser test_parser;
 
-    std::string result;
-    for (;;) {
-        char input_str[100];
+	std::string result;
+	for (;;) {
+		char input_str[100];
 		std::cin.getline(input_str, sizeof(input_str));
-        if (std::string(input_str) == "quit")
-        {
-            break;
-        }
-        else
-        {
+		if (std::string(input_str) == "quit")
+		{
+			break;
+		}
+		else
+		{
 			result = input_str;
 			if (Sqf::check(result))
 			{
@@ -112,8 +117,8 @@ int main(int nNumberofArgs, char* pszArgs[])
 			{
 				std::cout << "extDB: False " << result << std::endl;
 			}
-        }
-    }
-    return 0;
+		}
+	}
+	return 0;
 }
 #endif

@@ -299,6 +299,7 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 		#ifdef DEBUG_LOGGING
 			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC: Trace: Input:" + input_str;
 		#endif
+
 		if (input_str.length() <= 4)
 		{
 			result = "[0,\"Error Message to Short\"]";
@@ -479,15 +480,15 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 		result = "[0,\"Error DB Locked Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
-    {
+	{
 		#ifdef TESTING
 			std::cout << "extDB: DB_BASIC_V2: Error Data Exception: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_BASIC_V2: Error Data Exception: " + e.displayText();
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "eextDB: DB_BASIC_V2: Error Data Exception: Input:" + input_str;
-        result = "[0,\"Error Data Exception\"]";
-    }
-    catch (Poco::Exception& e)
+		result = "[0,\"Error Data Exception\"]";
+	}
+	catch (Poco::Exception& e)
 	{
 		#ifdef TESTING
 			std::cout << "extDB: DB_BASIC_V2: Error Exception: " + e.displayText() << std::endl;
