@@ -24,8 +24,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/MySQL/MySQLException.h>
 #include <Poco/Data/SQLite/Connector.h>
 #include <Poco/Data/SQLite/SQLiteException.h>
-#include "Poco/Data/ODBC/Connector.h"
-#include "Poco/Data/ODBC/ODBCException.h"
+#include <Poco/Data/ODBC/Connector.h>
+#include <Poco/Data/ODBC/ODBCException.h>
 
 #include <Poco/AutoPtr.h>
 #include <Poco/DateTime.h>
@@ -33,26 +33,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Exception.h>
 #include <Poco/NumberFormatter.h>
 #include <Poco/NumberParser.h>
-#include <Poco/Util/IniFileConfiguration.h>
-
-#include <Poco/AsyncChannel.h>
-#include <Poco/AutoPtr.h>
-#include <Poco/File.h>
-#include <Poco/FormattingChannel.h>
-#include <Poco/Logger.h>
 #include <Poco/Path.h>
-#include <Poco/PatternFormatter.h>
-#include <Poco/SimpleFileChannel.h>
 #include <Poco/StringTokenizer.h>
+#include <Poco/Util/IniFileConfiguration.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread/thread.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <boost/random/random_device.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/regex.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <cstdlib>
 #include <cstring>
@@ -92,75 +84,62 @@ Ext::Ext(void) {
 	extDB_lock = false;
 
 	Poco::DateTime now;
-	Poco::Path log_path;
-	log_path.pushDirectory("extDB");
-	log_path.pushDirectory("logs");
-	log_path.pushDirectory(Poco::DateTimeFormatter::format(now, "%Y"));
-	log_path.pushDirectory(Poco::DateTimeFormatter::format(now, "%n"));
-	log_path.pushDirectory(Poco::DateTimeFormatter::format(now, "%d"));
-	Poco::File(log_path).createDirectories();
-	log_path.setFileName(Poco::DateTimeFormatter::format(now, "%H-%M-%S.log"));
+	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n%/%d/%H-%M-%S.log");
+	std::string log_relative_path = boost::filesystem::path("extDB/logs/" + log_filename).make_preferred().string();
 	
-	pChannel = new Poco::SimpleFileChannel;
-	pChannel->setProperty("path", log_path.toString());
-	pChannel->setProperty("rotation", "10 M");
+	boost::log::add_common_attributes();
 
-	pAsync = new Poco::AsyncChannel(pChannel);
+	boost::log::add_file_log
+	(
+		boost::log::keywords::auto_flush = true, 
+		boost::log::keywords::file_name = log_file_name,
+		boost::log::keywords::format = "[%TimeStamp%]: %Message%"
+	);
+	boost::log::core::get()->set_filter
+	(
+		boost::log::trivial::severity >= boost::log::trivial::info
+	);
 	
-	pPF = new Poco::PatternFormatter;
-	pPF->setProperty("pattern", "%Y-%m-%d %H:%M:%S:%F %s: %p: %t");
-	pPFC = new Poco::FormattingChannel(pPF, pAsync);
-	
-	Poco::Logger::root().setChannel(pPFC);
-	pLogger = &Poco::Logger::get("extDB");
 
 	bool conf_found = false;
 	bool conf_randomized = false;
 	
-	Poco::File conf_file("extdb-conf.ini");
-	
-	if (conf_file.exists())
+	if (!boost::filesystem::exists("extdb-conf.ini"))
 	{
-		if (conf_file.isFile())
-		{
-			conf_found = true;
-			pConf = (new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
-		}
+		conf_found = true;
+		pConf = (new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
 	}
 	else
     {
-		std::vector<std::string> file_list;
-		Poco::File(Poco::Path().current()).list(file_list);
-		
 		// Search for Randomize Config File -- Legacy Security Support For Arma2Servers
 			// TODO: WINDOWS ONLY ifdef endif
         boost::regex expression("extdb-conf.*ini");
-        for(std::vector<std::string>::iterator it = file_list.begin(); it != file_list.end(); ++it)
+
+        for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
         {
-			if (Poco::File(*it).isFile())
+			if (is_regular_file(it->path()))
 			{
-				if(boost::regex_search(*it, expression))
+				if(boost::regex_search(it->path().string(), expression))
 				{
 					conf_found = true;
 					conf_randomized = true;
-					pConf = new Poco::Util::IniFileConfiguration(*it);  // Load Randomized Conf
+					pConf = (new Poco::Util::IniFileConfiguration(it->path().string()));  // Load Randomized Conf
 					break;
 				}
 			}
 		}
     }
 
-	pLogger->information("Version: " + version());
+	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Version: " + version();
 	
 	if (!conf_found) 
 	{
 		#ifdef TESTING
 			std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;
 		#endif
-
-		pLogger->information("Unable to find extdb-conf.ini");
+		
+		BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Unable to find extdb-conf.ini";
 		// Kill Server no config file found -- Evil
-		// TODO: See if we can extension limp along with bad config ?
         std::exit(EXIT_FAILURE);
 	}
 	else
@@ -169,7 +148,7 @@ Ext::Ext(void) {
 		#ifdef TESTING
 			std::cout << "extDB: Found extdb-conf.ini" << std::endl;
 		#endif
-		pLogger->information("Found extdb-conf.ini");
+		BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Found extdb-conf.ini";
 
 		steam_api_key = pConf->getString("Main.Steam_WEB_API_KEY", "");
 
@@ -186,7 +165,7 @@ Ext::Ext(void) {
 			#ifdef TESTING
 				std::cout << "extDB: Creating Worker Thread +1" << std::endl ;
 			#endif
-			pLogger->information("Creating Worker Thread +1");
+			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Creating Worker Thread +1";
         }
 
 		// Load Logging Filter Options
@@ -194,67 +173,16 @@ Ext::Ext(void) {
 			std::cout << "extDB: Loading Log Settings" << std::endl;
 		#endif
 		
-		std::string level = pConf->getString("Logging.Level", "");
-		
-		if (boost::iequals(level, "none") == 1)
-		{
-			Poco::Logger::root().setLevel(0);
-			pLogger->setLevel(0);
-		}
-		else if (boost::iequals(level, "fatal") == 1)
-		{
-			Poco::Logger::root().setLevel(Poco::Message::PRIO_FATAL);
-			pLogger->setLevel(Poco::Message::PRIO_FATAL);
-		}
-		else if (boost::iequals(level, "critical") == 1)
-		{
-			Poco::Logger::root().setLevel(Poco::Message::PRIO_CRITICAL);
-			pLogger->setLevel(Poco::Message::PRIO_CRITICAL);
-		}
-		else if (boost::iequals(level, "error") == 1)
-		{
-			Poco::Logger::root().setLevel(Poco::Message::PRIO_ERROR);
-			pLogger->setLevel(Poco::Message::PRIO_ERROR);
-		}
-		else if (boost::iequals(level, "warning") == 1)
-		{
-			Poco::Logger::root().setLevel(Poco::Message::PRIO_WARNING);
-			pLogger->setLevel(Poco::Message::PRIO_WARNING);
-		}
-		else if (boost::iequals(level, "notice") == 1)
-		{
-			Poco::Logger::root().setLevel(Poco::Message::PRIO_NOTICE);
-			pLogger->setLevel(Poco::Message::PRIO_NOTICE);
-		}
-		else if (boost::iequals(level, "information") == 1)
-		{
-			Poco::Logger::root().setLevel(Poco::Message::PRIO_INFORMATION);
-			pLogger->setLevel(Poco::Message::PRIO_INFORMATION);
-		}
-		else if (boost::iequals(level, "debug") == 1)
-		{
-			Poco::Logger::root().setLevel(Poco::Message::PRIO_DEBUG);
-			pLogger->setLevel(Poco::Message::PRIO_DEBUG);
-		}
-		else if (boost::iequals(level, "trace") == 1)
-		{
-			Poco::Logger::root().setLevel(Poco::Message::PRIO_TRACE);
-			pLogger->setLevel(Poco::Message::PRIO_TRACE);
-		}
-		else
-		{
-			// Default Value
-			Poco::Logger::root().setLevel(Poco::Message::PRIO_INFORMATION);
-			pLogger->setLevel(Poco::Message::PRIO_INFORMATION);
-			pLogger->warning("No Config Option Logging - Level Found, Using Default Value -> Information");
-		}
-
+		boost::log::core::get()->set_filter
+		(
+			boost::log::trivial::severity >= (pConf->getInt("Logging.Filter", 2))
+		);
 
 		#ifdef TESTING
 //			std::cout << "extDB: Loading Rcon Settings" << std::endl;
 //			rcon.init(pConf->getInt("Main.RconPort", 2302), pConf->getString("Main.RconPassword", "password"));
 		#endif
-		//pLogger->information("Loading Rcon Settings");
+		//BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Loading Rcon Settings";
 		
 		
 		if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
@@ -286,7 +214,7 @@ void Ext::stop()
 	#ifdef TESTING
 		std::cout << "extDB: Stopping Please Wait..." << std::endl;
 	#endif
-	pLogger->information("Stopping Please Wait...");
+	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Stopping Please Wait...";
 
 	io_service.stop();
     threads.join_all();
@@ -299,7 +227,8 @@ void Ext::stop()
     else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
         Poco::Data::SQLite::Connector::unregisterConnector();
 
-	pLogger->information("Stopped");
+	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Stopped";
+	boost::log::core::get()->remove_all_sinks();
 }
 
 void Ext::connectDatabase(char *output, const int &output_size, const std::string &conf_option)
@@ -329,7 +258,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			#ifdef TESTING
 				std::cout << "extDB: Database Type: " << db_conn_info.db_type << std::endl;
 			#endif
-			pLogger->information("Database Type: " + db_conn_info.db_type);
+			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Type: " << db_conn_info.db_type;
 
             if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
             {
@@ -367,7 +296,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					#ifdef TESTING
 						std::cout << "extDB: Database Session Pool Started" << std::endl;
 					#endif
-					pLogger->information("Database Session Pool Started");
+					BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
                     std::strcpy(output, "[1]");
                 }
                 else
@@ -375,7 +304,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					#ifdef TESTING
 						std::cout << "extDB: Database Session Pool Failed" << std::endl;
 					#endif
-					pLogger->critical("Database Session Pool Failed");
+					BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Session Pool Failed";
 					std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
                 }
             }
@@ -400,7 +329,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					#ifdef TESTING
 						std::cout << "extDB: Database Session Pool Started" << std::endl;
 					#endif
-					pLogger->information("Database Session Pool Started");
+					BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
                     std::strcpy(output, "[1]");
                 }
                 else
@@ -408,7 +337,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					#ifdef TESTING
 						std::cout << "extDB: Database Session Pool Failed" << std::endl;
 					#endif
-					pLogger->critical("Database Session Pool Failed");
+					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Database Session Pool Failed";
                     std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
                 }
             }
@@ -417,7 +346,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 				#ifdef TESTING
 					std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
 				#endif 
-				pLogger->error("No Database Engine Found for " + db_name + ".");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Database Engine Found for " << db_name << ".";
 				std::strcpy(output, "[0,\"Unknown Database Type\"]");
             }
         }
@@ -426,7 +355,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			#ifdef TESTING
 				std::cout << "extDB: WARNING No Config Option Found: " << conf_option << "." << std::endl;
 			#endif
-			pLogger->error("No Config Option Found: " + conf_option + ".");
+			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Config Option Found: " << conf_option << ".";
 			std::strcpy(output, "[0,\"No Config Option Found\"]");
         }
     }
@@ -435,7 +364,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 		#ifdef TESTING
 			std::cout << "extDB: Database Setup Failed: " << e.displayText() << std::endl;
 		#endif
-		pLogger->error("Database Setup Failed: " + e.displayText());
+		BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Setup Failed: " << e.displayText();
         std::exit(EXIT_FAILURE);
     }
 }
@@ -571,7 +500,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
-				pLogger->warning("DB_BASIC is Deprecated... Update SQF code for DB_BASIC_V2");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC is Deprecated... Update SQF code for DB_BASIC_V2";
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_BASIC_V2")) == 1)
@@ -600,7 +529,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
-				pLogger->warning("DB_PROCEDURE is Deprecated... Update SQF code for DB_PROCEDURE_V2");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC is Deprecated... Update SQF code for DB_PROCEDURE_V2";
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
@@ -629,7 +558,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
-				pLogger->warning("DB_RAW is Deprecated... Update SQF code for DB_RAW_V2");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC is Deprecated... Update SQF code for DB_RAW_V2";
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
@@ -658,7 +587,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
-				pLogger->warning("DB_RAW_NO_EXTRA_QUOTES is Deprecated... Update SQF code for DB_RAW_NO_EXTRA_QUOTES_V2");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC is Deprecated... Update SQF code for DB_RAW_NO_EXTRA_QUOTES_V2";
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
@@ -770,7 +699,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
     try
     {
 		#ifdef DEBUG_LOGGING
-			pLogger->trace("Extension Input from Server: " +  std::string(function));
+			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << "Extension Input from Server: " +  std::string(function);
 		#endif
 		const std::string input_str(function);
 		if (input_str.length() <= 2)
@@ -921,7 +850,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif
-		pLogger->error("extDB: Error: " + e.displayText());
+		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Error: " + e.displayText();
     }
 }
 
