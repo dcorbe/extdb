@@ -1,4 +1,4 @@
-## Arma3 Extension DB  C++ (windows / linux)
+## Arma3 Extension DB  C++ (windows / linux)   v16  
 
 I got bored waiting on 2017 / Epoch for Arma3.
 So i decided to write up an C++ Extension for Arma3server.
@@ -19,11 +19,12 @@ http://www.altisliferpg.com
 
 #### Protocols
 
+ - DB_CUSTOM (Ability to define sql statements in a .ini file)
  - DB_BASIC
- - DB_PROCEDURE
+ - DB_PROCEDURE (limited support, no outputs)
  - DB_RAW (by raw i mean raw sql commands, no sanitizing input or output checks at all)
  - DB_RAW_NO_EXTRA_QUOTES
- - MISC (has crc32 md4 md5 time + time offset)
+ - MISC (has beguid crc32 md4 md5 time + time offset)
  - MISC_LOG (ability to add info to extDB logfile)
 
 
@@ -61,7 +62,7 @@ https://github.com/Torndeco/extdb/wiki/Install-Linux---Chroot-Guide-%28WIP%29
  - rajkosto for his work on DayZ Hive, that i have looked at & and still is over my head most of the time..   Using same method for getting Unique Char ID, also using almost the exact same boost parser for checking input/output to database   https://github.com/rajkosto/hive
  - Fank https://gist.github.com/Fank/11127158 for his code to convert SteamID to BEGUID.
  - Tonic & Atlis RPG Admins for beening literally beening bleeding edge testers. And good sports when i messed up, wasn't out a week and multiple servers were testing out extDB.
- - firefly2442 https://github.com/firefly2442 for work on new CMake Build System
+ - firefly2442 https://github.com/firefly2442 for the CMake Build System & wiki updates
 
 
 ##### Disclaimer

@@ -456,8 +456,8 @@ int main(int nNumberofArgs, char* pszArgs[])
 	
 	if (options.count("file"))
 	{
-		//std::ifstream fin(options["file"].as<std::string>());
-		std::ifstream fin("test");
+		std::ifstream fin(options["file"].as<std::string>());
+		//std::ifstream fin("test");
 		if (fin.is_open() == false)
 		{
 			std::cout << "ERROR: file is open" << std::endl;
