@@ -1,24 +1,12 @@
-This is not finished yet...
+First static build for extDB :)
 
-Did some basic tests out local build with logging code commented out & without intel tbb.
-Was working fine
+Poco::Log has bug aswell for static compiles and logging.
+Switched over to Boost Logging, 
+Note this means Debian Users can't compile from source without manually updating thier boost.
 
-Stuff left todo
+Requirements to build static build
 
-Switch Poco Logging back to Boost logging...  (was in version 13 code) Already started it...
-Just need to finish off updating the Protocols Logging Code
+Boost 1.56 (not a typo) there is a bug with older versions for static builds.
+Use makefiles + not cmake for static builds...
 
-Add Intel tbb, i.e  dynamic Link it & add the source file memory_allocator.cpp
-
-Come up with some basic optimize compiler settings for redistributable code
-
-Would have it done tonight.... but some work came up... will be done this weekend.
-
-
-Known issues...
-Since i will be changing back to Boost Logging
-Means Debian Users won't be able to compile from source without updating thier boost library.
-Since there will be a static build of extDB, this won't be a showstopper issue.
-
-Pluses of static build, could look @ backporting Poco changes for missing MySQL features i.e 
-Date Time DataType Support
+make extdb-static

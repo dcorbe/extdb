@@ -5,5 +5,5 @@ DYNAMIC_LIBRARYS := -ldl -lpthread
 FILES := src/ext.cpp src/uniqueid.cpp src/sanitize.cpp src/protocols/*.cpp
 extdb-static:
 	$(COMPILER) $(CFLAGS) -g -shared -o extDB.so $(FILES) src/main.cpp -Wl,-Bstatic $(STATIC_LIBRARYS) -Wl,-Bdynamic $(DYNAMIC_LIBRARYS)
-test-static:
+test:
 	$(COMPILER) $(CFLAGS) -g -o extdb-test $(FILES) -DTEST_APP -DTESTING -Wl,-Bstatic $(STATIC_LIBRARYS) -Wl,-Bdynamic $(DYNAMIC_LIBRARYS)
