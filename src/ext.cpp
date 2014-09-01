@@ -220,9 +220,8 @@ Ext::~Ext(void)
 
 void Ext::stop()
 {
-	#ifdef TESTING
-		std::cout << "extDB: Stopping Please Wait..." << std::endl;
-	#endif
+	std::cout << "extDB: Stopping Please Wait..." << std::endl;
+	
 	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Stopping Please Wait...";
 
 	io_service.stop();
