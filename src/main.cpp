@@ -27,7 +27,7 @@ namespace {
 	static void __attribute__((destructor))
 	extension_destroy(void)
 	{
-		extension->stop();
+		//extension->stop();
 	}
 
 	extern "C"

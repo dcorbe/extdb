@@ -78,7 +78,9 @@ void DBPool::customizeSession (Poco::Data::Session& session)
 {
 	try
 	{
-		session.setProperty("maxRetryAttempts", 100);
+		// This is mainly for SQLite Database Locks when its writing changes.. 
+		//		i.e multi-threaded queries -> SQLite 
+		session.setProperty("maxRetryAttempts", 100);  
 	}
 	catch (Poco::Data::NotSupportedException&)
 	{
@@ -99,8 +101,8 @@ Ext::Ext(void) {
 	boost::log::add_file_log
 	(
 		boost::log::keywords::auto_flush = true, 
-		boost::log::keywords::file_name = log_filename,
-		boost::log::keywords::format = "[%TimeStamp%]: %Message%"
+		boost::log::keywords::file_name = log_relative_path,
+		boost::log::keywords::format = "[%TimeStamp%]: ThreadID %ThreadID%: %Message%"
 	);
 	boost::log::core::get()->set_filter
 	(
@@ -226,14 +228,14 @@ void Ext::stop()
 	io_service.stop();
 	threads.join_all();
 	unordered_map_protocol.clear();
-
+/*
 	if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
 		Poco::Data::MySQL::Connector::unregisterConnector();
 	else if (boost::iequals(db_conn_info.db_type, std::string ("ODBC")) == 1)
 		Poco::Data::ODBC::Connector::unregisterConnector();
 	else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
 		Poco::Data::SQLite::Connector::unregisterConnector();
-
+*/
 	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Stopped";
 	boost::log::core::get()->remove_all_sinks();
 }
