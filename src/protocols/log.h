@@ -29,5 +29,5 @@ class LOG: public AbstractProtocol
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 		
 	private:
-		std::string log_id;
+		std::string log_msg_header;
 };

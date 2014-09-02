@@ -219,23 +219,15 @@ Ext::~Ext(void)
 }
 
 void Ext::stop()
-{
-	std::cout << "extDB: Stopping Please Wait..." << std::endl;
-	
-	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Stopping Please Wait...";
+{	
+	#ifdef TESTING
+		std::cout << "extDB: Stopping Please Wait ..." << std::endl;
+	#endif
 
 	io_service.stop();
 	threads.join_all();
 	unordered_map_protocol.clear();
-/*
-	if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
-		Poco::Data::MySQL::Connector::unregisterConnector();
-	else if (boost::iequals(db_conn_info.db_type, std::string ("ODBC")) == 1)
-		Poco::Data::ODBC::Connector::unregisterConnector();
-	else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
-		Poco::Data::SQLite::Connector::unregisterConnector();
-*/
-	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Stopped";
+
 	boost::log::core::get()->remove_all_sinks();
 }
 
@@ -285,7 +277,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					std::string compress = pConf->getString(conf_option + ".Compress", "false");
 					if (boost::iequals(compress, "true") == 1)
 					{
-						db_conn_info.connection_str = db_conn_info.connection_str + "compress=true";
+						db_conn_info.connection_str = db_conn_info.connection_str + ";compress=true";
 					}
 				}
 				else
@@ -378,7 +370,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-	return "16";
+	return "17";
 }
 
 
