@@ -1,3 +1,17 @@
+17
+	ADDED: Linux Static Build of extDB
+	
+	FIXED: Compress MySQL Option
+	FIXED: DB_CUSTOM_V2 template fix exists check
+	FIXED: extDB exception error on arma3server shutdown on linux.
+	
+	MISC: Logging Code Changed back to Boost Log (done for Linux Static builds)
+	MISC: Added Thread ID to logouts, makes it easier to debug log information involving multiple threads working at once.
+
+	Note: Debian Users, need newer Boost Libraries if they are compiling from source.
+		Or just use the static builds	
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 16  
 	UPDATED: DB_CUSTOM_V2 you can define sql statements with 0 inputs  
 
