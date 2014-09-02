@@ -18,15 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <boost/asio.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <Poco/AsyncChannel.h>
-#include <Poco/FormattingChannel.h>
-#include <Poco/PatternFormatter.h>
-#include <Poco/SimpleFileChannel.h>
-
-#include <Poco/Thread.h>
+#include <Poco/Data/SessionPool.h>
 
 #include "uniqueid.h"
 
@@ -55,11 +51,6 @@ class Ext: public AbstractExt
 		Ext();
 		~Ext();
 
-		Poco::AutoPtr<Poco::SimpleFileChannel> pChannel;
-		Poco::AutoPtr<Poco::AsyncChannel> pAsync;
-		Poco::AutoPtr<Poco::PatternFormatter> pPF;
-		Poco::AutoPtr<Poco::FormattingChannel> pPFC;
-
 		void callExtenion(char *output, const int &output_size, const char *function);
 		std::string version() const;
 
@@ -76,7 +67,6 @@ class Ext: public AbstractExt
 		void freeUniqueID_mutexlock(const int &unique_id);
 
 	private:
-		Poco::Logger *pLogger;
 		bool extDB_lock;
 		int max_threads;
 
@@ -100,6 +90,7 @@ class Ext: public AbstractExt
 		boost::thread_group threads;
 
 		// Database Session Pool
+		//boost::shared_ptr<DBPool> db_pool;
 		boost::shared_ptr<DBPool> db_pool;
 		boost::mutex mutex_db_pool;
 

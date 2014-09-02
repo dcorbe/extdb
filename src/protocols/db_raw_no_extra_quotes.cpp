@@ -19,25 +19,25 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "db_raw_no_extra_quotes.h"
 
 #include <Poco/Data/Common.h>
+#include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/Session.h>
+
+#include <Poco/Data/MySQL/Connector.h>
+#include <Poco/Data/MySQL/MySQLException.h>
+#include <Poco/Data/SQLite/Connector.h>
+#include <Poco/Data/SQLite/SQLiteException.h>
+#include <Poco/Data/ODBC/Connector.h>
+#include <Poco/Data/ODBC/ODBCException.h>
+
 #include <Poco/Exception.h>
 
-#include "Poco/Data/MySQL/Connector.h"
-#include "Poco/Data/MySQL/MySQLException.h"
-#include "Poco/Data/SQLite/Connector.h"
-#include "Poco/Data/SQLite/SQLiteException.h"
-#include "Poco/Data/ODBC/Connector.h"
-#include "Poco/Data/ODBC/ODBCException.h"
-
-#include <cstdlib>
-#include <iostream>
-
+#ifdef TEST_APP
+	#include <iostream>
+#endif
 
 bool DB_RAW_NO_EXTRA_QUOTES::init(AbstractExt *extension, const std::string init_str)
 {
-	pLogger = &Poco::Logger::get("DB_RAW_NO_EXTRA_QUOTES");
-	
 	if (extension->getDBType() == std::string("MySQL"))
 	{
 		return true;
@@ -56,7 +56,7 @@ bool DB_RAW_NO_EXTRA_QUOTES::init(AbstractExt *extension, const std::string init
 		#ifdef TESTING
 			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: No Database Connection" << std::endl;
 		#endif
-		pLogger->warning("No Database Connection");
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES: No Database Connection";
 		return false;
 	}
 }
@@ -64,15 +64,13 @@ bool DB_RAW_NO_EXTRA_QUOTES::init(AbstractExt *extension, const std::string init
 
 void DB_RAW_NO_EXTRA_QUOTES::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
-    try
-    {
-		pLogger = &Poco::Logger::get("DB_RAW_NO_EXTRA_QUOTES");
-		
+	try
+	{
 		#ifdef TESTING
 			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: DEBUG INFO: " + input_str << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
-			pLogger->trace(" " + input_str);
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Trace: Input:" + input_str;
 		#endif
 
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
@@ -113,55 +111,55 @@ void DB_RAW_NO_EXTRA_QUOTES::callProtocol(AbstractExt *extension, std::string in
 		}
 		result += "]";
 		#ifdef TESTING
-			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: DEBUG INFO: RESULT:" + result << std::endl;
+			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: Trace: Result:" + result << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
-			pLogger->trace(" RESULT:" + result);
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Trace: Result: " + input_str;
 		#endif
 	}
 	catch (Poco::Data::SQLite::DBLockedException& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: Error: " << e.displayText() << std::endl;
-		#endif 
-		pLogger->critical("Input: " + input_str);
-		pLogger->critical("Database Locked Exception: " + e.displayText());
+			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error Database Locked Exception: " + e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error DBLockedException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error DBLockedException: Input:" + input_str;
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: Error: " << e.displayText() << std::endl;
-		#endif 
-		pLogger->critical("Input: " + input_str);
-		pLogger->critical("Connection Exception: " + e.displayText());
+			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error ConnectionException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error ConnectionException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error ConnectionException: Input:" + input_str;
 		result = "[0,\"Error Connection Exception\"]";
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: Error: " << e.displayText() << std::endl;
-		#endif 
-		pLogger->critical("Input: " + input_str);
-		pLogger->critical("Statement Exception: " + e.displayText());
+			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error StatementException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error StatementException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error StatementException: Input:" + input_str;
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
     {
 		#ifdef TESTING
-			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error DataException: " + e.displayText() << std::endl;
 		#endif
-		pLogger->critical("Input: " + input_str);
-		pLogger->critical("Data Exception: " + e.displayText());
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error DataException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error DataException: Input:" + input_str;
         result = "[0,\"Error Data Exception\"]";
     }
     catch (Poco::Exception& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+			std::cout << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error Exception: " + e.displayText() << std::endl;
 		#endif
-		pLogger->critical("Input: " + input_str);
-		pLogger->critical("Exception: " + e.displayText());
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error Exception: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES: Error Exception: Input:" + input_str;
 		result = "[0,\"Error Exception\"]";
 	}
 }

@@ -34,7 +34,10 @@ From Frank https://gist.github.com/Fank/11127158
 #include <Poco/Timespan.h>
 
 #include <cstdlib>
-#include <iostream>
+
+#ifdef TEST_APP
+	#include <iostream>
+#endif
 
 #include "../sanitize.h"
 

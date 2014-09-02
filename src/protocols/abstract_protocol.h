@@ -20,14 +20,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_ext.h"
 
-#include <Poco/Data/Session.h>
-#include <Poco/Data/SessionPool.h>
-#include <Poco/Logger.h>
-
-#include <cstdlib>
-#include <iostream>
-
-
 class AbstractProtocol
 {
 	public:
@@ -36,7 +28,4 @@ class AbstractProtocol
 
 		virtual bool init(AbstractExt *extension, const std::string init_str);
 		virtual void callProtocol(AbstractExt *extension, std::string input_str, std::string &result)=0;
-		
-	protected:
-		Poco::Logger *pLogger;
 };
