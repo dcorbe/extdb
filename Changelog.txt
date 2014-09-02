@@ -6,7 +6,7 @@
 	FIXED: extDB exception error on arma3server shutdown on linux.
 	
 	MISC: Logging Code Changed back to Boost Log (done for Linux Static builds)
-	MISC: Added Thread ID to logouts, makes it easier to debug log information involving multiple threads working at once.
+	MISC: Added Thread ID to logs info, makes it easier to debug log information involving multiple threads working at once.
 
 	Note: Debian Users, need newer Boost Libraries if they are compiling from source.
 		Or just use the static builds	
