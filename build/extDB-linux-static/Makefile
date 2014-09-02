@@ -5,6 +5,10 @@ DYNAMIC_LIBRARYS := -ldl -lpthread -ltbbmalloc
 FILES := src/memory_allocator.cpp src/ext.cpp src/uniqueid.cpp src/sanitize.cpp src/protocols/abstract_protocol.cpp src/protocols/db_basic.cpp src/protocols/db_basic_v2.cpp src/protocols/db_custom_v2.cpp src/protocols/db_procedure.cpp src/protocols/db_procedure_v2.cpp src/protocols/db_raw.cpp src/protocols/db_raw_v2.cpp src/protocols/db_raw_no_extra_quotes.cpp src/protocols/db_raw_no_extra_quotes_v2.cpp src/protocols/log.cpp src/protocols/misc.cpp
 
 extdb-static:
-	$(COMPILER) $(CFLAGS) -g -shared -o extDB.so $(FILES) src/main.cpp -Wl,-Bstatic $(STATIC_LIBRARYS) -Wl,-Bdynamic $(DYNAMIC_LIBRARYS)
+	$(COMPILER) $(CFLAGS) -shared -o extDB.so $(FILES) src/main.cpp -Wl,-Bstatic $(STATIC_LIBRARYS) -Wl,-Bdynamic $(DYNAMIC_LIBRARYS)
+
+extdb-static-debug-logging:
+	$(COMPILER) $(CFLAGS) -shared -o extDB.so $(FILES) -DDEBUG_LOGGING src/main.cpp -Wl,-Bstatic $(STATIC_LIBRARYS) -Wl,-Bdynamic $(DYNAMIC_LIBRARYS)
+
 test:
 	$(COMPILER) $(CFLAGS) -g -o extdb-test $(FILES) -DTEST_APP -DTESTING -Wl,-Bstatic $(STATIC_LIBRARYS) -Wl,-Bdynamic $(DYNAMIC_LIBRARYS)
