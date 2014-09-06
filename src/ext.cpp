@@ -337,6 +337,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					#endif
 					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Database Session Pool Failed";
 					std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
+					std::exit(EXIT_FAILURE);
 				}
 			}
 			else
@@ -346,6 +347,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 				#endif 
 				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Database Engine Found for " << db_name << ".";
 				std::strcpy(output, "[0,\"Unknown Database Type\"]");
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		else
@@ -355,6 +357,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			#endif
 			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Config Option Found: " << conf_option << ".";
 			std::strcpy(output, "[0,\"No Config Option Found\"]");
+			std::exit(EXIT_FAILURE);
 		}
 	}
 	catch (Poco::Exception& e)
