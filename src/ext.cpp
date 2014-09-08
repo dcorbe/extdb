@@ -530,7 +530,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC is Deprecated... Update SQF code for DB_PROCEDURE_V2";
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_PROCEDURE is Deprecated... Update SQF code for DB_PROCEDURE_V2";
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
@@ -559,7 +559,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC is Deprecated... Update SQF code for DB_RAW_V2";
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_RAW is Deprecated... Update SQF code for DB_RAW_V2";
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
@@ -588,7 +588,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC is Deprecated... Update SQF code for DB_RAW_NO_EXTRA_QUOTES_V2";
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_RAW_NO_EXTRA_QUOTES is Deprecated... Update SQF code for DB_RAW_NO_EXTRA_QUOTES_V2";
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
