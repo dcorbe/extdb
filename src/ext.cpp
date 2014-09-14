@@ -116,23 +116,25 @@ Ext::Ext(void) {
 	}
 	else
 	{
-		// Search for Randomize Config File -- Legacy Security Support For Arma2Servers
-			// TODO: WINDOWS ONLY ifdef endif
-		boost::regex expression("extdb-conf.*ini");
+		#ifdef _WIN32
+			// Search for Randomize Config File -- Legacy Security Support For Arma2Servers
+				// TODO: WINDOWS ONLY ifdef endif
+			boost::regex expression("extdb-conf.*ini");
 
-		for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
-		{
-			if (is_regular_file(it->path()))
+			for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
 			{
-				if(boost::regex_search(it->path().string(), expression))
+				if (is_regular_file(it->path()))
 				{
-					conf_found = true;
-					conf_randomized = true;
-					pConf = (new Poco::Util::IniFileConfiguration(it->path().string()));  // Load Randomized Conf
-					break;
+					if(boost::regex_search(it->path().string(), expression))
+					{
+						conf_found = true;
+						conf_randomized = true;
+						pConf = (new Poco::Util::IniFileConfiguration(it->path().string()));  // Load Randomized Conf
+						break;
+					}
 				}
 			}
-		}
+		#endif
 	}
 
 	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Version: " + version();
@@ -189,23 +191,24 @@ Ext::Ext(void) {
 		#endif
 		//BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Loading Rcon Settings";
 		
-		
-		if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
-		// Only Gonna Randomize Once, Keeps things Simple
-		{
-			std::string chars("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-							  "1234567890");
-			// Skipping Lowercase, this function only for arma2 + extensions only available on windows.
-			boost::random::random_device rng;
-			boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
-			
-			std::string randomized_filename = "extdb-conf-";
-			for(int i = 0; i < 8; ++i) {
-				randomized_filename += chars[index_dist(rng)];
+		#ifdef _WIN32
+			if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
+			// Only Gonna Randomize Once, Keeps things Simple
+			{
+				std::string chars("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+								  "1234567890");
+				// Skipping Lowercase, this function only for arma2 + extensions only available on windows.
+				boost::random::random_device rng;
+				boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
+				
+				std::string randomized_filename = "extdb-conf-";
+				for(int i = 0; i < 8; ++i) {
+					randomized_filename += chars[index_dist(rng)];
+				}
+				randomized_filename += ".ini";
+				boost::filesystem::rename("extdb-conf.ini", randomized_filename);
 			}
-			randomized_filename += ".ini";
-			boost::filesystem::rename("extdb-conf.ini", randomized_filename);
-		}
+		#endif
 	}
 }
 
@@ -641,7 +644,6 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 {
 	try
 	{
-		//BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Extension Output Size: " +  Poco::NumberFormatter::format(output_size);
 		#ifdef DEBUG_LOGGING
 			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << "Extension Input from Server: " +  std::string(function);
 		#endif
@@ -760,6 +762,15 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 								else if (tokens[1] == "LOCK")
 								{
 									extDB_lock = true;
+									std::strcpy(output, ("[1]"));
+								}
+								else if (tokens[1] == "OUTPUTSIZE")
+									std::string outputsize_str = Poco::NumberFormatter::format(output_size);
+									BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Extension Output Size: " + outputsize_str;
+									std::strcpy(output, outputsize_str);
+								else
+								{
+									std::strcpy(output, ("[0,\"Error Invalid Format\"]"));	
 								}
 								break;
 							case 3:
