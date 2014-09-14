@@ -451,11 +451,11 @@ void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &out
 	}
 	else // SEND MSG (Part)
 	{
-		std::string msg = it->second.substr(0, output_size-9);
+		std::string msg = it->second.substr(0, output_size-1);
 		std::strcpy(output, msg.c_str());
-		if (it->second.length() > (output_size-9))
+		if (it->second.length() > (output_size-1))
 		{
-			unordered_map_results[unique_id] = it->second.substr(output_size-9);
+			unordered_map_results[unique_id] = it->second.substr(output_size-1);
 		}
 		else
 		{
@@ -593,6 +593,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 	if (itr == unordered_map_protocol.end())
 	{
 		std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
+		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Unknown Protocol: " + protocol);
 	}
 	else
 	{
@@ -650,7 +651,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		const std::string input_str(function);
 		if (input_str.length() <= 2)
 		{
-			std::strcpy(output, ("[0,\"Error Invalid Message, (Message to short)\"]"));
+			std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
+			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Message: " + input_str);
 		}
 		else
 		{
@@ -669,6 +671,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					if (found==std::string::npos)  // Check Invalid Format
 					{
 						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
 					}
 					else
 					{
@@ -677,12 +680,15 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						// Data
 						std::string data = input_str.substr(found+1);
 						int unique_id = getUniqueID_mutexlock();
+
+						// Check for Protocol Name Exists...
+						// Do this so if someone manages to get server, the error message wont get stored in the result unordered map
 						{
 							boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
-							// Check for Protocol Name Exists
 							if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
 							{
 								std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
+								BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Unknown Protocol: " + protocol);
 							}
 							else
 							{
@@ -713,6 +719,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					if (found==std::string::npos)  // Check Invalid Format
 					{
 						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
 					}
 					else
 					{
@@ -732,6 +739,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					if (found==std::string::npos)  // Check Invalid Format
 					{
 						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
 					}
 					else
 					{
@@ -771,6 +779,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 								else
 								{
 									std::strcpy(output, ("[0,\"Error Invalid Format\"]"));	
+									BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
 								}
 								break;
 							case 3:
@@ -788,6 +797,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 							default:
 								// Invalid Format
 								std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+								BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
 						}
 					}
 					break;
@@ -795,6 +805,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 				default:
 				{
 					std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
+					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Message: " + input_str);
 				}
 			}
 		}
