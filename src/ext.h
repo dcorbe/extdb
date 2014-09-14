@@ -90,7 +90,6 @@ class Ext: public AbstractExt
 		boost::thread_group threads;
 
 		// Database Session Pool
-		//boost::shared_ptr<DBPool> db_pool;
 		boost::shared_ptr<DBPool> db_pool;
 		boost::mutex mutex_db_pool;
 

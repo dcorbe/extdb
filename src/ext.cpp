@@ -89,7 +89,7 @@ Ext::Ext(void) {
 	extDB_lock = false;
 
 	Poco::DateTime now;
-	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n%/%d/%H-%M-%S.log");
+	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n/%d/%H-%M-%S.log");
 	std::string log_relative_path = boost::filesystem::path("extDB/logs/" + log_filename).make_preferred().string();
 	
 	boost::log::add_common_attributes();
@@ -302,6 +302,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					#endif
 					BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Session Pool Failed";
 					std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
+					db_conn_info = DBConnectionInfo();
 					std::exit(EXIT_FAILURE);
 				}
 			}
@@ -334,6 +335,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					#endif
 					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Database Session Pool Failed";
 					std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
+					db_conn_info = DBConnectionInfo();
 					std::exit(EXIT_FAILURE);
 				}
 			}
@@ -344,6 +346,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 				#endif 
 				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Database Engine Found for " << db_name << ".";
 				std::strcpy(output, "[0,\"Unknown Database Type\"]");
+				db_conn_info = DBConnectionInfo();
 				std::exit(EXIT_FAILURE);
 			}
 		}
@@ -354,6 +357,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			#endif
 			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Config Option Found: " << conf_option << ".";
 			std::strcpy(output, "[0,\"No Config Option Found\"]");
+			db_conn_info = DBConnectionInfo();
 			std::exit(EXIT_FAILURE);
 		}
 	}
@@ -363,6 +367,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			std::cout << "extDB: Database Setup Failed: " << e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Setup Failed: " << e.displayText();
+		db_conn_info = DBConnectionInfo();
 		std::exit(EXIT_FAILURE);
 	}
 }
@@ -636,6 +641,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 {
 	try
 	{
+		//BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Extension Output Size: " +  Poco::NumberFormatter::format(output_size);
 		#ifdef DEBUG_LOGGING
 			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << "Extension Input from Server: " +  std::string(function);
 		#endif
@@ -741,7 +747,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						// Protocol
 
 						Poco::StringTokenizer tokens(input_str, ":");
-						std::size_t token_count = tokens.count(); // TODO CHECK !!!!!!!!
+						std::size_t token_count = tokens.count();
 						
 						switch (token_count)
 						{
