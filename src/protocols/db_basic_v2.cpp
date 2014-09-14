@@ -133,14 +133,14 @@ void DB_BASIC_V2::getOptionAll(Poco::Data::Session &db_session, std::string &tab
 
 	Poco::Data::RecordSet rs(sql);
 	
-	result = "[1, [";
+	result = "[1,[";
 	std::size_t cols = rs.columnCount();
 	if (cols >= 1)
 	{
 		bool more = rs.moveFirst();
 		while (more)
 		{
-			result += " [";
+			result += "[";
 			for (std::size_t col = 0; col < cols; ++col)
 			{
 				if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
@@ -163,7 +163,7 @@ void DB_BASIC_V2::getOptionAll(Poco::Data::Session &db_session, std::string &tab
 				}
 				if (col < (cols - 1))
 				{
-					result += ", ";
+					result += ",";
 				}
 			}
 			more = rs.moveNext();

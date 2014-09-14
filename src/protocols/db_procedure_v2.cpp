@@ -121,7 +121,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 						sanitize_check = false;
 						break;
 					}
-					sql_str_procedure += t_arg_inputs[i] + ", ";
+					sql_str_procedure += t_arg_inputs[i] + ",";
 				}
 				
 				if (sanitize_check)
@@ -132,8 +132,8 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					{
 						if (num_of_inputs > 0)
 						{
-							// Remove the trailing ", " if no outputs
-							sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 2));  
+							// Remove the trailing "," if no outputs
+							sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 1));  
 						}
 						sql_str_procedure += ")";
 					}
@@ -142,13 +142,13 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 						// Generate Output Values
 						unique_id = extension->getUniqueID_mutexlock(); // Using this to make sure no clashing of Output Values
 						for(int i = 0; i != num_of_outputs; ++i) {
-							const std::string temp_str = "@Output" + Poco::NumberFormatter::format(i) + "_" + Poco::NumberFormatter::format(unique_id) +  + "_" + t_arg[0] + ", ";
+							const std::string temp_str = "@Output" + Poco::NumberFormatter::format(i) + "_" + Poco::NumberFormatter::format(unique_id) +  + "_" + t_arg[0] + ",";
 							sql_str_procedure += temp_str;
 							sql_str_select += temp_str;
 						}
-						// Remove the trailing ", "
-						sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 2));  // Remove the trailing ", " if there is outputs
-						sql_str_select = sql_str_select.substr(0,(sql_str_select.length() - 2));
+						// Remove the trailing ","
+						sql_str_procedure = sql_str_procedure.substr(0,(sql_str_procedure.length() - 1));  // Remove the trailing ", " if there is outputs
+						sql_str_select = sql_str_select.substr(0,(sql_str_select.length() - 1));
 						sql_str_procedure += ")";
 					}
 
@@ -156,9 +156,9 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 					Poco::Data::Statement sql(db_session);
 
-					sql << sql_str_procedure, Poco::Data::now;  // TODO: See if can get any error message if unsuccessfull
+					sql << sql_str_procedure, Poco::Data::now;
 
-					result = "[1, [";
+					result = "[1,[";
 
 					if (num_of_outputs > 0)
 					{
@@ -177,7 +177,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 							bool more = rs.moveFirst();
 							while (more)
 							{
-								result += " [";
+								result += "[";
 								for (std::size_t col = 0; col < cols; ++col)
 								{
 									if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
@@ -190,7 +190,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 									}
 									if (col < (cols - 1))
 									{
-										result += ", ";
+										result += ",";
 									}
 								}
 
