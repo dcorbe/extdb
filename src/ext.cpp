@@ -1,5 +1,6 @@
 /*
 Copyright (C) 2014 Declan Ireland <http://github.com/torndeco/extDB>
+Copyright (C) 2014 MaHuJa https://github.com/MaHuJa
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
