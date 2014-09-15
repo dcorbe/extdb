@@ -150,9 +150,9 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V2: No Template File Found"<< std::endl;
+			std::cout << "extDB: DB_CUSTOM_V2: Template File Not Found" << db_template_file << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V2: No Template File Found";
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V2: No Template File Found:" << db_template_file;
 	}
 	return status;
 }
