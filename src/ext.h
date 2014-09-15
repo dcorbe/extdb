@@ -68,6 +68,8 @@ class Ext: public AbstractExt
 
 	private:
 		bool extDB_lock;
+		bool extDB_error_db_kill_server;
+		
 		int max_threads;
 
 		std::string steam_api_key;
@@ -90,7 +92,6 @@ class Ext: public AbstractExt
 		boost::thread_group threads;
 
 		// Database Session Pool
-		//boost::shared_ptr<DBPool> db_pool;
 		boost::shared_ptr<DBPool> db_pool;
 		boost::mutex mutex_db_pool;
 

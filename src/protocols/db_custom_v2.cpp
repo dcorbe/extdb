@@ -76,14 +76,13 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 	
 	std::string db_custom_dir = boost::filesystem::path("extDB/db_custom").make_preferred().string();
 	boost::filesystem::create_directories(db_custom_dir); // Creating Directory if missing
-	std::string db_template_file = boost::filesystem::path(db_custom_dir + init_str + ".ini").make_preferred().string();
+	std::string db_template_file = boost::filesystem::path(db_custom_dir + "/" + init_str + ".ini").make_preferred().string();
 
 	
 	if (boost::filesystem::exists(db_template_file))
 	{
 		template_ini = (new Poco::Util::IniFileConfiguration(db_template_file));
 		
-		//std::vector < std::string > calls = template_ini->createView("");
 		std::vector < std::string > custom_calls;
 		template_ini->keys(custom_calls);
 		
@@ -150,6 +149,10 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 	else 
 	{
 		status = false;
+		#ifdef TESTING
+			std::cout << "extDB: DB_CUSTOM_V2: Template File Not Found" << db_template_file << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V2: No Template File Found:" << db_template_file;
 	}
 	return status;
 }
@@ -179,14 +182,14 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		sql.execute();
 		Poco::Data::RecordSet rs(sql);
 
-		result = "[1, [";
+		result = "[1,[";
 		std::size_t cols = rs.columnCount();
 		if (cols >= 1)
 		{
 			bool more = rs.moveFirst();
 			while (more)
 			{
-				result += " [";
+				result += "[";
 				for (std::size_t col = 0; col < cols; ++col)
 				{
 					if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
@@ -209,7 +212,7 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 					}
 					if (col < (cols - 1))
 					{
-						result += ", ";
+						result += ",";
 					}
 				}
 				more = rs.moveNext();

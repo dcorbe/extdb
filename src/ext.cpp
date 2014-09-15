@@ -61,14 +61,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "uniqueid.h"
 #include "protocols/abstract_protocol.h"
-#include "protocols/db_basic.h"
 #include "protocols/db_basic_v2.h"
 #include "protocols/db_custom_v2.h"
-#include "protocols/db_procedure.h"
 #include "protocols/db_procedure_v2.h"
-#include "protocols/db_raw.h"
 #include "protocols/db_raw_v2.h"
-#include "protocols/db_raw_no_extra_quotes.h"
 #include "protocols/db_raw_no_extra_quotes_v2.h"
 #include "protocols/log.h"
 #include "protocols/misc.h"
@@ -91,9 +87,10 @@ void DBPool::customizeSession (Poco::Data::Session& session)
 Ext::Ext(void) {
 	mgr.reset (new IdManager);
 	extDB_lock = false;
+	extDB_error_db_kill_server = true;
 
 	Poco::DateTime now;
-	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n%/%d/%H-%M-%S.log");
+	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n/%d/%H-%M-%S.log");
 	std::string log_relative_path = boost::filesystem::path("extDB/logs/" + log_filename).make_preferred().string();
 	
 	boost::log::add_common_attributes();
@@ -120,23 +117,25 @@ Ext::Ext(void) {
 	}
 	else
 	{
-		// Search for Randomize Config File -- Legacy Security Support For Arma2Servers
-			// TODO: WINDOWS ONLY ifdef endif
-		boost::regex expression("extdb-conf.*ini");
+		#ifdef _WIN32
+			// Search for Randomize Config File -- Legacy Security Support For Arma2Servers
+				// TODO: WINDOWS ONLY ifdef endif
+			boost::regex expression("extdb-conf.*ini");
 
-		for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
-		{
-			if (is_regular_file(it->path()))
+			for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
 			{
-				if(boost::regex_search(it->path().string(), expression))
+				if (is_regular_file(it->path()))
 				{
-					conf_found = true;
-					conf_randomized = true;
-					pConf = (new Poco::Util::IniFileConfiguration(it->path().string()));  // Load Randomized Conf
-					break;
+					if(boost::regex_search(it->path().string(), expression))
+					{
+						conf_found = true;
+						conf_randomized = true;
+						pConf = (new Poco::Util::IniFileConfiguration(it->path().string()));  // Load Randomized Conf
+						break;
+					}
 				}
 			}
-		}
+		#endif
 	}
 
 	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Version: " + version();
@@ -158,6 +157,8 @@ Ext::Ext(void) {
 			std::cout << "extDB: Found extdb-conf.ini" << std::endl;
 		#endif
 		BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Found extdb-conf.ini";
+
+		extDB_error_db_kill_server = pConf->getBool("Main.Error Database Kill Server", true);
 
 		steam_api_key = pConf->getString("Main.Steam_WEB_API_KEY", "");
 
@@ -193,23 +194,24 @@ Ext::Ext(void) {
 		#endif
 		//BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Loading Rcon Settings";
 		
-		
-		if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
-		// Only Gonna Randomize Once, Keeps things Simple
-		{
-			std::string chars("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-							  "1234567890");
-			// Skipping Lowercase, this function only for arma2 + extensions only available on windows.
-			boost::random::random_device rng;
-			boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
-			
-			std::string randomized_filename = "extdb-conf-";
-			for(int i = 0; i < 8; ++i) {
-				randomized_filename += chars[index_dist(rng)];
+		#ifdef _WIN32
+			if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
+			// Only Gonna Randomize Once, Keeps things Simple
+			{
+				std::string chars("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+								  "1234567890");
+				// Skipping Lowercase, this function only for arma2 + extensions only available on windows.
+				boost::random::random_device rng;
+				boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
+				
+				std::string randomized_filename = "extdb-conf-";
+				for(int i = 0; i < 8; ++i) {
+					randomized_filename += chars[index_dist(rng)];
+				}
+				randomized_filename += ".ini";
+				boost::filesystem::rename("extdb-conf.ini", randomized_filename);
 			}
-			randomized_filename += ".ini";
-			boost::filesystem::rename("extdb-conf.ini", randomized_filename);
-		}
+		#endif
 	}
 }
 
@@ -233,128 +235,158 @@ void Ext::stop()
 
 void Ext::connectDatabase(char *output, const int &output_size, const std::string &conf_option)
 {
-	// TODO ADD Code to check for database already initialized !!!!!!!!!!!
 	try
 	{
-		if (pConf->hasOption(conf_option + ".Type"))
+		// Check if already connectted to Database.
+		if (!db_conn_info.db_type.empty())
 		{
-			// Database
-			db_conn_info.db_type = pConf->getString(conf_option + ".Type");
-			std::string db_name = pConf->getString(conf_option + ".Name");
-
-			db_conn_info.min_sessions = pConf->getInt(conf_option + ".minSessions", 1);
-			if (db_conn_info.min_sessions <= 0)
-			{
-				db_conn_info.min_sessions = 1;
-			}
-			db_conn_info.min_sessions = pConf->getInt(conf_option + ".maxSessions", 1);
-			if (db_conn_info.max_sessions <= 0)
-			{
-				db_conn_info.max_sessions = max_threads;
-			}
-
-			db_conn_info.idle_time = pConf->getInt(conf_option + ".idleTime");
-
 			#ifdef TESTING
-				std::cout << "extDB: Database Type: " << db_conn_info.db_type << std::endl;
+				std::cout << "extDB: Already Connected to Database: " << db_conn_info.db_type << "." << std::endl;
 			#endif
-			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Type: " << db_conn_info.db_type;
-
-			if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
+			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Already Connected to a Database: " << db_conn_info.db_type << ".";
+			std::strcpy(output, "[0,\"Already Connected to Database\"]");
+		}
+		else
+		{
+			if (pConf->hasOption(conf_option + ".Type"))
 			{
-				std::string username = pConf->getString(conf_option + ".Username");
-				std::string password = pConf->getString(conf_option + ".Password");
+				// Database
+				db_conn_info.db_type = pConf->getString(conf_option + ".Type");
+				std::string db_name = pConf->getString(conf_option + ".Name");
 
-				std::string ip = pConf->getString(conf_option + ".IP");
-				std::string port = pConf->getString(conf_option + ".Port");
-
-				db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
-
-				if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
+				db_conn_info.min_sessions = pConf->getInt(conf_option + ".minSessions", 1);
+				if (db_conn_info.min_sessions <= 0)
 				{
-					db_conn_info.db_type = "MySQL";
-					Poco::Data::MySQL::Connector::registerConnector();
-					std::string compress = pConf->getString(conf_option + ".Compress", "false");
-					if (boost::iequals(compress, "true") == 1)
+					db_conn_info.min_sessions = 1;
+				}
+				db_conn_info.min_sessions = pConf->getInt(conf_option + ".maxSessions", 1);
+				if (db_conn_info.max_sessions <= 0)
+				{
+					db_conn_info.max_sessions = max_threads;
+				}
+
+				db_conn_info.idle_time = pConf->getInt(conf_option + ".idleTime");
+
+				#ifdef TESTING
+					std::cout << "extDB: Database Type: " << db_conn_info.db_type << std::endl;
+				#endif
+				BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Type: " << db_conn_info.db_type;
+
+				if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
+				{
+					std::string username = pConf->getString(conf_option + ".Username");
+					std::string password = pConf->getString(conf_option + ".Password");
+
+					std::string ip = pConf->getString(conf_option + ".IP");
+					std::string port = pConf->getString(conf_option + ".Port");
+
+					db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
+
+					if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
 					{
-						db_conn_info.connection_str = db_conn_info.connection_str + ";compress=true";
+						db_conn_info.db_type = "MySQL";
+						Poco::Data::MySQL::Connector::registerConnector();
+						std::string compress = pConf->getString(conf_option + ".Compress", "false");
+						if (boost::iequals(compress, "true") == 1)
+						{
+							db_conn_info.connection_str = db_conn_info.connection_str + ";compress=true";
+						}
+					}
+					else
+					{
+						db_conn_info.db_type = "ODBC";
+						Poco::Data::ODBC::Connector::registerConnector();
+					}
+
+					db_pool.reset(new DBPool(db_conn_info.db_type, 
+																db_conn_info.connection_str, 
+																db_conn_info.min_sessions, 
+																db_conn_info.max_sessions, 
+																db_conn_info.idle_time));
+					if (db_pool->get().isConnected())
+					{
+						#ifdef TESTING
+							std::cout << "extDB: Database Session Pool Started" << std::endl;
+						#endif
+						BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
+						std::strcpy(output, "[1]");
+					}
+					else
+					{
+						#ifdef TESTING
+							std::cout << "extDB: Database Session Pool Failed" << std::endl;
+						#endif
+						BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Session Pool Failed";
+						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
+						db_conn_info = DBConnectionInfo();
+						if (extDB_error_db_kill_server)
+						{
+							std::exit(EXIT_FAILURE);
+						}
+					}
+				}
+				else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
+				{
+					db_conn_info.db_type = "SQLite";
+					Poco::Data::SQLite::Connector::registerConnector();
+
+					std::string sqlite_file = boost::filesystem::path("extDB/sqlite/" + db_name).make_preferred().string();
+					db_conn_info.connection_str = sqlite_file;
+
+					db_pool.reset(new DBPool(db_conn_info.db_type, 
+																db_conn_info.connection_str, 
+																db_conn_info.min_sessions, 
+																db_conn_info.max_sessions, 
+																db_conn_info.idle_time));
+					if (db_pool->get().isConnected())
+					{
+						#ifdef TESTING
+							std::cout << "extDB: Database Session Pool Started" << std::endl;
+						#endif
+						BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
+						std::strcpy(output, "[1]");
+					}
+					else
+					{
+						#ifdef TESTING
+							std::cout << "extDB: Database Session Pool Failed" << std::endl;
+						#endif
+						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Database Session Pool Failed";
+						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
+						db_conn_info = DBConnectionInfo();
+						if (extDB_error_db_kill_server)
+						{
+							std::exit(EXIT_FAILURE);
+						}
 					}
 				}
 				else
 				{
-					db_conn_info.db_type = "ODBC";
-					Poco::Data::ODBC::Connector::registerConnector();
-				}
-
-				db_pool.reset(new DBPool(db_conn_info.db_type, 
-															db_conn_info.connection_str, 
-															db_conn_info.min_sessions, 
-															db_conn_info.max_sessions, 
-															db_conn_info.idle_time));
-				if (db_pool->get().isConnected())
-				{
 					#ifdef TESTING
-						std::cout << "extDB: Database Session Pool Started" << std::endl;
-					#endif
-					BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
-					std::strcpy(output, "[1]");
-				}
-				else
-				{
-					#ifdef TESTING
-						std::cout << "extDB: Database Session Pool Failed" << std::endl;
-					#endif
-					BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Session Pool Failed";
-					std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
-				}
-			}
-			else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
-			{
-				db_conn_info.db_type = "SQLite";
-				Poco::Data::SQLite::Connector::registerConnector();
-
-				std::string sqlite_file = boost::filesystem::path("extDB/sqlite/" + db_name).make_preferred().string();
-				db_conn_info.connection_str = sqlite_file;
-
-				db_pool.reset(new DBPool(db_conn_info.db_type, 
-															db_conn_info.connection_str, 
-															db_conn_info.min_sessions, 
-															db_conn_info.max_sessions, 
-															db_conn_info.idle_time));
-
-				if (db_pool->get().isConnected())
-				{
-					#ifdef TESTING
-						std::cout << "extDB: Database Session Pool Started" << std::endl;
-					#endif
-					BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
-					std::strcpy(output, "[1]");
-				}
-				else
-				{
-					#ifdef TESTING
-						std::cout << "extDB: Database Session Pool Failed" << std::endl;
-					#endif
-					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Database Session Pool Failed";
-					std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
+						std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
+					#endif 
+					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Database Engine Found for " << db_name << ".";
+					std::strcpy(output, "[0,\"Unknown Database Type\"]");
+					db_conn_info = DBConnectionInfo();
+					if (extDB_error_db_kill_server)
+					{
+						std::exit(EXIT_FAILURE);
+					}
 				}
 			}
 			else
 			{
 				#ifdef TESTING
-					std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
-				#endif 
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Database Engine Found for " << db_name << ".";
-				std::strcpy(output, "[0,\"Unknown Database Type\"]");
+					std::cout << "extDB: WARNING No Config Option Found: " << conf_option << "." << std::endl;
+				#endif
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Config Option Found: " << conf_option << ".";
+				std::strcpy(output, "[0,\"No Config Option Found\"]");
+				db_conn_info = DBConnectionInfo();
+				if (extDB_error_db_kill_server)
+				{
+					std::exit(EXIT_FAILURE);
+				}
 			}
-		}
-		else
-		{
-			#ifdef TESTING
-				std::cout << "extDB: WARNING No Config Option Found: " << conf_option << "." << std::endl;
-			#endif
-			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Config Option Found: " << conf_option << ".";
-			std::strcpy(output, "[0,\"No Config Option Found\"]");
 		}
 	}
 	catch (Poco::Exception& e)
@@ -363,14 +395,19 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			std::cout << "extDB: Database Setup Failed: " << e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Setup Failed: " << e.displayText();
-		std::exit(EXIT_FAILURE);
+		std::strcpy(output, "[0,\"Database Exception Error\"]");
+		db_conn_info = DBConnectionInfo();
+		if (extDB_error_db_kill_server)
+		{
+			std::exit(EXIT_FAILURE);
+		}
 	}
 }
 
 
 std::string Ext::version() const
 {
-	return "17";
+	return "18";
 }
 
 
@@ -443,11 +480,11 @@ void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &out
 	}
 	else // SEND MSG (Part)
 	{
-		std::string msg = it->second.substr(0, output_size-9);
+		std::string msg = it->second.substr(0, output_size-1);
 		std::strcpy(output, msg.c_str());
-		if (it->second.length() > (output_size-9))
+		if (it->second.length() > (output_size-1))
 		{
-			unordered_map_results[unique_id] = it->second.substr(output_size-9);
+			unordered_map_results[unique_id] = it->second.substr(output_size-1);
 		}
 		else
 		{
@@ -486,9 +523,9 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 				std::strcpy(output, "[1]");
 			}
 		}
-		else if (boost::iequals(protocol, std::string("DB_BASIC")) == 1)
+		else if (boost::iequals(protocol, std::string("LOG")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_BASIC());
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new LOG());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -498,99 +535,11 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			else
 			{
 				std::strcpy(output, "[1]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC is Deprecated... Update SQF code for DB_BASIC_V2";
 			}
 		}
 		else if (boost::iequals(protocol, std::string("DB_BASIC_V2")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_BASIC_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_PROCEDURE")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC is Deprecated... Update SQF code for DB_PROCEDURE_V2";
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_RAW")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC is Deprecated... Update SQF code for DB_RAW_V2";
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_NO_EXTRA_QUOTES());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: DB_BASIC is Deprecated... Update SQF code for DB_RAW_NO_EXTRA_QUOTES_V2";
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_NO_EXTRA_QUOTES_V2());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -616,9 +565,37 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 				std::strcpy(output, "[1]");
 			}
 		}
-		else if (boost::iequals(protocol, std::string("LOG")) == 1)
+		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new LOG());
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
+		}
+		else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V2());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
+		}
+		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_NO_EXTRA_QUOTES_V2());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -645,6 +622,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 	if (itr == unordered_map_protocol.end())
 	{
 		std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
+		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Unknown Protocol: " + protocol);
 	}
 	else
 	{
@@ -702,7 +680,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		const std::string input_str(function);
 		if (input_str.length() <= 2)
 		{
-			std::strcpy(output, ("[0,\"Error Invalid Message, (Message to short)\"]"));
+			std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
+			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Message: " + input_str);
 		}
 		else
 		{
@@ -721,6 +700,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					if (found==std::string::npos)  // Check Invalid Format
 					{
 						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
 					}
 					else
 					{
@@ -729,12 +709,15 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						// Data
 						std::string data = input_str.substr(found+1);
 						int unique_id = getUniqueID_mutexlock();
+
+						// Check for Protocol Name Exists...
+						// Do this so if someone manages to get server, the error message wont get stored in the result unordered map
 						{
 							boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
-							// Check for Protocol Name Exists
 							if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
 							{
 								std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
+								BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Unknown Protocol: " + protocol);
 							}
 							else
 							{
@@ -765,6 +748,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					if (found==std::string::npos)  // Check Invalid Format
 					{
 						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
 					}
 					else
 					{
@@ -784,6 +768,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					if (found==std::string::npos)  // Check Invalid Format
 					{
 						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
 					}
 					else
 					{
@@ -801,7 +786,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						// Protocol
 
 						Poco::StringTokenizer tokens(input_str, ":");
-						std::size_t token_count = tokens.count(); // TODO CHECK !!!!!!!!
+						std::size_t token_count = tokens.count();
 						
 						switch (token_count)
 						{
@@ -814,6 +799,18 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 								else if (tokens[1] == "LOCK")
 								{
 									extDB_lock = true;
+									std::strcpy(output, ("[1]"));
+								}
+								else if (tokens[1] == "OUTPUTSIZE")
+								{
+									std::string outputsize_str(Poco::NumberFormatter::format(output_size));
+									BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Extension Output Size: " + outputsize_str;
+									std::strcpy(output, outputsize_str.c_str());
+								}
+								else
+								{
+									std::strcpy(output, ("[0,\"Error Invalid Format\"]"));	
+									BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
 								}
 								break;
 							case 3:
@@ -831,6 +828,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 							default:
 								// Invalid Format
 								std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+								BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
 						}
 					}
 					break;
@@ -838,6 +836,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 				default:
 				{
 					std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
+					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Message: " + input_str);
 				}
 			}
 		}

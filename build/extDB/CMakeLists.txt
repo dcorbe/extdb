@@ -33,14 +33,10 @@ SET(SOURCES
 	../../src/uniqueid.cpp
 	../../src/sanitize.cpp
 	../../src/protocols/abstract_protocol.cpp
-	../../src/protocols/db_procedure.cpp
-	../../src/protocols/db_procedure_v2.cpp
-	../../src/protocols/db_basic.cpp
 	../../src/protocols/db_basic_v2.cpp
 	../../src/protocols/db_custom_v2.cpp
-	../../src/protocols/db_raw.cpp
 	../../src/protocols/db_raw_v2.cpp
-	../../src/protocols/db_raw_no_extra_quotes.cpp
+	../../src/protocols/db_procedure_v2.cpp
 	../../src/protocols/db_raw_no_extra_quotes_v2.cpp
 	../../src/protocols/misc.cpp
 	../../src/protocols/log.cpp
@@ -175,3 +171,7 @@ elseif (CMAKE_SIZEOF_VOID_P EQUAL 4) #32bit
 else()
 	message(STATUS "CMake wasn't able to identify if you are on 32-bit or 64-bit...")
 endif()
+
+
+mark_as_advanced(CMAKE_INSTALL_PREFIX)
+mark_as_advanced(CMAKE_CONFIGURATION_TYPES)
