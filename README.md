@@ -19,11 +19,11 @@ http://www.altisliferpg.com
 
 #### Protocols
 
- - DB_CUSTOM (Ability to define sql statements in a .ini file)
- - DB_BASIC
- - DB_PROCEDURE (limited support, no outputs)
- - DB_RAW (by raw i mean raw sql commands, no sanitizing input or output checks at all)
- - DB_RAW_NO_EXTRA_QUOTES
+ - DB_CUSTOM_V2 (Ability to define sql statements in a .ini file)
+ - DB_BASIC_V2
+ - DB_PROCEDURE_V2 (limited support, no outputs)
+ - DB_RAW_V2 (by raw i mean raw sql commands, no sanitizing input or output checks at all)
+ - DB_RAW_NO_EXTRA_QUOTES_V2
  - MISC (has beguid crc32 md4 md5 time + time offset)
  - MISC_LOG (ability to add info to extDB logfile)
 
@@ -41,18 +41,6 @@ extDB doesn't work well with large datatypes in Database...
 #### Using Fred's Malloc
 ExtDB is incompatible with https://github.com/fred41/tbbmalloc_arma.  
    Workaround rename Fred's malloc & change arma startup to the new filename.  
-
-#### Requirements for Windows
-
- - Windows XP or greater
- - Windows Server 2003 or greater
-
-#### Install from Source - Windows
-https://github.com/Torndeco/extdb/wiki/Install
-
-#### Install from Source - Linux
-https://github.com/Torndeco/extdb/wiki/Install-Linux---Chroot-Guide-%28WIP%29
-
 
 #### Thanks to
 
