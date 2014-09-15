@@ -783,9 +783,11 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 									std::strcpy(output, ("[1]"));
 								}
 								else if (tokens[1] == "OUTPUTSIZE")
-									std::string outputsize_str = Poco::NumberFormatter::format(output_size);
+								{
+									std::string outputsize_str(Poco::NumberFormatter::format(output_size));
 									BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Extension Output Size: " + outputsize_str;
-									std::strcpy(output, outputsize_str);
+									std::strcpy(output, outputsize_str.c_str());
+								}
 								else
 								{
 									std::strcpy(output, ("[0,\"Error Invalid Format\"]"));	
