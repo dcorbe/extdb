@@ -68,6 +68,8 @@ class Ext: public AbstractExt
 
 	private:
 		bool extDB_lock;
+		bool extDB_error_db_kill_server;
+		
 		int max_threads;
 
 		std::string steam_api_key;
