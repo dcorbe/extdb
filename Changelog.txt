@@ -4,8 +4,8 @@
 
 	FIXED: Fixed (+ Tested) Template File Check for DB_CUSTOM_V2
 	FIXED: Killing Server if Database Config Section Missing. (If killing server == enabled see above)
-	
 	FIXED: Removed some arma2 code from compiling for linux builds. (Randomized Config Option)
+	FIXED: Test App Input Limit: by MaHuJa https://github.com/MaHuJa
 	
 	MISC: Removed Whitespace Padding from Returned Results
 	MISC: Various small Logic Fixes to code + more error outputs i.e like if you try to 9:ADD:Database Twice  etc...

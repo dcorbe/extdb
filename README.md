@@ -63,6 +63,7 @@ https://github.com/Torndeco/extdb/wiki/Install-Linux---Chroot-Guide-%28WIP%29
  - Fank https://gist.github.com/Fank/11127158 for his code to convert SteamID to BEGUID.
  - Tonic & Atlis RPG Admins for beening literally beening bleeding edge testers. And good sports when i messed up, wasn't out a week and multiple servers were testing out extDB.
  - firefly2442 https://github.com/firefly2442 for the CMake Build System & wiki updates
+ - MaHuJa https://github.com/MaHuJa for fixing Test Application Input, no longer hardcoded input limit
 
 
 ##### Disclaimer
