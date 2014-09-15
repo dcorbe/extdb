@@ -232,112 +232,132 @@ void Ext::stop()
 
 void Ext::connectDatabase(char *output, const int &output_size, const std::string &conf_option)
 {
-	// TODO ADD Code to check for database already initialized !!!!!!!!!!!
 	try
 	{
-		if (pConf->hasOption(conf_option + ".Type"))
+		// Check if already connectted to Database.
+		if (!db_conn_info.db_type.empty())
 		{
-			// Database
-			db_conn_info.db_type = pConf->getString(conf_option + ".Type");
-			std::string db_name = pConf->getString(conf_option + ".Name");
-
-			db_conn_info.min_sessions = pConf->getInt(conf_option + ".minSessions", 1);
-			if (db_conn_info.min_sessions <= 0)
-			{
-				db_conn_info.min_sessions = 1;
-			}
-			db_conn_info.min_sessions = pConf->getInt(conf_option + ".maxSessions", 1);
-			if (db_conn_info.max_sessions <= 0)
-			{
-				db_conn_info.max_sessions = max_threads;
-			}
-
-			db_conn_info.idle_time = pConf->getInt(conf_option + ".idleTime");
-
 			#ifdef TESTING
-				std::cout << "extDB: Database Type: " << db_conn_info.db_type << std::endl;
+				std::cout << "extDB: Already Connected to Database: " << db_conn_info.db_type << "." << std::endl;
 			#endif
-			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Type: " << db_conn_info.db_type;
-
-			if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
+			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Already Connected to a Database: " << db_conn_info.db_type << ".";
+			std::strcpy(output, "[0,\"Already Connected to Database\"]");
+		}
+		else
+		{
+			if (pConf->hasOption(conf_option + ".Type"))
 			{
-				std::string username = pConf->getString(conf_option + ".Username");
-				std::string password = pConf->getString(conf_option + ".Password");
+				// Database
+				db_conn_info.db_type = pConf->getString(conf_option + ".Type");
+				std::string db_name = pConf->getString(conf_option + ".Name");
 
-				std::string ip = pConf->getString(conf_option + ".IP");
-				std::string port = pConf->getString(conf_option + ".Port");
-
-				db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
-
-				if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
+				db_conn_info.min_sessions = pConf->getInt(conf_option + ".minSessions", 1);
+				if (db_conn_info.min_sessions <= 0)
 				{
-					db_conn_info.db_type = "MySQL";
-					Poco::Data::MySQL::Connector::registerConnector();
-					std::string compress = pConf->getString(conf_option + ".Compress", "false");
-					if (boost::iequals(compress, "true") == 1)
+					db_conn_info.min_sessions = 1;
+				}
+				db_conn_info.min_sessions = pConf->getInt(conf_option + ".maxSessions", 1);
+				if (db_conn_info.max_sessions <= 0)
+				{
+					db_conn_info.max_sessions = max_threads;
+				}
+
+				db_conn_info.idle_time = pConf->getInt(conf_option + ".idleTime");
+
+				#ifdef TESTING
+					std::cout << "extDB: Database Type: " << db_conn_info.db_type << std::endl;
+				#endif
+				BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Type: " << db_conn_info.db_type;
+
+				if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
+				{
+					std::string username = pConf->getString(conf_option + ".Username");
+					std::string password = pConf->getString(conf_option + ".Password");
+
+					std::string ip = pConf->getString(conf_option + ".IP");
+					std::string port = pConf->getString(conf_option + ".Port");
+
+					db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
+
+					if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
 					{
-						db_conn_info.connection_str = db_conn_info.connection_str + ";compress=true";
+						db_conn_info.db_type = "MySQL";
+						Poco::Data::MySQL::Connector::registerConnector();
+						std::string compress = pConf->getString(conf_option + ".Compress", "false");
+						if (boost::iequals(compress, "true") == 1)
+						{
+							db_conn_info.connection_str = db_conn_info.connection_str + ";compress=true";
+						}
+					}
+					else
+					{
+						db_conn_info.db_type = "ODBC";
+						Poco::Data::ODBC::Connector::registerConnector();
+					}
+
+					db_pool.reset(new DBPool(db_conn_info.db_type, 
+																db_conn_info.connection_str, 
+																db_conn_info.min_sessions, 
+																db_conn_info.max_sessions, 
+																db_conn_info.idle_time));
+					if (db_pool->get().isConnected())
+					{
+						#ifdef TESTING
+							std::cout << "extDB: Database Session Pool Started" << std::endl;
+						#endif
+						BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
+						std::strcpy(output, "[1]");
+					}
+					else
+					{
+						#ifdef TESTING
+							std::cout << "extDB: Database Session Pool Failed" << std::endl;
+						#endif
+						BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Session Pool Failed";
+						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
+						db_conn_info = DBConnectionInfo();
+						std::exit(EXIT_FAILURE);
+					}
+				}
+				else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
+				{
+					db_conn_info.db_type = "SQLite";
+					Poco::Data::SQLite::Connector::registerConnector();
+
+					std::string sqlite_file = boost::filesystem::path("extDB/sqlite/" + db_name).make_preferred().string();
+					db_conn_info.connection_str = sqlite_file;
+
+					db_pool.reset(new DBPool(db_conn_info.db_type, 
+																db_conn_info.connection_str, 
+																db_conn_info.min_sessions, 
+																db_conn_info.max_sessions, 
+																db_conn_info.idle_time));
+					if (db_pool->get().isConnected())
+					{
+						#ifdef TESTING
+							std::cout << "extDB: Database Session Pool Started" << std::endl;
+						#endif
+						BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
+						std::strcpy(output, "[1]");
+					}
+					else
+					{
+						#ifdef TESTING
+							std::cout << "extDB: Database Session Pool Failed" << std::endl;
+						#endif
+						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Database Session Pool Failed";
+						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
+						db_conn_info = DBConnectionInfo();
+						std::exit(EXIT_FAILURE);
 					}
 				}
 				else
 				{
-					db_conn_info.db_type = "ODBC";
-					Poco::Data::ODBC::Connector::registerConnector();
-				}
-
-				db_pool.reset(new DBPool(db_conn_info.db_type, 
-															db_conn_info.connection_str, 
-															db_conn_info.min_sessions, 
-															db_conn_info.max_sessions, 
-															db_conn_info.idle_time));
-				if (db_pool->get().isConnected())
-				{
 					#ifdef TESTING
-						std::cout << "extDB: Database Session Pool Started" << std::endl;
-					#endif
-					BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
-					std::strcpy(output, "[1]");
-				}
-				else
-				{
-					#ifdef TESTING
-						std::cout << "extDB: Database Session Pool Failed" << std::endl;
-					#endif
-					BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Session Pool Failed";
-					std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
-					db_conn_info = DBConnectionInfo();
-					std::exit(EXIT_FAILURE);
-				}
-			}
-			else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
-			{
-				db_conn_info.db_type = "SQLite";
-				Poco::Data::SQLite::Connector::registerConnector();
-
-				std::string sqlite_file = boost::filesystem::path("extDB/sqlite/" + db_name).make_preferred().string();
-				db_conn_info.connection_str = sqlite_file;
-
-				db_pool.reset(new DBPool(db_conn_info.db_type, 
-															db_conn_info.connection_str, 
-															db_conn_info.min_sessions, 
-															db_conn_info.max_sessions, 
-															db_conn_info.idle_time));
-
-				if (db_pool->get().isConnected())
-				{
-					#ifdef TESTING
-						std::cout << "extDB: Database Session Pool Started" << std::endl;
-					#endif
-					BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
-					std::strcpy(output, "[1]");
-				}
-				else
-				{
-					#ifdef TESTING
-						std::cout << "extDB: Database Session Pool Failed" << std::endl;
-					#endif
-					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Database Session Pool Failed";
-					std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
+						std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
+					#endif 
+					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Database Engine Found for " << db_name << ".";
+					std::strcpy(output, "[0,\"Unknown Database Type\"]");
 					db_conn_info = DBConnectionInfo();
 					std::exit(EXIT_FAILURE);
 				}
@@ -345,23 +365,13 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			else
 			{
 				#ifdef TESTING
-					std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
-				#endif 
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Database Engine Found for " << db_name << ".";
-				std::strcpy(output, "[0,\"Unknown Database Type\"]");
+					std::cout << "extDB: WARNING No Config Option Found: " << conf_option << "." << std::endl;
+				#endif
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Config Option Found: " << conf_option << ".";
+				std::strcpy(output, "[0,\"No Config Option Found\"]");
 				db_conn_info = DBConnectionInfo();
 				std::exit(EXIT_FAILURE);
 			}
-		}
-		else
-		{
-			#ifdef TESTING
-				std::cout << "extDB: WARNING No Config Option Found: " << conf_option << "." << std::endl;
-			#endif
-			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Config Option Found: " << conf_option << ".";
-			std::strcpy(output, "[0,\"No Config Option Found\"]");
-			db_conn_info = DBConnectionInfo();
-			std::exit(EXIT_FAILURE);
 		}
 	}
 	catch (Poco::Exception& e)
@@ -378,7 +388,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-	return "17";
+	return "18";
 }
 
 
