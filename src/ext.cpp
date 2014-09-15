@@ -856,22 +856,24 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 int main(int nNumberofArgs, char* pszArgs[])
 {
 	std::cout << std::endl << "Welcome to extDB Test Application : " << std::endl;
-	std::cout << "    This application has 4096 char limited input." << std::endl;
-	std::cout << "         Extension doesn't have this problem" << std::endl;
+	std::cout << std::endl << "OutputSize is set to 80 for Test Application, to be readable " << std::endl;
+	std::cout << "OutputSize for Arma3 is more like 10k in size " << std::endl;
 	std::cout << " To exit type 'quit'" << std::endl << std::endl;
+
+	char result[80];
+	std::string input_str;
+
 	Ext *extension;
 	extension = (new Ext());
-	char result[4096];
 	for (;;) {
-		char input_str[4096];
-		std::cin.getline(input_str, sizeof(input_str));
-		if (std::string(input_str) == "quit")
+		std::getline(std::cin, input_str);
+		if (input_str == "quit")
 		{
 		    break;
 		}
 		else
 		{
-			extension->callExtenion(result, 80, input_str);
+			extension->callExtenion(result, 80, input_str.c_str());
 			std::cout << "extDB: " << result << std::endl;
 		}
 	}
