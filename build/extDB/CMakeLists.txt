@@ -171,3 +171,7 @@ elseif (CMAKE_SIZEOF_VOID_P EQUAL 4) #32bit
 else()
 	message(STATUS "CMake wasn't able to identify if you are on 32-bit or 64-bit...")
 endif()
+
+
+mark_as_advanced(CMAKE_INSTALL_PREFIX)
+mark_as_advanced(CMAKE_CONFIGURATION_TYPES)
