@@ -1,4 +1,6 @@
 18
+	MAJOR: Removed V1 Protocols, been over a month.
+
 	ADDED: 9:OUTPUTSIZE  debug command, returns outputsize for armaextension. Also logs to extdb logfile.
 	ADDED: config option "Error Database Kill Server" to enable/disable killing server if Database Connection Fails.
 
