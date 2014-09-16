@@ -73,6 +73,16 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V2: No Database Connection";
 		return false;
 	}
+
+	// Check if DB_CUSTOM_V2 Template Filename Given
+	if (init_str.empty()) 
+	{
+		#ifdef TESTING
+			std::cout << "extDB: DB_CUSTOM_V2: Missing Parameter or No Template Filename given" << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "Missing Parameter or No Template Filename given";
+		return false;
+	}
 	
 	std::string db_custom_dir = boost::filesystem::path("extDB/db_custom").make_preferred().string();
 	boost::filesystem::create_directories(db_custom_dir); // Creating Directory if missing
