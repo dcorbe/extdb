@@ -209,10 +209,10 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					result += "]]";
 
 					#ifdef TESTING
-						std::cout << "extDB: DB_PROCEDURE_V2: Trace: Result: " + input_str << std::endl;
+						std::cout << "extDB: DB_PROCEDURE_V2: Trace: Result: " + result << std::endl;
 					#endif
 					#ifdef DEBUG_LOGGING
-						BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE_V2: Trace: Result: " + input_str;
+						BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE_V2: Trace: Result: " + result;
 					#endif
 				}
 				else

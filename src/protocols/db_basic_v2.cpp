@@ -466,7 +466,7 @@ void DB_BASIC_V2::callProtocol(AbstractExt *extension, std::string input_str, st
 					std::cout << "extDB: DB_BASIC_V2: Trace: Result:" + result << std::endl;
 				#endif
 				#ifdef DEBUG_LOGGING
-					BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: Trace: Result: " + input_str;
+					BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_BASIC_V2: Trace: Result: " + result;
 				#endif
 			}
 		}
