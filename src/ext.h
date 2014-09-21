@@ -97,7 +97,8 @@ class Ext: public AbstractExt
 
 		void connectDatabase(char *output, const int &output_size, const std::string &conf_option);
 
-		void getResult_mutexlock(const int &unique_id, char *output, const int &output_size);
+		void getSinglePartResult_mutexlock(const int &unique_id, char *output, const int &output_size);
+		void getMultiPartResult_mutexlock(const int &unique_id, char *output, const int &output_size);
 		void sendResult_mutexlock(const std::string &result, char *output, const int &output_size);
 
 		// boost::unordered_map + mutex -- for Plugin Loaded

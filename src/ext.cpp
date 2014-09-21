@@ -1,6 +1,5 @@
 /*
 Copyright (C) 2014 Declan Ireland <http://github.com/torndeco/extDB>
-Copyright (C) 2014 MaHuJa https://github.com/MaHuJa
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -64,6 +63,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/abstract_protocol.h"
 #include "protocols/db_basic_v2.h"
 #include "protocols/db_custom_v2.h"
+#include "protocols/db_custom_v3.h"
 #include "protocols/db_procedure_v2.h"
 #include "protocols/db_raw_v2.h"
 #include "protocols/db_raw_no_extra_quotes_v2.h"
@@ -449,13 +449,50 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 	}
 }
 
+
 std::string Ext::getDBType()
 {
 	return db_conn_info.db_type;
 }
 
-void Ext::getResult_mutexlock(const int &unique_id, char *output, const int &output_size)
-// Gets Result String from unordered map array
+
+void Ext::getSinglePartResult_mutexlock(const int &unique_id, char *output, const int &output_size)
+// Gets Result String from unordered map array -- Result Formt == Single-Message
+//   If <=, then sends output to arma, and removes entry from unordered map array
+//   If >, sends [5] to indicate MultiPartResult
+{
+	boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results); // TODO Try to make Mutex Lock smaller
+	boost::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
+	if (it == unordered_map_results.end()) // NO UNIQUE ID or WAIT
+	{
+		if (unordered_map_wait.count(unique_id) == 0)
+		{
+			std::strcpy(output, (""));
+		}
+		else
+		{
+			std::strcpy(output, ("[3]"));
+		}
+	}
+	else // SEND MSG (Part)
+	{
+		if (it->second.length() > (output_size-1))
+		{
+			std::strcpy(output, ("[5]"));
+		}
+		else
+		{
+			std::string msg = it->second.substr(0, output_size-1);
+			std::strcpy(output, msg.c_str());
+			unordered_map_results.erase(unique_id);
+			freeUniqueID_mutexlock(unique_id);
+		}
+	}
+}
+
+
+void Ext::getMultiPartResult_mutexlock(const int &unique_id, char *output, const int &output_size)
+// Gets Result String from unordered map array  -- Result Format = Multi-Message 
 //   If length of String = 0, sends arma "", and removes entry from unordered map array
 //   If <=, then sends output to arma
 //   If >, then sends 1 part to arma + stores rest.
@@ -566,6 +603,20 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 				std::strcpy(output, "[1]");
 			}
 		}
+		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V3")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V2());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
+		}
 		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
@@ -633,7 +684,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 		std::string result;
 		result.reserve(2000);
 		itr->second->callProtocol(this, data, result);
-		if (result.length() <= (output_size-9))
+		if (result.length() <= (output_size-6))
 		{
 			std::strcpy(output, ("[1, " + result + "]").c_str());
 		}
@@ -735,10 +786,16 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					}
 					break;
 				}
-				case 5: // GET
+				case 4: // GET -- Single-Part Message Format
 				{
 					const int unique_id = Poco::NumberParser::parse(input_str.substr(2));
-					getResult_mutexlock(unique_id, output, output_size);
+					getSinglePartResult_mutexlock(unique_id, output, output_size);
+					break;
+				}
+				case 5: // GET -- Multi-Part Message Format
+				{
+					const int unique_id = Poco::NumberParser::parse(input_str.substr(2));
+					getMultiPartResult_mutexlock(unique_id, output, output_size);
 					break;
 				}
 				case 1: //ASYNC
