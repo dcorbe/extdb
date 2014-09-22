@@ -41,10 +41,10 @@ class DB_CUSTOM_V3: public AbstractProtocol
 			std::list<Poco::DynamicAny> sql;
 			int number_of_inputs;
 			bool sanitize_check;
-			bool strip_chars_enabled;
-			Poco::StringTokenizer strip_chars;
+			bool strip_strings_enabled;
+			std::vector< std::string > strip_strings;
 		};
 		boost::unordered_map<std::string, Template_Calls> custom_protocol;
 
-		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, std::string &result);
+		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, std::string &result);
 };

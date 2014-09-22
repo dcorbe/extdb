@@ -37,6 +37,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Util/AbstractConfiguration.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
+#include <boost/algorithm/string/erase.hpp>
 #include <boost/filesystem.hpp>
 
 #ifdef TESTING
@@ -101,9 +102,15 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 			int default_number_of_inputs = template_ini->getInt("Default.Number of Inputs", 0);
 
 			bool default_sanitize_check = template_ini->getBool("Default.Sanitize Check", true);
-			bool default_strip_chars_enabled = template_ini->getBool("Default.Strip Chars", true);
+			bool default_strip_strings_enabled = template_ini->getBool("Default.Strip Strings", true);
 
-			Poco::StringTokenizer default_strip_chars((template_ini->getString("Default.Strip Chars List", "")), "");
+			std::vector< std::string > default_strip_strings;
+
+			Poco::StringTokenizer default_strip_strings_tokens((template_ini->getString("Default.Strip Strings List", "")), ",");
+			for(int i = 0; i < default_strip_strings_tokens.count(); ++i)
+			{
+				default_strip_strings.push_back(default_strip_strings_tokens[i]);
+			}
 
 			if ((template_ini->getInt("Default.Version", 1)) == 3)
 			{
@@ -129,15 +136,19 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 					
 					custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", default_number_of_inputs);
 					custom_protocol[call_name].sanitize_check = template_ini->getBool(call_name + ".Sanitize Check", default_sanitize_check);
-					custom_protocol[call_name].strip_chars_enabled = template_ini->getBool(call_name + ".Strip Chars", default_strip_chars_enabled);
+					custom_protocol[call_name].strip_strings_enabled = template_ini->getBool(call_name + ".Strip Strings", default_strip_strings_enabled);
 
-					if (template_ini->has(call_name + ".Strip Chars List"))
+					if (template_ini->has(call_name + ".Strip Strings List"))
 					{
-						custom_protocol[call_name].strip_chars = Poco::StringTokenizer((template_ini->getString("Default.Strip Chars List", "")), "");
+						Poco::StringTokenizer strip_strings_tokens((template_ini->getString(call_name + ".Strip Strings List", "")), ",");
+						for(int i = 0; i < strip_strings_tokens.count(); ++i)
+						{
+							custom_protocol[call_name].strip_strings.push_back(strip_strings_tokens[i]);
+						}
 					}
 					else
 					{
-						custom_protocol[call_name].strip_chars = default_strip_chars;
+						custom_protocol[call_name].strip_strings = default_strip_strings;
 					}
 					
 					
@@ -214,7 +225,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 }
 
 
-void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, std::string &result)
+void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, std::string &result)
 {
 	std::string sql_str;
 	
@@ -362,7 +373,7 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 		}
 		else
 		{
-			std::list inputs;
+			std::vector< std::string > inputs;
 			std::string input_value_str;
 
 			if (itr->second.sanitize_check)
@@ -370,26 +381,26 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 				// Sanitize Check == Enabled
 				bool sanitize_ok = true;
 
-				for(int i = 1; i < token_count; ++i) {
+				for(int i = 1; i < token_count; ++i) 
+				{
 					input_value_str = tokens[i];
 
 					// Strip Chars
-					for (int i2 = 0, i2 < (itr->second.strip_chars.count() - 1), ++i2)
+					for (int i2 = 0; (i2 < (itr->second.strip_strings.size() - 1)); ++i2)
 					{
-						boost::erase_all(input_value_str, itr->second.strip_chars[i2]);
+						boost::erase_all(input_value_str, itr->second.strip_strings[i2]);
 					}
 
 					// Sanitize Check
 					if (!Sqf::check(tokens[i]))
 					{
-						sanitize_check = false;
+						sanitize_ok = false;
 						break;
 					}
 
 					// Add String to List
 					inputs.push_back(input_value_str);	
 				}
-
 				if (sanitize_ok)
 				{
 					callCustomProtocol(extension, itr, inputs, result);
@@ -403,16 +414,13 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 			else
 			{
 				// Sanitize Check == Disabled
-
-				input_value_str = tokens[i];
-
-				// Sanitize Checks == Disabled
 				for(int i = 1; i < token_count; ++i)
 				{
+					input_value_str = tokens[i];
 					// Strip Chars
-					for (int i2 = 0, i2 < (second.strip_chars.count() - 1), ++i2)
+					for (int i2 = 0; i2 < itr->second.strip_strings.size(); ++i2)
 					{
-						boost::erase_all(input_value_str, itr->second.strip_chars[i2]);
+						boost::erase_all(input_value_str, itr->second.strip_strings[i2]);
 					}
 
 					// Add String to List
