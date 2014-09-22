@@ -99,8 +99,11 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 		if (template_ini->hasOption("Default.Version"))
 		{
 			int default_number_of_inputs = template_ini->getInt("Default.Number of Inputs", 0);
-			bool default_sanitize_inputs = template_ini->getBool("Default.Sanitize Inputs", true);
-			bool default_sanitize_outputs = template_ini->getBool("Default.Sanitize Outputs", true);
+
+			bool default_sanitize_check = template_ini->getBool("Default.Sanitize Check", true);
+			bool default_strip_chars_enabled = template_ini->getBool("Default.Strip Chars", true);
+
+			Poco::StringTokenizer default_strip_chars((template_ini->getString("Default.Strip Chars List", "")), "");
 
 			if ((template_ini->getInt("Default.Version", 1)) == 3)
 			{
@@ -125,8 +128,18 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 					}
 					
 					custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", default_number_of_inputs);
-					custom_protocol[call_name].sanitize_inputs = template_ini->getBool(call_name + ".Sanitize Input", default_sanitize_inputs);
-					custom_protocol[call_name].sanitize_outputs = template_ini->getBool(call_name + ".Sanitize Output", default_sanitize_outputs);
+					custom_protocol[call_name].sanitize_check = template_ini->getBool(call_name + ".Sanitize Check", default_sanitize_check);
+					custom_protocol[call_name].strip_chars_enabled = template_ini->getBool(call_name + ".Strip Chars", default_strip_chars_enabled);
+
+					if (template_ini->has(call_name + ".Strip Chars List"))
+					{
+						custom_protocol[call_name].strip_chars = Poco::StringTokenizer((template_ini->getString("Default.Strip Chars List", "")), "");
+					}
+					else
+					{
+						custom_protocol[call_name].strip_chars = default_strip_chars;
+					}
+					
 					
 					std::list<Poco::DynamicAny> sql_list;
 					sql_list.push_back(Poco::DynamicAny(sql_str));
@@ -143,7 +156,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 								size_t pos;
 								std::string work_str = *it_sql_list;
 								std::string tmp_str;
-								while(true)
+								while (true)
 								{
 									pos = work_str.find(input_val_str);
 									if (pos != std::string::npos)
@@ -349,22 +362,63 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 		}
 		else
 		{
-			bool sanitize_check = true;
-			if (itr->second.sanitize_inputs)
+			std::list inputs;
+			std::string input_value_str;
+
+			if (itr->second.sanitize_check)
 			{
+				// Sanitize Check == Enabled
+				bool sanitize_ok = true;
+
 				for(int i = 1; i < token_count; ++i) {
+					input_value_str = tokens[i];
+
+					// Strip Chars
+					for (int i2 = 0, i2 < (itr->second.strip_chars.count() - 1), ++i2)
+					{
+						boost::erase_all(input_value_str, itr->second.strip_chars[i2]);
+					}
+
+					// Sanitize Check
 					if (!Sqf::check(tokens[i]))
 					{
-						std::cout << tokens[i] << std::endl;
 						sanitize_check = false;
-						result = "[0,\"Error Value Input is not sanitized\"]";
 						break;
 					}
+
+					// Add String to List
+					inputs.push_back(input_value_str);	
+				}
+
+				if (sanitize_ok)
+				{
+					callCustomProtocol(extension, itr, inputs, result);
+				}
+				else
+				{
+					result = "[0,\"Error Values Input is not sanitized\"]";
+					BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Sanitize Check error: Input:" + input_str;
 				}
 			}
-			if (sanitize_check)
+			else
 			{
-				callCustomProtocol(extension, itr, tokens, result);
+				// Sanitize Check == Disabled
+
+				input_value_str = tokens[i];
+
+				// Sanitize Checks == Disabled
+				for(int i = 1; i < token_count; ++i)
+				{
+					// Strip Chars
+					for (int i2 = 0, i2 < (second.strip_chars.count() - 1), ++i2)
+					{
+						boost::erase_all(input_value_str, itr->second.strip_chars[i2]);
+					}
+
+					// Add String to List
+					inputs.push_back(input_value_str);
+				}
+				callCustomProtocol(extension, itr, inputs, result);
 			}
 		}
 	}

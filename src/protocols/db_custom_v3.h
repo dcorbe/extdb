@@ -40,8 +40,9 @@ class DB_CUSTOM_V3: public AbstractProtocol
 		struct Template_Calls {
 			std::list<Poco::DynamicAny> sql;
 			int number_of_inputs;
-			bool sanitize_inputs;
-			bool sanitize_outputs;
+			bool sanitize_check;
+			bool strip_chars_enabled;
+			Poco::StringTokenizer strip_chars;
 		};
 		boost::unordered_map<std::string, Template_Calls> custom_protocol;
 

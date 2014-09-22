@@ -322,9 +322,9 @@ void DB_CUSTOM_V2::callProtocol(AbstractExt *extension, std::string input_str, s
 				for(int i = 1; i < token_count; ++i) {
 					if (!Sqf::check(tokens[i]))
 					{
-						std::cout << tokens[i] << std::endl;
 						sanitize_check = false;
 						result = "[0,\"Error Value Input is not sanitized\"]";
+						BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Sanitize Check error: Input:" + input_str;
 						break;
 					}
 				}
