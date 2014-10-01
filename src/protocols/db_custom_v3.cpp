@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#include "DB_CUSTOM_V3.h"
+#include "db_custom_v3.h"
 
 #include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>

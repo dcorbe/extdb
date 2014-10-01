@@ -184,11 +184,11 @@ Ext::Ext(void) {
 			std::cout << "extDB: Loading Log Settings" << std::endl;
 		#endif
 		
-		int log_filter_level = (pConf->getInt("Logging.Filter",2));
+		int log_filter_level = pConf->getInt("Logging.Filter",2);
 
 		boost::log::core::get()->set_filter
 		(
-			boost::log::trivial::severity >= log_filter_level)
+			boost::log::trivial::severity >= log_filter_level
 		);
 
 		#ifndef DEBUG_LOGGING
@@ -417,7 +417,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-	return "18";
+	return "19";
 }
 
 
