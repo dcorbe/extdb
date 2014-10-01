@@ -184,10 +184,19 @@ Ext::Ext(void) {
 			std::cout << "extDB: Loading Log Settings" << std::endl;
 		#endif
 		
+		int log_filter_level = (pConf->getInt("Logging.Filter",2));
+
 		boost::log::core::get()->set_filter
 		(
-			boost::log::trivial::severity >= (pConf->getInt("Logging.Filter", 2))
+			boost::log::trivial::severity >= log_filter_level)
 		);
+
+		#ifndef DEBUG_LOGGING
+			if (log_filter_level == 0)
+			{
+				BOOST_LOG_SEV(logger, boost::log::trivial::trace) << "extDB: Warning Log Filter Option Trace only works with debug extDB";
+			};
+		#endif
 
 		#ifdef TESTING
 //			std::cout << "extDB: Loading Rcon Settings" << std::endl;
