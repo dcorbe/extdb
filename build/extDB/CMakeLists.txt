@@ -35,6 +35,7 @@ SET(SOURCES
 	../../src/protocols/abstract_protocol.cpp
 	../../src/protocols/db_basic_v2.cpp
 	../../src/protocols/db_custom_v2.cpp
+	../../src/protocols/db_custom_v3.cpp
 	../../src/protocols/db_raw_v2.cpp
 	../../src/protocols/db_procedure_v2.cpp
 	../../src/protocols/db_raw_no_extra_quotes_v2.cpp

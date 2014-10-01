@@ -151,7 +151,6 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 						custom_protocol[call_name].strip_strings = default_strip_strings;
 					}
 					
-					
 					std::list<Poco::DynamicAny> sql_list;
 					sql_list.push_back(Poco::DynamicAny(sql_str));
 
