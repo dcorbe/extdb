@@ -33,13 +33,11 @@ SET(SOURCES
 	../../src/uniqueid.cpp
 	../../src/sanitize.cpp
 	../../src/protocols/abstract_protocol.cpp
-	../../src/protocols/db_procedure.cpp
-	../../src/protocols/db_procedure_v2.cpp
-	../../src/protocols/db_basic.cpp
 	../../src/protocols/db_basic_v2.cpp
-	../../src/protocols/db_raw.cpp
+	../../src/protocols/db_custom_v2.cpp
+	../../src/protocols/db_custom_v3.cpp
 	../../src/protocols/db_raw_v2.cpp
-	../../src/protocols/db_raw_no_extra_quotes.cpp
+	../../src/protocols/db_procedure_v2.cpp
 	../../src/protocols/db_raw_no_extra_quotes_v2.cpp
 	../../src/protocols/misc.cpp
 	../../src/protocols/log.cpp
@@ -90,7 +88,7 @@ if(${WIN32})
 else()
 	add_definitions(-DBOOST_LOG_DYN_LINK)
 endif()
-find_package(Boost REQUIRED COMPONENTS chrono date_time random regex system thread)
+find_package(Boost REQUIRED COMPONENTS chrono date_time filesystem log log_setup program_options random regex system thread)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
 	target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})
@@ -165,3 +163,16 @@ else()
 		)
 	endif()
 endif()
+
+#check for 32bit vs. 64bit system
+if (CMAKE_SIZEOF_VOID_P EQUAL 8) #64bit
+	message(STATUS "Warning: You are on a 64-bit system, make sure you are pulling in the appropriate 32-bit libraries.")
+elseif (CMAKE_SIZEOF_VOID_P EQUAL 4) #32bit
+	message(STATUS "You are on a 32-bit system.")
+else()
+	message(STATUS "CMake wasn't able to identify if you are on 32-bit or 64-bit...")
+endif()
+
+
+mark_as_advanced(CMAKE_INSTALL_PREFIX)
+mark_as_advanced(CMAKE_CONFIGURATION_TYPES)

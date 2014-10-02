@@ -1,4 +1,4 @@
-	/*
+/*
 Copyright (C) 2014 Declan Ireland <http://github.com/torndeco/extDB>
 
 This program is free software: you can redistribute it and/or modify
@@ -16,14 +16,34 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-
 #pragma once
+
+#include <boost/unordered_map.hpp>
+
+#include <Poco/DynamicAny.h>
+#include <Poco/StringTokenizer.h>
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
 
-class MISC_LOG: public AbstractProtocol
+
+class DB_CUSTOM_V2: public AbstractProtocol
 {
 	public:
+		bool init(AbstractExt *extension, const std::string init_str);
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
+		
+	private:
+		std::string db_custom_name;
+		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
+		
+		struct Template_Calls {
+			std::list<Poco::DynamicAny> sql;
+			int number_of_inputs;
+			bool sanitize_inputs;
+			bool sanitize_outputs;
+		};
+		boost::unordered_map<std::string, Template_Calls> custom_protocol;
+
+		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::StringTokenizer &tokens, std::string &result);
 };

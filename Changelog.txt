@@ -1,23 +1,100 @@
-14 = V2 Protocols, screwed up the logic in return values. V2 Protocol so wouldn't break any sqf code.
-		Will deprecated Original Protocols in next version & remove sometime in the future.
-		Its only a minor Change more info in Wiki soon.
-	Changed over to Poco Library for Filesystem & Logging  (Should compile on Debian now without having to update Boost)
-		Log Format == slightly different.
-		Log Files are now sub divided on Days aswell (directories).
-		Replace Log Filter Option with Log Level Option (has different values)
-13 = CMake Build System Updates + Fixes
+18
+	MAJOR: Removed V1 Protocols, been over a month.
+
+	ADDED: 9:OUTPUTSIZE  debug command, returns outputsize for armaextension. Also logs to extdb logfile.
+	ADDED: config option "Error Database Kill Server" to enable/disable killing server if Database Connection Fails.
+
+	FIXED: Fixed (+ Tested) Template File Check for DB_CUSTOM_V2
+	FIXED: Killing Server if Database Config Section Missing. (If killing server == enabled see above)
+	FIXED: Removed some arma2 code from compiling for linux builds. (Randomized Config Option)
+	FIXED: Test App Input Limit: by MaHuJa https://github.com/MaHuJa
+	
+	MISC: Removed Whitespace Padding from Returned Results
+	MISC: Various small Logic Fixes to code + more error outputs i.e like if you try to 9:ADD:Database Twice  etc...
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
+17
+	ADDED: Linux Static Build of extDB
+	
+	FIXED: Compress MySQL Option
+	FIXED: DB_CUSTOM_V2 template fix exists check
+	FIXED: extDB exception error on arma3server shutdown on linux.
+
+	UPDATED: Windows Builds using Boost 1.56 + latest Intel tbb43_20140724oss_win
+	
+	MISC: Logging Code Changed back to Boost Log (done for Linux Static builds)
+	MISC: Added Thread ID to logs info, makes it easier to debug log information involving multiple threads working at once.
+	
+	MISC: Misc Fixes for DB_BASIC
+
+	Note: Debian Users, need newer Boost Libraries if they are compiling from source.
+		Or just use the static builds	
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
+16  
+	UPDATED: DB_CUSTOM_V2 you can define sql statements with 0 inputs  
+
+	FIXED: DB_CUSTOM_V2 issue when input had same (sub-)string as $INPUT_x in it.  
+	FIXED: MISC Protocol returning false instead of 0  
+
+	MISC: Just some minor code cleanup..  
+
+Note: if u have any issues with DB_CUSTOM_V2, please report them,  
+you can downgrade to V16 until i get issue fixed. DB_CUSTOM_V2 Code was rewritten.  
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
+15
+	ADDED: Deprecated Warnings in Log Files for V1 Protocols (be like a month or more before i remove them).
+	ADDED: DB_Custom_V2 Protocol allows u to define SQL commands to run in a foo.ini file. 
+		Basicly gives u freedom of Raw SQL commands without the added security risk, also option to use sanitize code or not.
+			https://github.com/Torndeco/extdb/blob/stable/windows_release/15%20Debug%20Logging/extDB/db_custom/example.ini
+	ADDED: MISC -> BEGUID, now you can get players BEGUID from their SteamID
+	
+	UPDATED: Log Class you can now define the ID for the log entries (minor change really)
+	UPDATED: Sanitize Code now changed back to original code, exact same as DayZ Hive, less strict.
+	UPDATED: Rcon Test APP, is now a useable Rcon Chat Console App. Main use is for linux users for automated warnings. (Windows Users got BEC)
+			Windows Test Rcon app packaged for testing purposes atm.
+	UPDATED: CMake Changes New Warnings for detection of 64bit libraries  (thx firefly2442), for linux users that try to compile 64bit version.
+	
+	FIXED: DB_Procedure now working
+		IMPORTANT Procedures Support == limited, doesn't support Outputs anymore (with Poco 1.4)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+14
+	ADDED: V2 Protocols, screwed up the logic in return values. V2 Protocol so wouldn't break any sqf code.
+			Will deprecated Original Protocols in next version & remove sometime in the future.
+			Its only a minor Change more info in Wiki soon.
+		
+	FIXED: Logging Code, Should Compile on Debian Now (using Poco Library for logging)
+			Log Format == slightly different.
+			Log Files are now sub divided on Days aswell (directories).
+			Replace Log Filter Option with Log Level Option (has different values)
+		
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+13
 	ADDED: MySQL compress config option
 	ADDED: WIP Rcon Code (just used in rcon app atm)
+	
+	UPDATED: CMake Build System Updates + Fixes
 	UPDATED: DB_BASIC now contains Other 1 + Other 2 + Other 3 Fields
 	UPDATED: DB_BASIC now has logging output
+	
 	FIXED: SQlite DB Locked concurrent access
-12 = New Log Class, so u can output text to extDB logfiles.
+	
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+12 
+	New Log Class, so u can output text to extDB logfiles.
 	All extensions have basic startup + error logging
 	Fixed DB_BASIC get all commands
 	Added minor Error Handling Logic checks when adding Protocols
 	SQLite Databases moved into extDB/ directory
-11 = Randomized Unique ID starting Number, also made smaller range.
+	
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+11
+	Randomized Unique ID starting Number, also made smaller range.
 	DB_RAW_NO_EXTRA_QUOTES, New CMake Build System for Windows Source Compile
+	
+------------------------------------------------------------------------------------------------------------------------------------------------------------
 10 = Enabled TBB, String Reserved Length to help prevent bad_alloc
 9 = Disabled TBB
 8 = Procedure Support via DB_PROCEDURE(sanitized input),

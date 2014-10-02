@@ -19,16 +19,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "log.h"
 
 
-bool LOG::init(AbstractExt *extension)
+bool LOG::init(AbstractExt *extension, const std::string init_str)
 {
-	pLogger = &Poco::Logger::get("LOG");
+	log_msg_header = init_str;
 	return true;
 }
 
 
 void LOG::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
-	//BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << input_str;
-	pLogger->information(input_str);
+	BOOST_LOG_SEV(extension->logger, boost::log::trivial::info) << log_msg_header + input_str;
 	result = "[1]";
 }

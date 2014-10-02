@@ -22,49 +22,69 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include <boost/thread/thread.hpp>
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/unordered_map.hpp>
+
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketAddress.h>
 #include <Poco/Net/NetException.h>
 
-//#include <boost/thread/thread.hpp>
+#include <Poco/Stopwatch.h>
 
-class Rcon
+#include <Poco/ExpireCache.h>
+
+
+class Rcon: public Poco::Runnable
 {
 	public:
-		void sendCommand(std::string command);
-		void init(int port, std::string password);
+		Rcon(std::string address, int port, std::string password, bool auto_reconnect);
+
+		void run();
+		void disconnect();
+		
+		void addCommand(std::string command);
 
 	private:
+		typedef std::pair< int, boost::unordered_map < int, std::string > > RconMultiPartMsg;
+		
 		struct RconPacket {
 			char cmd_char_workaround;
 			char *cmd;
 			unsigned char packetCode;
+			std::string packet;
 		};
+		
+		RconPacket rcon_packet;
 
 		struct RconLogin {
+			std::string address;
 			int port;
 			char *password;
+			bool auto_reconnect;
 		};
 
+		RconLogin rcon_login;
 
 		Poco::Net::SocketAddress sa;
 		Poco::Net::DatagramSocket dgs;
 
-		RconLogin rcon_login;
-		RconPacket rcon_packet;
-
-		std::clock_t start_time;
-		char buffer[1024];
-
-		bool logged_in;
-		bool cmd_sent;
-		bool cmd_response;
-		int size;
+		Poco::Stopwatch rcon_timer;
 		
-		//boost::mutex mutex_rcon_global; // TODO:: Look @ changing Rcon Code to avoid this
+		char buffer[4096];  //TODO Change so not hardcoded limit
+		int buffer_size;
+		
+		// Mutex Locks
+		boost::recursive_mutex mutex_rcon_run_flag;
+		bool rcon_run_flag;
+		
+		boost::recursive_mutex mutex_rcon_commands;
+		std::vector< std::string > rcon_commands;
 
+		// Functions
 		void connect();
-		void sendCommand(std::string &command, std::string &response);
-		void makePacket(RconPacket rcon, std::string &cmdPacket);
-		void extractData(int pos, std::string &data);
+		void mainLoop();
+
+		void makePacket(RconPacket &rcon);
+		void extractData(int pos, std::string &result);
 };

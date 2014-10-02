@@ -22,12 +22,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <Poco/Checksum.h>
 #include <Poco/ClassLibrary.h>
-#include <Poco/Data/SessionPool.h>
 #include <Poco/MD4Engine.h>
 #include <Poco/MD5Engine.h>
-
-#include <cstdlib>
-#include <iostream>
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
@@ -36,11 +32,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class MISC: public AbstractProtocol
 {
 	public:
-		std::string name() const
-		{
-			return "Plugin_MISC";
-		}
-
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 
 		//Poco::Checksum checksum_adler32;
@@ -49,7 +40,7 @@ class MISC: public AbstractProtocol
 		Poco::Checksum checksum_crc32;
 		boost::mutex mutex_checksum_crc32;
 
-private:
+	private:
 		Poco::MD5Engine md5;
 		boost::mutex mutex_md5;
 
@@ -62,4 +53,5 @@ private:
 		void getCrc32(std::string &input_str, std::string &result);
 		void getMD4(std::string &input_str, std::string &result);
 		void getMD5(std::string &input_str, std::string &result);
+		void getBEGUID(std::string &input_str, std::string &result);
 };

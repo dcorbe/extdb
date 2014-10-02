@@ -19,20 +19,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <Poco/Data/Session.h>
-#include <Poco/Data/SessionPool.h>
-
-#include <cstdlib>
-#include <iostream>
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
+
 #include "../sanitize.h"
 
 
 class DB_BASIC_V2: public AbstractProtocol
 {
 	public:
-		bool init(AbstractExt *extension);
+		bool init(AbstractExt *extension, const std::string input_str);
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 		
 	private:

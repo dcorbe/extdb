@@ -139,3 +139,10 @@ set (POCO_LIBRARYDIR ${POCO_ROOT}/lib)
 if(NOT DEFINED POCO_LIBRARYDIR)
 	set (POCO_LIBRARYDIR ${POCO_ROOT}/lib)
 endif(NOT DEFINED POCO_LIBRARYDIR)
+
+# Damn Linux Users Getting Confused, thinking this is a problem & ignoring lines with error on them
+if(NOT ${WIN32})
+MARK_AS_ADVANCED(
+	POCO_ROOT
+)
+endif()

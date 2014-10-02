@@ -18,18 +18,33 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include <Poco/Data/SessionPool.h>
+#include <boost/unordered_map.hpp>
 
-#include <cstdlib>
-#include <iostream>
+#include <Poco/DynamicAny.h>
+#include <Poco/StringTokenizer.h>
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
 
 
-class DB_RAW: public AbstractProtocol
+class DB_CUSTOM_V3: public AbstractProtocol
 {
 	public:
-		bool init(AbstractExt *extension);
+		bool init(AbstractExt *extension, const std::string init_str);
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
+		
+	private:
+		std::string db_custom_name;
+		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
+		
+		struct Template_Calls {
+			std::list<Poco::DynamicAny> sql;
+			int number_of_inputs;
+			bool sanitize_check;
+			bool strip_strings_enabled;
+			std::vector< std::string > strip_strings;
+		};
+		boost::unordered_map<std::string, Template_Calls> custom_protocol;
+
+		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, std::string &result);
 };
