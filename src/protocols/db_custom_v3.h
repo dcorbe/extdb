@@ -43,6 +43,7 @@ class DB_CUSTOM_V3: public AbstractProtocol
 			bool sanitize_check;
 			bool strip_strings_enabled;
 			std::vector< std::string > strip_strings;
+			bool string_datatype_check;
 		};
 		boost::unordered_map<std::string, Template_Calls> custom_protocol;
 

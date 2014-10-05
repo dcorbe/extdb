@@ -103,6 +103,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 
 			bool default_sanitize_check = template_ini->getBool("Default.Sanitize Check", true);
 			bool default_strip_strings_enabled = template_ini->getBool("Default.Strip Strings", true);
+			bool default_string_datatype_check = template_ini->getBool("Default.String Datatype Check", true);
 
 			std::vector< std::string > default_strip_strings;
 
@@ -112,7 +113,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 				default_strip_strings.push_back(default_strip_strings_tokens[i]);
 			}
 
-			if ((template_ini->getInt("Default.Version", 1)) == 3)
+			if ((template_ini->getInt("Default.Version", 1)) == 4)
 			{
 				for(std::vector<std::string>::iterator it = custom_calls.begin(); it != custom_calls.end(); ++it) 
 				{
@@ -137,6 +138,8 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 					custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", default_number_of_inputs);
 					custom_protocol[call_name].sanitize_check = template_ini->getBool(call_name + ".Sanitize Check", default_sanitize_check);
 					custom_protocol[call_name].strip_strings_enabled = template_ini->getBool(call_name + ".Strip Strings", default_strip_strings_enabled);
+					custom_protocol[call_name].string_datatype_check = template_ini->getBool(call_name + ".String Datatype Check", default_string_datatype_check);
+
 
 					if (template_ini->has(call_name + ".Strip Strings List"))
 					{
@@ -159,17 +162,23 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 						std::string input_val_str = "$INPUT_" + Poco::NumberFormatter::format(x);
 						size_t input_val_len = input_val_str.length();
 
+						std::string input_stringval_str = "$INPUT_STRING_" + Poco::NumberFormatter::format(x);
+						size_t input_stringval_len = input_stringval_str.length();
+
 						for(std::list<Poco::DynamicAny>::iterator it_sql_list = sql_list.begin(); it_sql_list != sql_list.end(); ++it_sql_list) 
 						{
 							if (it_sql_list->isString())
 							{
 								size_t pos;
+								size_t pos2;
 								std::string work_str = *it_sql_list;
 								std::string tmp_str;
 								while (true)
 								{
-									pos = work_str.find(input_val_str);
-									if (pos != std::string::npos)
+									pos = work_str.find(input_val_str); //TODO
+									pos2 = work_str.find(input_stringval_str);
+
+									if (pos < pos2)
 									{
 										tmp_str = work_str.substr(0, pos);
 										work_str = work_str.substr((pos + input_val_len), std::string::npos);
@@ -177,7 +186,15 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 										std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, x);
 										new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
 									}
-									else
+									else if (pos > pos2)
+									{
+										tmp_str = work_str.substr(0, pos2);
+										work_str = work_str.substr((pos2 + input_stringval_len), std::string::npos);
+										
+										std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, -x);
+										new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
+									}
+									else //if (pos != std::string::npos)
 									{
 										if (!work_str.empty())
 										{
@@ -211,7 +228,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 			#endif
 			BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V3: Template File Missing Default Options: " << db_template_file;
 		}
-	} 
+	}
 	else 
 	{
 		status = false;
@@ -236,10 +253,17 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		}
 		else
 		{
-			sql_str += tokens[*it_sql_list];
+			if (*it_sql_list < 0)
+			{
+				sql_str += "`" + tokens[(-1 * *it_sql_list)] + "`";
+			}
+			else
+			{
+				sql_str += tokens[*it_sql_list];
+			}
 		}
 	}
-
+ 
 	try 
 	{
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
@@ -258,7 +282,7 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				result += "[";
 				for (std::size_t col = 0; col < cols; ++col)
 				{
-					if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+					if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
 					{
 						if (!rs[col].isEmpty())
 						{
