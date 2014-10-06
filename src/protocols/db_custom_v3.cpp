@@ -387,16 +387,19 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 	if (itr == custom_protocol.end())
 	{
 		result = "[0,\"Error No Custom Call Not Found\"]";
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error No Custom Call Not Found: " + input_str;
 	}
 	else
 	{
 		if (itr->second.number_of_inputs != (token_count - 1))
 		{
 			result = "[0,\"Error Incorrect Number of Inputs\"]";
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Incorrect Number of Inputs: " + input_str;
 		}
 		else
 		{
 			std::vector< std::string > inputs;
+			inputs.push_back(""); // We ignore [0] Entry, makes logic simplier when using -x value to indicate $INPUT_STRING_X
 			std::string input_value_str;
 
 			if (itr->second.sanitize_check)

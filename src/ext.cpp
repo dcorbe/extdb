@@ -614,7 +614,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V3")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V2());
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V3());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
