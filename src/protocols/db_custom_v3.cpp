@@ -255,7 +255,7 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		{
 			if (*it_sql_list < 0)
 			{
-				sql_str += "`" + tokens[(-1 * *it_sql_list)] + "`";
+				sql_str += "'" + tokens[(-1 * *it_sql_list)] + "'";
 			}
 			else
 			{
