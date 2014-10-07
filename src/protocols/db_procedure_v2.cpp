@@ -182,11 +182,25 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 								{
 									if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
 									{
-										result += "\"" + (rs[col].convert<std::string>() + "\"");
+										if (!rs[col].isEmpty())
+										{
+											result += "\"" + (rs[col].convert<std::string>() + "\"");
+										}
+										else
+										{
+											result += ("\"\"");
+										}
 									}
 									else
 									{
-										result += rs[col].convert<std::string>();
+										if (!rs[col].isEmpty())
+										{
+											result += rs[col].convert<std::string>();
+										}
+										else
+										{
+											result += ("\"\"");
+										}
 									}
 									if (col < (cols - 1))
 									{

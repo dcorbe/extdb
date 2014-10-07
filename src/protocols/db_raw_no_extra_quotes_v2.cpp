@@ -93,6 +93,10 @@ void DB_RAW_NO_EXTRA_QUOTES_V2::callProtocol(AbstractExt *extension, std::string
 					{
 						result += rs[col].convert<std::string>();
 					}
+					else
+					{
+						result += ("\"\"");
+					}
 					if (col < (cols - 1))
 					{
 						result += ",";

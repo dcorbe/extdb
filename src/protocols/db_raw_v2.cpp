@@ -105,6 +105,10 @@ void DB_RAW_V2::callProtocol(AbstractExt *extension, std::string input_str, std:
 						{
 							result += rs[col].convert<std::string>();
 						}
+						else
+						{
+							result += ("\"\"");
+						}
 					}
 					if (col < (cols - 1))
 					{

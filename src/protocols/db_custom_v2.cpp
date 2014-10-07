@@ -219,6 +219,10 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 						{
 							result += rs[col].convert<std::string>();
 						}
+						else
+						{
+							result += ("\"\"");
+						}
 					}
 					if (col < (cols - 1))
 					{
