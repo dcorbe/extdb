@@ -1,3 +1,28 @@
+20 WIP
+	ADDED: DB_CUSTOM_V3 $INPUT_STRING_x which will add "" around input values. Reason later on will integerate Sanitize Check to work with this.
+
+	ADDED: DB_CUSTOM_V3 'Option String Datatype Check' To disable / enable adding quotation around results.
+	
+	FIXED: DB_CUSTOM_Vx were you have more than 9 Inputs
+	
+	FIXED: SegFault when Data Supplied to some Protocols was empty. It shouldn't happen in normal usage anyways...
+	
+	FIXED: extDB will now use empty string "" for value when value in Database is Null. Before returned string wouldn't compiled.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
+19
+	ADDED: DB_Custom_V3 Protocol, config file is cleaner
+				Multiple SQL_x lines when added together have space added between them i.e SQL_1 + " " + SQL_2 + " " + SQL_3 etc
+				Ability to set Default Settings
+				Strip List of Characters Option for Input Values
+		
+	ADDED: New Get Results Method. 4:<Unique ID>, this will return [5] if message is to big to fit in single message.
+
+	FIXED: Trace Log, showing input instead of result info in logs.
+	
+	MISC: Added warning if trying to use Trace Setting in normal extDB.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 18
 	MAJOR: Removed V1 Protocols, been over a month.
 
