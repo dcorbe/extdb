@@ -1,5 +1,5 @@
 20 WIP
-	ADDED: DB_CUSTOM_V3 $INPUT_STRING_x which will add "" around input values. Reason later on will integerate Sanitize Check to work with this.
+	ADDED: DB_CUSTOM_V3 $INPUT_STRING_x which will add "" around input values. Reason later on will integerate this with Sanitize Checks.
 
 	ADDED: DB_CUSTOM_V3 'Option String Datatype Check' To disable / enable adding quotation around results.
 	
