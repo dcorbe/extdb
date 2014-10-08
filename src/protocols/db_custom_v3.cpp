@@ -157,7 +157,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 					std::list<Poco::DynamicAny> sql_list;
 					sql_list.push_back(Poco::DynamicAny(sql_str));
 
-					for (int x=1; x <= custom_protocol[call_name].number_of_inputs; ++x)
+					for (int x = (custom_protocol[call_name].number_of_inputs + 1); x > 0; --x)
 					{
 						std::string input_val_str = "$INPUT_" + Poco::NumberFormatter::format(x);
 						size_t input_val_len = input_val_str.length();
@@ -255,7 +255,7 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		{
 			if (*it_sql_list < 0)
 			{
-				sql_str += "'" + tokens[(-1 * *it_sql_list)] + "'";
+				sql_str += "\"" + tokens[(-1 * *it_sql_list)] + "\"";
 			}
 			else
 			{
@@ -282,28 +282,31 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				result += "[";
 				for (std::size_t col = 0; col < cols; ++col)
 				{
+					std::string temp_str = rs[col].convert<std::string>();
+
 					if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
 					{
-						if (!rs[col].isEmpty())
+						if (temp_str.empty())
 						{
-							result += "\"" + (rs[col].convert<std::string>() + "\"");
+							result += ("\"\"");
 						}
 						else
 						{
-							result += ("\"\"");
+							result += "\"" + temp_str + "\"";
 						}
 					}
 					else
 					{
-						if (!rs[col].isEmpty())
-						{
-							result += rs[col].convert<std::string>();
-						}
-						else
+						if (temp_str.empty())
 						{
 							result += ("\"\"");
 						}
+						else
+						{
+							result += temp_str;
+						}
 					}
+
 					if (col < (cols - 1))
 					{
 						result += ",";
@@ -415,7 +418,7 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 				{
 					input_value_str = tokens[i];
 
-					// Strip Chars
+					// Strip Chars					
 					for (int i2 = 0; (i2 < (itr->second.strip_strings.size() - 1)); ++i2)
 					{
 						boost::erase_all(input_value_str, itr->second.strip_strings[i2]);

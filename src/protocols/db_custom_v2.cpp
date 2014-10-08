@@ -116,7 +116,7 @@ bool DB_CUSTOM_V2::init(AbstractExt *extension, const std::string init_str)
 			std::list<Poco::DynamicAny> sql_list;
 			sql_list.push_back(Poco::DynamicAny(sql_str));
 
-			for (int x=1; x <= custom_protocol[call_name].number_of_inputs; ++x)
+			for (int x = (custom_protocol[call_name].number_of_inputs + 1); x > 0; --x)
 			{
 				std::string input_val_str = "$INPUT_" + Poco::NumberFormatter::format(x);
 				size_t input_val_len = input_val_str.length();
@@ -202,26 +202,27 @@ void DB_CUSTOM_V2::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				result += "[";
 				for (std::size_t col = 0; col < cols; ++col)
 				{
+					std::string temp_str = rs[col].convert<std::string>();
 					if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
 					{
-						if (!rs[col].isEmpty())
+						if (temp_str.empty())
 						{
-							result += "\"" + (rs[col].convert<std::string>() + "\"");
+							result += ("\"\"");
 						}
 						else
 						{
-							result += ("\"\"");
+							result += "\"" + temp_str + "\"";
 						}
 					}
 					else
 					{
-						if (!rs[col].isEmpty())
+						if (temp_str.empty())
 						{
-							result += rs[col].convert<std::string>();
+							result += ("\"\"");
 						}
 						else
 						{
-							result += ("\"\"");
+							result += temp_str;
 						}
 					}
 					if (col < (cols - 1))
