@@ -180,26 +180,28 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 								result += "[";
 								for (std::size_t col = 0; col < cols; ++col)
 								{
+									std::string temp_str = rs[col].convert<std::string>();
+									
 									if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
 									{
-										if (!rs[col].isEmpty())
+										if (temp_str.empty())
 										{
-											result += "\"" + (rs[col].convert<std::string>() + "\"");
+											result += ("\"\"");
 										}
 										else
 										{
-											result += ("\"\"");
+											result += "\"" + temp_str + "\"";
 										}
 									}
 									else
 									{
-										if (!rs[col].isEmpty())
+										if (temp_str.empty())
 										{
-											result += rs[col].convert<std::string>();
+											result += ("\"\"");
 										}
 										else
 										{
-											result += ("\"\"");
+											result += temp_str;
 										}
 									}
 									if (col < (cols - 1))
