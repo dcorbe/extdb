@@ -23,6 +23,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/DynamicAny.h>
 #include <Poco/StringTokenizer.h>
 
+#include <Poco/MD5Engine.h>
+
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
 
@@ -34,6 +36,9 @@ class DB_CUSTOM_V3: public AbstractProtocol
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 		
 	private:
+		Poco::MD5Engine md5;
+		boost::mutex mutex_md5;
+
 		std::string db_custom_name;
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
 		
@@ -48,4 +53,5 @@ class DB_CUSTOM_V3: public AbstractProtocol
 		boost::unordered_map<std::string, Template_Calls> custom_protocol;
 
 		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, std::string &result);
+		void getBEGUID(std::string &input_str, std::string &result);
 };

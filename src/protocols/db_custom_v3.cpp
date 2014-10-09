@@ -37,6 +37,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Util/AbstractConfiguration.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
+#include <Poco/DigestEngine.h>
+#include <Poco/MD5Engine.h>
+
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/filesystem.hpp>
 
@@ -165,20 +168,25 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 						std::string input_stringval_str = "$INPUT_STRING_" + Poco::NumberFormatter::format(x);
 						size_t input_stringval_len = input_stringval_str.length();
 
+						std::string input_beguidval_str = "$INPUT_BEGUID_" + Poco::NumberFormatter::format(x);
+						size_t input_beguidval_len = input_beguidval_str.length();
+
 						for(std::list<Poco::DynamicAny>::iterator it_sql_list = sql_list.begin(); it_sql_list != sql_list.end(); ++it_sql_list) 
 						{
 							if (it_sql_list->isString())
 							{
-								size_t pos;
-								size_t pos2;
 								std::string work_str = *it_sql_list;
 								std::string tmp_str;
 								while (true)
 								{
+									size_t pos;
+									size_t pos2;
+									size_t pos3;
 									pos = work_str.find(input_val_str); //TODO
 									pos2 = work_str.find(input_stringval_str);
+									pos2 = work_str.find(input_beguidval_str);
 
-									if (pos < pos2)
+									if ((pos < pos2) && (pos < pos3))
 									{
 										tmp_str = work_str.substr(0, pos);
 										work_str = work_str.substr((pos + input_val_len), std::string::npos);
@@ -186,7 +194,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 										std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, x);
 										new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
 									}
-									else if (pos > pos2)
+									else if ((pos2 < pos) && (pos2 < pos3))
 									{
 										tmp_str = work_str.substr(0, pos2);
 										work_str = work_str.substr((pos2 + input_stringval_len), std::string::npos);
@@ -194,7 +202,15 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 										std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, -x);
 										new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
 									}
-									else //if (pos != std::string::npos)
+									else if ((pos3 < pos) && (pos3 < pos2))
+									{
+										tmp_str = work_str.substr(0, pos3);
+										work_str = work_str.substr((pos2 + input_beguidval_len), std::string::npos);
+										
+										std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, (-x -1000));
+										new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
+									}
+									else
 									{
 										if (!work_str.empty())
 										{
@@ -241,25 +257,69 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 }
 
 
+void DB_CUSTOM_V3::getBEGUID(std::string &input_str, std::string &result)
+// From Frank https://gist.github.com/Fank/11127158
+// Modified to use libpoco
+{
+	boost::lock_guard<boost::mutex> lock(mutex_md5);
+	bool status = true;
+	for (unsigned int index=0; index < input_str.length(); index++)
+	{
+		if (!std::isdigit(input_str[index]))
+		{
+			status = false;
+			result = "Invalid SteamID";
+			break;
+		}
+	}
+	
+	if (status)
+	{
+		Poco::Int64 steamID = Poco::NumberParser::parse64(input_str);
+		Poco::Int8 i = 0, parts[8] = { 0 };
+
+		do
+		{
+			parts[i++] = steamID & 0xFFu;
+		} while (steamID >>= 8);
+
+		std::stringstream bestring;
+		bestring << "BE";
+		for (int i = 0; i < sizeof(parts); i++) {
+			bestring << char(parts[i]);
+		}
+
+		md5.update(bestring.str());
+		result = ("\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"");
+	}
+}
+
+
 void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, std::string &result)
 {
 	std::string sql_str;
 	
 	for(std::list<Poco::DynamicAny>::const_iterator it_sql_list = (itr->second.sql).begin(); it_sql_list != (itr->second.sql).end(); ++it_sql_list) 
 	{
-		if (it_sql_list->isString())  // Check for Input Variable
+		if (it_sql_list->isString())  // Check for $Input Variable
 		{
 			sql_str += it_sql_list->convert<std::string>();
 		}
 		else
 		{
-			if (*it_sql_list < 0)
+			if (*it_sql_list < -1000) // Convert $Input to "BEGUID"
+			{
+				std::string beguid_str;
+				getBEGUID(tokens[(-1 * *it_sql_list)], beguid_str);
+				sql_str += "\"" + beguid_str + "\"";
+			}
+			else if (*it_sql_list < 0) // Convert $Input to String ""
 			{
 				sql_str += "\"" + tokens[(-1 * *it_sql_list)] + "\"";
 			}
 			else
 			{
-				sql_str += tokens[*it_sql_list];
+				sql_str += tokens[*it_sql_list]; // Convert $Input to String
 			}
 		}
 	}
