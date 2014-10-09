@@ -98,6 +98,7 @@ void MISC::getBEGUID(std::string &input_str, std::string &result)
 // From Frank https://gist.github.com/Fank/11127158
 // Modified to use libpoco
 {
+	boost::lock_guard<boost::mutex> lock(mutex_md5);
 	bool status = true;
 	for (unsigned int index=0; index < input_str.length(); index++)
 	{
