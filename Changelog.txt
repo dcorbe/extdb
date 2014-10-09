@@ -1,13 +1,17 @@
 20 WIP
 	ADDED: DB_CUSTOM_V3 $INPUT_STRING_x which will add "" around input values. Reason later on will integerate this with Sanitize Checks.
+	
+	ADDED: DB_CUSTOM_V3 $INPUT_BEGUID_x which will convert Player UID -> BeGUID + wrap around with "".
 
 	ADDED: DB_CUSTOM_V3 'Option String Datatype Check' To disable / enable adding quotation around results. I will prob rename this before release
 	
-	FIXED: DB_CUSTOM_Vx were you have more than 9 Inputs
+	FIXED: DB_CUSTOM_Vx were you have more than 9 Inputs, Max Inputs = 999
 	
 	FIXED: SegFault when Data Supplied to some Protocols was empty. It shouldn't happen in normal usage anyways...
 	
 	FIXED: extDB will now use empty string "" for value when value in Database is Null. Before returned string wouldn't compiled.
+	
+	FIXED: mutex Lock for MISC:BEGUID
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------  
 19
