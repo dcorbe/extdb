@@ -116,108 +116,129 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 			{
 				for(std::vector<std::string>::iterator it = custom_calls.begin(); it != custom_calls.end(); ++it) 
 				{
+					int sql_line_num = 0;
+					int sql_part_num = 0;
 					std::string call_name = *it;
-					std::string sql_str;
-					
-					int sql_count = 1;
-					std::string sql_count_str = "1";
 
-					while (template_ini->has(call_name + ".SQL_" + sql_count_str))
+					std::string sql_line_num_str;
+					std::string sql_part_num_str;
+					while (true)
 					{
-						sql_str += (template_ini->getString(call_name + ".SQL_" + sql_count_str)) + " " ;
-						sql_count++;
-						sql_count_str = Poco::NumberFormatter::format(sql_count);
-					}
-
-					if (sql_count > 1)
-					{
-						sql_str = sql_str.substr(0, sql_str.size()-1);
-					}
-					
-					custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", default_number_of_inputs);
-					custom_protocol[call_name].string_datatype_check = template_ini->getBool(call_name + ".String Datatype Check", default_string_datatype_check);
-					custom_protocol[call_name].sanitize_value_check = template_ini->getBool(call_name + ".Sanitize Value Check", default_sanitize_value_check);
-					custom_protocol[call_name].bad_chars_action = template_ini->getString(call_name + ".Bad Chars Action", default_bad_chars_action);
-					custom_protocol[call_name].bad_chars = template_ini->getString(call_name + ".Bad Chars", default_bad_chars);
-
-					if ((boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("STRIP")) == 1) || (boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("NONE")) == 1))
-					{					
-						std::list<Poco::DynamicAny> sql_list;
-						sql_list.push_back(Poco::DynamicAny(sql_str));
-
-						for (int x = (custom_protocol[call_name].number_of_inputs + 1); x > 0; --x)
+						sql_line_num++;
+						sql_line_num_str = Poco::NumberFormatter::format(sql_line_num);
+						if (!(template_ini->has(call_name + ".SQL" + sql_line_num_str + "_1")))
 						{
-							std::string input_val_str = "$INPUT_" + Poco::NumberFormatter::format(x);
-							size_t input_val_len = input_val_str.length();
+							break;
+						}
+						
+						std::string sql_str;
 
-							std::string input_stringval_str = "$INPUT_STRING_" + Poco::NumberFormatter::format(x);
-							size_t input_stringval_len = input_stringval_str.length();
-
-							std::string input_beguidval_str = "$INPUT_BEGUID_" + Poco::NumberFormatter::format(x);
-							size_t input_beguidval_len = input_beguidval_str.length();
-
-							for(std::list<Poco::DynamicAny>::iterator it_sql_list = sql_list.begin(); it_sql_list != sql_list.end(); ++it_sql_list) 
+						sql_part_num = 0;
+						while (true)
+						{
+							sql_part_num++;
+							sql_part_num_str = Poco::NumberFormatter::format(sql_part_num);							
+							if (!(template_ini->has(call_name + ".SQL" + sql_line_num_str + "_" + sql_part_num_str)))
 							{
-								if (it_sql_list->isString())
-								{
-									std::string work_str = *it_sql_list;
-									std::string tmp_str;
-									while (true)
-									{
-										size_t pos;
-										size_t pos2;
-										size_t pos3;
-										pos = work_str.find(input_val_str);
-										pos2 = work_str.find(input_stringval_str);
-										pos3 = work_str.find(input_beguidval_str);
+								break;
+							}
+							else
+							{
+								sql_str += (template_ini->getString(call_name + ".SQL" + sql_line_num_str + "_" + sql_part_num_str)) + " " ;		
+							}
+						}
 
-										if ((pos < pos2) && (pos < pos3))
+						if (sql_part_num > 1) // Remove trailing Whitespace
+						{
+							sql_str = sql_str.substr(0, sql_str.size()-1);
+						}
+						
+						custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", default_number_of_inputs);
+						custom_protocol[call_name].string_datatype_check = template_ini->getBool(call_name + ".String Datatype Check", default_string_datatype_check);
+						custom_protocol[call_name].sanitize_value_check = template_ini->getBool(call_name + ".Sanitize Value Check", default_sanitize_value_check);
+						custom_protocol[call_name].bad_chars_action = template_ini->getString(call_name + ".Bad Chars Action", default_bad_chars_action);
+						custom_protocol[call_name].bad_chars = template_ini->getString(call_name + ".Bad Chars", default_bad_chars);
+
+						if ((boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("STRIP")) == 1) || (boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("NONE")) == 1))
+						{					
+							std::list<Poco::DynamicAny> sql_list;
+							sql_list.push_back(Poco::DynamicAny(sql_str));
+
+							for (int x = (custom_protocol[call_name].number_of_inputs + 1); x > 0; --x)
+							{
+								std::string input_val_str = "$INPUT_" + Poco::NumberFormatter::format(x);
+								size_t input_val_len = input_val_str.length();
+
+								std::string input_stringval_str = "$INPUT_STRING_" + Poco::NumberFormatter::format(x);
+								size_t input_stringval_len = input_stringval_str.length();
+
+								std::string input_beguidval_str = "$INPUT_BEGUID_" + Poco::NumberFormatter::format(x);
+								size_t input_beguidval_len = input_beguidval_str.length();
+
+								for(std::list<Poco::DynamicAny>::iterator it_sql_list = sql_list.begin(); it_sql_list != sql_list.end(); ++it_sql_list) 
+								{
+									if (it_sql_list->isString())
+									{
+										std::string work_str = *it_sql_list;
+										std::string tmp_str;
+										while (true)
 										{
-											tmp_str = work_str.substr(0, pos);
-											work_str = work_str.substr((pos + input_val_len), std::string::npos);
-											
-											std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, x);
-											new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
-										}
-										else if ((pos2 < pos) && (pos2 < pos3))
-										{
-											tmp_str = work_str.substr(0, pos2);
-											work_str = work_str.substr((pos2 + input_stringval_len), std::string::npos);
-											
-											std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, -x);
-											new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
-										}
-										else if ((pos3 < pos) && (pos3 < pos2))
-										{
-											tmp_str = work_str.substr(0, pos3);
-											work_str = work_str.substr((pos3 + input_beguidval_len), std::string::npos);
-											
-											std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, (-x -1000));
-											new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
-										}
-										else
-										{
-											if (!work_str.empty())
+											size_t pos;
+											size_t pos2;
+											size_t pos3;
+											pos = work_str.find(input_val_str);
+											pos2 = work_str.find(input_stringval_str);
+											pos3 = work_str.find(input_beguidval_str);
+
+											if ((pos < pos2) && (pos < pos3))
 											{
-												sql_list.insert(it_sql_list, work_str);
-												it_sql_list = sql_list.erase(it_sql_list);
-												--it_sql_list;
+												tmp_str = work_str.substr(0, pos);
+												work_str = work_str.substr((pos + input_val_len), std::string::npos);
+												
+												std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, x);
+												new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
 											}
-											break;
+											else if ((pos2 < pos) && (pos2 < pos3))
+											{
+												tmp_str = work_str.substr(0, pos2);
+												work_str = work_str.substr((pos2 + input_stringval_len), std::string::npos);
+												
+												std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, -x);
+												new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
+											}
+											else if ((pos3 < pos) && (pos3 < pos2))
+											{
+												tmp_str = work_str.substr(0, pos3);
+												work_str = work_str.substr((pos3 + input_beguidval_len), std::string::npos);
+												
+												std::list<Poco::DynamicAny>::iterator new_it_sql_vector = sql_list.insert(it_sql_list, (-x -1000));
+												new_it_sql_vector = sql_list.insert(new_it_sql_vector, tmp_str);
+											}
+											else
+											{
+												if (!work_str.empty())
+												{
+													sql_list.insert(it_sql_list, work_str);
+													it_sql_list = sql_list.erase(it_sql_list);
+													--it_sql_list;
+												}
+												break;
+											}
 										}
 									}
 								}
 							}
+							//custom_protocol[call_name].sql = sql_list;
+							custom_protocol[call_name].sql_statements.push_back(sql_list);
 						}
-						custom_protocol[call_name].sql = sql_list;
-					}
-					else
-					{
-						status = false;
-						#ifdef TESTING
-							std::cout << "extDB: DB_CUSTOM_V3: Unknown Bad Strings Action for " << call_name << ":" << custom_protocol[call_name].bad_chars_action << std::endl;
-						#endif
-						BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V3: Unknown Bad Strings Action for " << call_name << ":" << custom_protocol[call_name].bad_chars_action;
+						else
+						{
+							status = false;
+							#ifdef TESTING
+								std::cout << "extDB: DB_CUSTOM_V3: Unknown Bad Strings Action for " << call_name << ":" << custom_protocol[call_name].bad_chars_action << std::endl;
+							#endif
+							BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V3: Unknown Bad Strings Action for " << call_name << ":" << custom_protocol[call_name].bad_chars_action;
+						}
 					}
 				}
 			}
@@ -291,170 +312,185 @@ void DB_CUSTOM_V3::getBEGUID(std::string &input_str, std::string &result)
 
 void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result)
 {
-	std::string sql_str;
-	std::string tmp_str;
+	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
+	Poco::Data::Statement sql_current(db_session);
 
-	
-	for(std::list<Poco::DynamicAny>::const_iterator it_sql_list = (itr->second.sql).begin(); it_sql_list != (itr->second.sql).end(); ++it_sql_list) 
+	for(std::vector< std::list<Poco::DynamicAny> >::const_iterator it_sql_statements_vector = itr->second.sql_statements.begin(); it_sql_statements_vector != itr->second.sql_statements.end(); ++it_sql_statements_vector)
 	{
-		if (it_sql_list->isString())  // Check for $Input Variable
+		std::string sql_str;
+		std::string tmp_str;
+
+		for(std::list<Poco::DynamicAny>::const_iterator it_sql_list = it_sql_statements_vector->begin(); it_sql_list != it_sql_statements_vector->end(); ++it_sql_list) 
+//		for(std::list<Poco::DynamicAny>::const_iterator it_sql_list = it_sql_statements_vector->second.sql.begin(); it_sql_list != it_sql_statements_vector->second.sql.end(); ++it_sql_list) 
 		{
-			sql_str += it_sql_list->convert<std::string>();
+			if (it_sql_list->isString())  // Check for $Input Variable
+			{
+				sql_str += it_sql_list->convert<std::string>();
+			}
+			else
+			{
+				if (*it_sql_list > 0) // Convert $Input to String
+				{
+					if (itr->second.sanitize_value_check)
+					{
+						// Sanitize Check
+						if (!Sqf::check(tokens[*it_sql_list]))
+						{
+							sanitize_value_check_ok = false;
+							break;
+						}
+					}
+					sql_str += tokens[*it_sql_list]; 
+				}
+				else if (*it_sql_list > -1000) // Convert $Input to String ""
+				{
+					tmp_str = tokens[(-1 * *it_sql_list)];
+					boost::erase_all(tmp_str, "\"");
+					tmp_str = "\"" + tmp_str + "\"";
+
+					if (itr->second.sanitize_value_check)
+					{
+						// Sanitize Check
+						if (!Sqf::check(tmp_str))
+						{
+							sanitize_value_check_ok = false;
+							break;
+						}
+					}
+
+					sql_str += tmp_str;
+				}
+				else // Convert $Input to "BEGUID"
+				{
+					std::string input_str_test = tokens[((-1 * *it_sql_list) - 1000)];
+					getBEGUID(input_str_test, tmp_str);
+					sql_str += tmp_str;
+				}
+			}
+		}
+
+		if (sanitize_value_check_ok)
+		{
+			try 
+			{
+				Poco::Data::Statement sql(db_session);
+				sql << sql_str;
+				sql.execute();
+				sql_current.swap(sql);
+			}
+			catch (Poco::Data::SQLite::DBLockedException& e)
+			{
+				#ifdef TESTING
+					std::cout << "extDB: DB_CUSTOM_V3: Error DBLockedException: " + e.displayText() << std::endl;
+				#endif
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DBLockedException: " + e.displayText();
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DBLockedException: SQL:" + sql_str;
+				result = "[0,\"Error DBLocked Exception\"]";
+			}
+			catch (Poco::Data::MySQL::ConnectionException& e)
+			{
+				#ifdef TESTING
+					std::cout << "extDB: DB_CUSTOM_V3: Error ConnectionException: " + e.displayText() << std::endl;
+				#endif
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error ConnectionException: " + e.displayText();
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error ConnectionException: SQL:" + sql_str;
+			}
+			catch(Poco::Data::MySQL::StatementException& e)
+			{
+				#ifdef TESTING
+					std::cout << "extDB: DB_CUSTOM_V3: Error StatementException: " + e.displayText() << std::endl;
+				#endif
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error StatementException: " + e.displayText();
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error StatementException: SQL:" + sql_str;
+				result = "[0,\"Error Statement Exception\"]";
+			}
+			catch (Poco::Data::DataException& e)
+			{
+				#ifdef TESTING
+					std::cout << "extDB: DB_CUSTOM_V3: Error DataException: " + e.displayText() << std::endl;
+				#endif
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DataException: " + e.displayText();
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DataException: SQL:" + sql_str;
+				result = "[0,\"Error Data Exception\"]";
+			}
+			catch (Poco::Exception& e)
+			{
+				#ifdef TESTING
+					std::cout << "extDB: DB_CUSTOM_V3: Error Exception: " + e.displayText() << std::endl;
+				#endif
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Exception: " + e.displayText();
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Exception: SQL:" + sql_str;
+				result = "[0,\"Error Exception\"]";
+			}
 		}
 		else
 		{
-			if (*it_sql_list > 0) // Convert $Input to String
-			{
-				if (itr->second.sanitize_value_check)
-				{
-					// Sanitize Check
-					if (!Sqf::check(tokens[*it_sql_list]))
-					{
-						sanitize_value_check_ok = false;
-						break;
-					}
-				}
-				sql_str += tokens[*it_sql_list]; 
-			}
-			else if (*it_sql_list > -1000) // Convert $Input to String ""
-			{				
-				tmp_str = tokens[(-1 * *it_sql_list)];
-				boost::erase_all(tmp_str, "\"");
-				tmp_str = "\"" + tmp_str + "\"";
-
-				if (itr->second.sanitize_value_check)
-				{
-					// Sanitize Check
-					if (!Sqf::check(tmp_str))
-					{
-						sanitize_value_check_ok = false;
-						break;
-					}
-				}
-
-				sql_str += tmp_str;
-			}
-			else // Convert $Input to "BEGUID"
-			{
-				getBEGUID(tokens[(-1 * *it_sql_list)], tmp_str);
-				sql_str += "\"" + tmp_str + "\"";
-			}
+			break;
 		}
 	}
 
 	if (sanitize_value_check_ok)
 	{
-		try 
+		Poco::Data::RecordSet rs(sql_current);
+
+		result = "[1,[";
+		std::size_t cols = rs.columnCount();
+		if (cols >= 1)
 		{
-			Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-			Poco::Data::Statement sql(db_session);
-			sql << sql_str;
-			sql.execute();
-			Poco::Data::RecordSet rs(sql);
-
-			result = "[1,[";
-			std::size_t cols = rs.columnCount();
-			if (cols >= 1)
+			bool more = rs.moveFirst();
+			while (more)
 			{
-				bool more = rs.moveFirst();
-				while (more)
+				result += "[";
+				for (std::size_t col = 0; col < cols; ++col)
 				{
-					result += "[";
-					for (std::size_t col = 0; col < cols; ++col)
-					{
-						std::string temp_str = rs[col].convert<std::string>();
+					std::string temp_str = rs[col].convert<std::string>();
 
-						if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
+					if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
+					{
+						if (temp_str.empty())
 						{
-							if (temp_str.empty())
-							{
-								result += ("\"\"");
-							}
-							else
-							{
-								result += "\"" + temp_str + "\"";
-							}
+							result += ("\"\"");
 						}
 						else
 						{
-							if (temp_str.empty())
-							{
-								result += ("\"\"");
-							}
-							else
-							{
-								result += temp_str;
-							}
+							result += "\"" + temp_str + "\"";
 						}
-
-						if (col < (cols - 1))
-						{
-							result += ",";
-						}
-					}
-					more = rs.moveNext();
-					if (more)
-					{
-						result += "],";
 					}
 					else
 					{
-						result += "]";
+						if (temp_str.empty())
+						{
+							result += ("\"\"");
+						}
+						else
+						{
+							result += temp_str;
+						}
+					}
+
+					if (col < (cols - 1))
+					{
+						result += ",";
 					}
 				}
+				more = rs.moveNext();
+				if (more)
+				{
+					result += "],";
+				}
+				else
+				{
+					result += "]";
+				}
 			}
-			result += "]]";
-			#ifdef TESTING
-				std::cout << "extDB: DB_CUSTOM_V3: Trace: Result: " + result << std::endl;
-			#endif
-			#ifdef DEBUG_LOGGING
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_CUSTOM_V3: Trace: Result: " + result;
-			#endif
 		}
-		catch (Poco::Data::SQLite::DBLockedException& e)
-		{
-			#ifdef TESTING
-				std::cout << "extDB: DB_CUSTOM_V3: Error DBLockedException: " + e.displayText() << std::endl;
-			#endif
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DBLockedException: " + e.displayText();
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DBLockedException: SQL:" + sql_str;
-			result = "[0,\"Error DBLocked Exception\"]";
-		}
-		catch (Poco::Data::MySQL::ConnectionException& e)
-		{
-			#ifdef TESTING
-				std::cout << "extDB: DB_CUSTOM_V3: Error ConnectionException: " + e.displayText() << std::endl;
-			#endif
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error ConnectionException: " + e.displayText();
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error ConnectionException: SQL:" + sql_str;
-		}
-		catch(Poco::Data::MySQL::StatementException& e)
-		{
-			#ifdef TESTING
-				std::cout << "extDB: DB_CUSTOM_V3: Error StatementException: " + e.displayText() << std::endl;
-			#endif
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error StatementException: " + e.displayText();
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error StatementException: SQL:" + sql_str;
-			result = "[0,\"Error Statement Exception\"]";
-		}
-		catch (Poco::Data::DataException& e)
-		{
-			#ifdef TESTING
-				std::cout << "extDB: DB_CUSTOM_V3: Error DataException: " + e.displayText() << std::endl;
-			#endif
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DataException: " + e.displayText();
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DataException: SQL:" + sql_str;
-			result = "[0,\"Error Data Exception\"]";
-		}
-		catch (Poco::Exception& e)
-		{
-			#ifdef TESTING
-				std::cout << "extDB: DB_CUSTOM_V3: Error Exception: " + e.displayText() << std::endl;
-			#endif
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Exception: " + e.displayText();
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Exception: SQL:" + sql_str;
-			result = "[0,\"Error Exception\"]";
-		}
+		result += "]]";
+		#ifdef TESTING
+			std::cout << "extDB: DB_CUSTOM_V3: Trace: Result: " + result << std::endl;
+		#endif
+		#ifdef DEBUG_LOGGING
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_CUSTOM_V3: Trace: Result: " + result;
+		#endif
 	}
 }
 

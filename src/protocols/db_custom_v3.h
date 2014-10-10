@@ -49,7 +49,7 @@ class DB_CUSTOM_V3: public AbstractProtocol
 			bool string_datatype_check;
 			std::string bad_chars;
 			std::string bad_chars_action;
-			std::list<Poco::DynamicAny> sql;
+			std::vector< std::list<Poco::DynamicAny> > sql_statements;
 		};
 		boost::unordered_map<std::string, Template_Calls> custom_protocol;
 
