@@ -122,6 +122,13 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 
 					std::string sql_line_num_str;
 					std::string sql_part_num_str;
+
+					custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", default_number_of_inputs);
+					custom_protocol[call_name].string_datatype_check = template_ini->getBool(call_name + ".String Datatype Check", default_string_datatype_check);
+					custom_protocol[call_name].sanitize_value_check = template_ini->getBool(call_name + ".Sanitize Value Check", default_sanitize_value_check);
+					custom_protocol[call_name].bad_chars_action = template_ini->getString(call_name + ".Bad Chars Action", default_bad_chars_action);
+					custom_protocol[call_name].bad_chars = template_ini->getString(call_name + ".Bad Chars", default_bad_chars);
+
 					while (true)
 					{
 						sql_line_num++;
@@ -152,19 +159,13 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 						{
 							sql_str = sql_str.substr(0, sql_str.size()-1);
 						}
-						
-						custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", default_number_of_inputs);
-						custom_protocol[call_name].string_datatype_check = template_ini->getBool(call_name + ".String Datatype Check", default_string_datatype_check);
-						custom_protocol[call_name].sanitize_value_check = template_ini->getBool(call_name + ".Sanitize Value Check", default_sanitize_value_check);
-						custom_protocol[call_name].bad_chars_action = template_ini->getString(call_name + ".Bad Chars Action", default_bad_chars_action);
-						custom_protocol[call_name].bad_chars = template_ini->getString(call_name + ".Bad Chars", default_bad_chars);
 
 						if ((boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("STRIP")) == 1) || (boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("NONE")) == 1))
 						{					
 							std::list<Poco::DynamicAny> sql_list;
 							sql_list.push_back(Poco::DynamicAny(sql_str));
 
-							for (int x = (custom_protocol[call_name].number_of_inputs + 1); x > 0; --x)
+							for (int x = (custom_protocol[call_name].number_of_inputs); x > 0; --x)
 							{
 								std::string input_val_str = "$INPUT_" + Poco::NumberFormatter::format(x);
 								size_t input_val_len = input_val_str.length();
@@ -278,6 +279,7 @@ void DB_CUSTOM_V3::getBEGUID(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_md5);
 	bool status = true;
+	
 	if (input_str.empty())
 	{
 		status = false;
