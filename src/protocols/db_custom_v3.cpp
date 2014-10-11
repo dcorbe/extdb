@@ -278,16 +278,23 @@ void DB_CUSTOM_V3::getBEGUID(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_md5);
 	bool status = true;
-	for (unsigned int index=0; index < input_str.length(); index++)
+	if (input_str.empty())
 	{
-		if (!std::isdigit(input_str[index]))
+		status = false;
+		result = "Invalid SteamID";
+	}
+	else
+	{
+		for (unsigned int index=0; index < input_str.length(); index++)
 		{
-			status = false;
-			result = "Invalid SteamID";
-			break;
+			if (!std::isdigit(input_str[index]))
+			{
+				status = false;
+				result = "Invalid SteamID";
+				break;
+			}
 		}
 	}
-	
 	if (status)
 	{
 		Poco::Int64 steamID = Poco::NumberParser::parse64(input_str);
