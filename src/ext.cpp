@@ -61,8 +61,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "uniqueid.h"
 #include "protocols/abstract_protocol.h"
-#include "protocols/db_basic_v2.h"
-#include "protocols/db_custom_v2.h"
 #include "protocols/db_custom_v3.h"
 #include "protocols/db_procedure_v2.h"
 #include "protocols/db_raw_v2.h"
@@ -417,7 +415,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-	return "19";
+	return "20";
 }
 
 
@@ -584,37 +582,9 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 				std::strcpy(output, "[1]");
 			}
 		}
-		else if (boost::iequals(protocol, std::string("DB_BASIC_V2")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_BASIC_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V2")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
 		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V3")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V2());
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V3());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -738,8 +708,12 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		#ifdef DEBUG_LOGGING
 			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << "Extension Input from Server: " +  std::string(function);
 		#endif
+
 		const std::string input_str(function);
-		if (input_str.length() <= 2)
+
+		std::string::size_type input_str_length = input_str.length();
+
+		if (input_str_length <= 2)
 		{
 			std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
 			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Message: " + input_str);
@@ -765,32 +739,41 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					}
 					else
 					{
-						bool found_procotol = false;
 						const std::string protocol = input_str.substr(2,(found-2));
-						// Data
-						std::string data = input_str.substr(found+1);
-						int unique_id = getUniqueID_mutexlock();
 
-						// Check for Protocol Name Exists...
-						// Do this so if someone manages to get server, the error message wont get stored in the result unordered map
+						if (found == (input_str_length - 1))
 						{
-							boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
-							if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
-							{
-								std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
-								BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Unknown Protocol: " + protocol);
-							}
-							else
-							{
-								unordered_map_wait[unique_id] = true;
-								found_procotol = true;
-							}
+							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
 						}
-						// Only Add Job to Work Queue + Return ID if Protocol Name exists.
-						if (found_procotol)
+						else
 						{
-							io_service.post(boost::bind(&Ext::asyncCallProtocol, this, protocol, data, unique_id));
-							std::strcpy(output, (("[2,\"" + Poco::NumberFormatter::format(unique_id) + "\"]")).c_str());
+							bool found_procotol = false;
+							// Data
+							std::string data = input_str.substr(found+1);
+							int unique_id = getUniqueID_mutexlock();
+
+							// Check for Protocol Name Exists...
+							// Do this so if someone manages to get server, the error message wont get stored in the result unordered map
+							{
+								boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
+								if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
+								{
+									std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
+									BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Unknown Protocol: " + protocol);
+								}
+								else
+								{
+									unordered_map_wait[unique_id] = true;
+									found_procotol = true;
+								}
+							}
+							// Only Add Job to Work Queue + Return ID if Protocol Name exists.
+							if (found_procotol)
+							{
+								io_service.post(boost::bind(&Ext::asyncCallProtocol, this, protocol, data, unique_id));
+								std::strcpy(output, (("[2,\"" + Poco::NumberFormatter::format(unique_id) + "\"]")).c_str());
+							}
 						}
 					}
 					break;
@@ -819,11 +802,19 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					}
 					else
 					{
-						const std::string protocol = input_str.substr(2,(found-2));
-						// Data
-						const std::string data = input_str.substr(found+1);
-						io_service.post(boost::bind(&Ext::onewayCallProtocol, this, protocol, data));
-						std::strcpy(output, "[1]");
+						if (found == (input_str_length - 1))
+						{
+							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+						}
+						else
+						{
+							const std::string protocol = input_str.substr(2,(found-2));
+							// Data
+							const std::string data = input_str.substr(found+1);
+							io_service.post(boost::bind(&Ext::onewayCallProtocol, this, protocol, data));
+							std::strcpy(output, "[1]");
+						}
 					}
 					break;
 				}
@@ -839,10 +830,18 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					}
 					else
 					{
-						const std::string protocol = input_str.substr(2,(found-2));
-						// Data
-						const std::string data = input_str.substr(found+1);
-						syncCallProtocol(output, output_size, protocol, data);
+						if (found == (input_str_length - 1))
+						{
+							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+						}
+						else
+						{
+							const std::string protocol = input_str.substr(2,(found-2));
+							// Data
+							const std::string data = input_str.substr(found+1);
+							syncCallProtocol(output, output_size, protocol, data);
+						};
 					}
 					break;
 				}

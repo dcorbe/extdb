@@ -18,10 +18,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include <boost/thread/thread.hpp>
 #include <boost/unordered_map.hpp>
 
 #include <Poco/DynamicAny.h>
 #include <Poco/StringTokenizer.h>
+
+#include <Poco/MD5Engine.h>
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
@@ -34,17 +37,22 @@ class DB_CUSTOM_V3: public AbstractProtocol
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 		
 	private:
+		Poco::MD5Engine md5;
+		boost::mutex mutex_md5;
+
 		std::string db_custom_name;
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
 		
 		struct Template_Calls {
-			std::list<Poco::DynamicAny> sql;
 			int number_of_inputs;
-			bool sanitize_check;
-			bool strip_strings_enabled;
-			std::vector< std::string > strip_strings;
+			bool sanitize_value_check;
+			bool string_datatype_check;
+			std::string bad_chars;
+			std::string bad_chars_action;
+			std::vector< std::list<Poco::DynamicAny> > sql_statements;
 		};
 		boost::unordered_map<std::string, Template_Calls> custom_protocol;
 
-		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, std::string &result);
+		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result);
+		void getBEGUID(std::string &input_str, std::string &result);
 };
