@@ -1,17 +1,29 @@
-20 WIP
-	ADDED: DB_CUSTOM_V3 $INPUT_STRING_x which will add "" around input values. Reason later on will integerate this with Sanitize Checks.
-	
-	ADDED: DB_CUSTOM_V3 $INPUT_BEGUID_x which will convert Player UID -> BeGUID + wrap around with "".
+20
+	ADDED: DB_CUSTOM_V3 Mult-SQL Statement Support.. you can now define multiple SQL Statements to run in sequence after each other.
+			Only result from last SQL Statement is returned.
 
-	ADDED: DB_CUSTOM_V3 'Option String Datatype Check' To disable / enable adding quotation around results. I will prob rename this before release
+	ADDED: DB_CUSTOM_V3 $INPUT_STRING_x which will add "" around input values. This is integrated with Sanitize Value Check.
 	
-	FIXED: DB_CUSTOM_Vx were you have more than 9 Inputs, Max Inputs = 999
+	ADDED: DB_CUSTOM_V3 $INPUT_BEGUID_x which will convert Player UID -> BeGUID + wrap it with "".
+
+	ADDED: DB_CUSTOM_V3 'Option String Datatype Check' To disable / enable adding quotation around results.
+	
+	FIXED: DB_CUSTOM_V3 were you have more than 9 Inputs, Max Inputs is now 999
+	
+	CHANGED: DB_CUSTOM_V3 Renamed some options look @ example-a3wasteland.ini.
 	
 	FIXED: SegFault when Data Supplied to some Protocols was empty. It shouldn't happen in normal usage anyways...
 	
 	FIXED: extDB will now use empty string "" for value when value in Database is Null. Before returned string wouldn't compiled.
 	
-	FIXED: mutex Lock for MISC:BEGUID
+	FIXED: mutex Lock issue for MISC:BEGUID
+	
+	
+	REMOVED: DB_CUSTOM_V2, will take less than 5/10 minutes to update config file to new format / features.
+	
+	REMOVED: DB_BASIC_V2, don't know of anyone using this Protocol. 
+				Its now obsolete with Multi-SQL Support in DB_CUSTOM_V3.
+				If anyone needs a hand, give me a shout and will help you update to DB_CUSTOM_V3
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------  
 19
