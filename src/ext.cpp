@@ -24,8 +24,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/MySQL/MySQLException.h>
 #include <Poco/Data/SQLite/Connector.h>
 #include <Poco/Data/SQLite/SQLiteException.h>
-#include <Poco/Data/ODBC/Connector.h>
-#include <Poco/Data/ODBC/ODBCException.h>
 
 #include <Poco/AutoPtr.h>
 #include <Poco/DateTime.h>
@@ -280,7 +278,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 				#endif
 				BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Type: " << db_conn_info.db_type;
 
-				if ( (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1) || (boost::iequals(db_conn_info.db_type, std::string("ODBC")) == 1) )
+				if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
 				{
 					std::string username = pConf->getString(conf_option + ".Username");
 					std::string password = pConf->getString(conf_option + ".Password");
@@ -290,20 +288,12 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 					db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
 
-					if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
+					db_conn_info.db_type = "MySQL";
+					Poco::Data::MySQL::Connector::registerConnector();
+					std::string compress = pConf->getString(conf_option + ".Compress", "false");
+					if (boost::iequals(compress, "true") == 1)
 					{
-						db_conn_info.db_type = "MySQL";
-						Poco::Data::MySQL::Connector::registerConnector();
-						std::string compress = pConf->getString(conf_option + ".Compress", "false");
-						if (boost::iequals(compress, "true") == 1)
-						{
-							db_conn_info.connection_str = db_conn_info.connection_str + ";compress=true";
-						}
-					}
-					else
-					{
-						db_conn_info.db_type = "ODBC";
-						Poco::Data::ODBC::Connector::registerConnector();
+						db_conn_info.connection_str = db_conn_info.connection_str + ";compress=true";
 					}
 
 					db_pool.reset(new DBPool(db_conn_info.db_type, 

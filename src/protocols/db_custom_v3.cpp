@@ -27,8 +27,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/MySQL/MySQLException.h>
 #include <Poco/Data/SQLite/Connector.h>
 #include <Poco/Data/SQLite/SQLiteException.h>
-#include <Poco/Data/ODBC/Connector.h>
-#include <Poco/Data/ODBC/ODBCException.h>
 
 #include <Poco/DynamicAny.h>
 #include <Poco/Exception.h>
@@ -61,10 +59,6 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 	if (extension->getDBType() == std::string("MySQL"))
 	{
 		status = true;
-	}
-	else if (extension->getDBType() == std::string("ODBC"))
-	{
-		status =  true;
 	}
 	else if (extension->getDBType() == std::string("SQLite"))
 	{
