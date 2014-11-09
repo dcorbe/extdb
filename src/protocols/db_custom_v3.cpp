@@ -160,7 +160,10 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 							sql_str = sql_str.substr(0, sql_str.size()-1);
 						}
 
-						if ((boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("STRIP")) == 1) || (boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("NONE")) == 1))
+						if ((boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("NONE")) == 1) || 
+							(boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("STRIP")) == 1)  ||
+							(boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("STRIP+LOG")) == 1)  ||
+							(boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("STRIP+ERROR")) == 1)) 
 						{					
 							std::list<Poco::DynamicAny> sql_list;
 							sql_list.push_back(Poco::DynamicAny(sql_str));
@@ -589,13 +592,18 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 					{
 						BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Bad Char Detected: Input:" + input_str;
 						BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Bad Char Detected: Token:" + tokens[i];
+						bad_chars_error = true;
 					}
-
-					bad_chars_error = true;
-					break;
 
 					// Add String to List
 					inputs.push_back(input_value_str);	
+				}
+			}
+			else
+			{
+				for(int i = 1; i < token_count; ++i) 
+				{
+					inputs.push_back(tokens[i]);	
 				}
 			}
 
@@ -608,6 +616,10 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 					result = "[0,\"Error Values Input is not sanitized\"]";
 					BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Sanitize Check error: Input:" + input_str;
 				}
+			}
+			else
+			{
+				result = "[0,\"Error Bad Char Found\"]";
 			}
 		}
 	}
