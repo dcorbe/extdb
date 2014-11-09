@@ -116,15 +116,6 @@ else()
 	message(FATAL_ERROR "\nMYSQL not found")
 endif()
 
-# ODBC
-include(FindODBC)
-if(ODBC_FOUND)
-	include_directories(${ODBC_INCLUDE_DIR})
-	target_link_libraries(${EXECUTABLE_NAME} ${ODBC_LIBRARY})
-else()
-	message(FATAL_ERROR "\nODBC not found")
-endif()
-
 # Look for Intel Threading Building Blocks (TBB)
 include(FindTBB)
 if(TBB_FOUND)

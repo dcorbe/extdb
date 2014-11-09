@@ -25,8 +25,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <Poco/Data/MySQL/Connector.h>
 #include <Poco/Data/MySQL/MySQLException.h>
-#include <Poco/Data/ODBC/Connector.h>
-#include <Poco/Data/ODBC/ODBCException.h>
 
 #include <Poco/Exception.h>
 #include <Poco/StringTokenizer.h>
@@ -41,10 +39,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 bool DB_PROCEDURE_V2::init(AbstractExt *extension, const std::string init_str)
 {
 	if (extension->getDBType() == std::string("MySQL"))
-	{
-		return true;
-	}
-	else if (extension->getDBType() == std::string("ODBC"))
 	{
 		return true;
 	}
