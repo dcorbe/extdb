@@ -1,3 +1,15 @@
+21
+
+	ADDED: STRIP+LOG / STRIP+ERROR Options for Bad Chars in DB_CUSTOM_V3.  
+	FIXED: Issue if you select NONE for action for Bad Chars Action for DB_CUSTOM_V3.  
+	
+	FIXED: Issue with wrong timestamp for filename, been off by a hour should be fixed now (via newer Poco).  
+
+	REMOVED: ODBC Support Removed, can be re-added if someone needs it.  
+	
+	Windows Binarys are now built using VS2013 + Update Various Libraries i.e Poco Boost MySQL Client Library.    
+	Linux Binarys updated Boost / Poco etc...
+
 20
 	ADDED: DB_CUSTOM_V3 Mult-SQL Statement Support.. you can now define multiple SQL Statements to run in sequence after each other.
 			Only result from last SQL Statement is returned.
