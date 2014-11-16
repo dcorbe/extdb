@@ -59,7 +59,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "uniqueid.h"
 #include "protocols/abstract_protocol.h"
-#include "protocols/db_custom_v3.h"
+#include "protocols/db_custom_v4.h"
 #include "protocols/db_procedure_v2.h"
 #include "protocols/db_raw_v2.h"
 #include "protocols/db_raw_no_extra_quotes_v2.h"
@@ -575,6 +575,20 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V3")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V3());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
+		}
+		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V4")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V4());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{

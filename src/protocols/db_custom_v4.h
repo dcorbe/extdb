@@ -30,7 +30,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_protocol.h"
 
 
-class DB_CUSTOM_V3: public AbstractProtocol
+class DB_CUSTOM_V4: public AbstractProtocol
 {
 	public:
 		bool init(AbstractExt *extension, const std::string init_str);
@@ -50,6 +50,7 @@ class DB_CUSTOM_V3: public AbstractProtocol
 			std::string bad_chars;
 			std::string bad_chars_action;
 			std::vector< std::list<Poco::DynamicAny> > sql_statements;
+			std::vector< int > sql_output;
 		};
 		boost::unordered_map<std::string, Template_Calls> custom_protocol;
 
