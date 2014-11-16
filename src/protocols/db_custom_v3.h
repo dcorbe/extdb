@@ -50,6 +50,7 @@ class DB_CUSTOM_V3: public AbstractProtocol
 			std::string bad_chars;
 			std::string bad_chars_action;
 			std::vector< std::list<Poco::DynamicAny> > sql_statements;
+			std::vector< int > sql_output;
 		};
 		boost::unordered_map<std::string, Template_Calls> custom_protocol;
 
