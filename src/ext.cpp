@@ -60,6 +60,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "uniqueid.h"
 #include "protocols/abstract_protocol.h"
 #include "protocols/db_custom_v4.h"
+#include "protocols/db_custom_v3.h"
 #include "protocols/db_procedure_v2.h"
 #include "protocols/db_raw_v2.h"
 #include "protocols/db_raw_no_extra_quotes_v2.h"
