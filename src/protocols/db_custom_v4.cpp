@@ -101,7 +101,6 @@ bool DB_CUSTOM_V4::init(AbstractExt *extension, const std::string init_str)
 		if (template_ini->hasOption("Default.Version"))
 		{
 			int default_number_of_inputs = template_ini->getInt("Default.Number of Inputs", 0);
-			int default_number_of_outputs = template_ini->getInt("Default.Number of Outputs", 0);
 
 			bool default_string_datatype_check = template_ini->getBool("Default.String Datatype Check", true);
 			bool default_sanitize_value_check = template_ini->getBool("Default.Sanitize Value Check", true);
@@ -121,7 +120,6 @@ bool DB_CUSTOM_V4::init(AbstractExt *extension, const std::string init_str)
 					std::string sql_part_num_str;
 
 					custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", default_number_of_inputs);
-					custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Outputs", default_number_of_outputs);
 					custom_protocol[call_name].string_datatype_check = template_ini->getBool(call_name + ".String Datatype Check", default_string_datatype_check);
 					custom_protocol[call_name].sanitize_value_check = template_ini->getBool(call_name + ".Sanitize Value Check", default_sanitize_value_check);
 					custom_protocol[call_name].bad_chars_action = template_ini->getString(call_name + ".Bad Chars Action", default_bad_chars_action);
