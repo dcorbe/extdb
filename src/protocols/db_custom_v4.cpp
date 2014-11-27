@@ -211,10 +211,10 @@ bool DB_CUSTOM_V4::init(AbstractExt *extension, const std::string init_str)
 								std::string input_beguidval_str = "$INPUT_BEGUID_" + Poco::NumberFormatter::format(x);
 								size_t input_beguidval_len = input_beguidval_str.length();
 
-								std::string input_quotes_stringval_str = "$INPUT_QUOTES_STRING_" + Poco::NumberFormatter::format(x);
+								std::string input_quotes_stringval_str = "$INPUT_ADD_QUOTES_STRING_" + Poco::NumberFormatter::format(x);
 								size_t input_quotes_stringval_len = input_stringval_str.length();
 
-								std::string input_quotes_beguidval_str = "$INPUT_QUOTES_BEGUID_" + Poco::NumberFormatter::format(x);
+								std::string input_quotes_beguidval_str = "$INPUT_ADD_QUOTES_BEGUID_" + Poco::NumberFormatter::format(x);
 								size_t input_quotes_beguidval_len = input_beguidval_str.length();
 
 								for(std::list<Poco::DynamicAny>::iterator it_sql_list = sql_list.begin(); it_sql_list != sql_list.end(); ++it_sql_list) 
@@ -519,7 +519,35 @@ void DB_CUSTOM_V4::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 					
 					if (col >= sql_output_count)
 					{
-						result += temp_str;
+						if (itr->second.string_datatype_check)
+						{
+							if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+							{
+								if (temp_str.empty())
+								{
+									result += ("\"\"");
+								}
+								else
+								{
+									result += "\"" + temp_str + "\"";
+								}
+							}
+							else
+							{
+								if (temp_str.empty())
+								{
+									result += ("\"\"");
+								}
+								else
+								{
+									result += temp_str;
+								}
+							}
+						}
+						else
+						{
+							result += temp_str;
+						}
 					}
 					else
 					{
