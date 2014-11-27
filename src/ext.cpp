@@ -406,7 +406,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-	return "21";
+	return "22";
 }
 
 
