@@ -59,8 +59,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "uniqueid.h"
 #include "protocols/abstract_protocol.h"
+#include "protocols/db_custom_v5.h"
 #include "protocols/db_custom_v4.h"
-#include "protocols/db_custom_v3.h"
 #include "protocols/db_procedure_v2.h"
 #include "protocols/db_raw_v2.h"
 #include "protocols/db_raw_no_extra_quotes_v2.h"
@@ -228,7 +228,7 @@ Ext::~Ext(void)
 }
 
 void Ext::stop()
-{	
+{
 	#ifdef TESTING
 		std::cout << "extDB: Stopping Please Wait ..." << std::endl;
 	#endif
@@ -448,6 +448,28 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 }
 
 
+std::pair<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap> Ext::getDBSessionCustom_mutexlock()
+// Gets available DB Session (mutex lock)
+{
+	try
+	{
+		boost::lock_guard<boost::mutex> lock(mutex_db_pool);
+		std::pair<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap > free_session = db_pool->extDB_get();
+		return free_session;
+	}
+	catch (Poco::Data::SessionPoolExhaustedException&)
+	//	Exceptiontal Handling in event of scenario if all asio worker threads are busy using all db connections
+	//		And there is SYNC call using db & db_pool = exhausted
+	{
+		Poco::Data::Session new_session(db_conn_info.db_type, db_conn_info.connection_str);
+		Poco::Data::SessionPool::StatementCacheMap statement_list;
+		return (std::make_pair(new_session, statement_list));
+	}
+}
+
+//std::pair<Session, std::unordered_map <std::string, Poco::SharedPtr<Poco::Data::Statement> > > SessionPool::extDB_get()
+
+
 std::string Ext::getDBType()
 {
 	return db_conn_info.db_type;
@@ -460,7 +482,7 @@ void Ext::getSinglePartResult_mutexlock(const int &unique_id, char *output, cons
 //   If >, sends [5] to indicate MultiPartResult
 {
 	boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results); // TODO Try to make Mutex Lock smaller
-	boost::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
+	std::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
 	if (it == unordered_map_results.end()) // NO UNIQUE ID or WAIT
 	{
 		if (unordered_map_wait.count(unique_id) == 0)
@@ -496,7 +518,7 @@ void Ext::getMultiPartResult_mutexlock(const int &unique_id, char *output, const
 //   If >, then sends 1 part to arma + stores rest.
 {
 	boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results); // TODO Try to make Mutex Lock smaller
-	boost::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
+	std::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
 	if (it == unordered_map_results.end()) // NO UNIQUE ID or WAIT
 	{
 		if (unordered_map_wait.count(unique_id) == 0)
@@ -573,9 +595,9 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 				std::strcpy(output, "[1]");
 			}
 		}
-		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V3")) == 1)
+		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V4")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V3());
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V4());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -587,9 +609,9 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 				std::strcpy(output, "[1]");
 			}
 		}
-		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V4")) == 1)
+		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V5")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V4());
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V5());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -654,7 +676,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 void Ext::syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data)
 // Sync callPlugin
 {
-	boost::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
+	std::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
 	if (itr == unordered_map_protocol.end())
 	{
 		std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
@@ -685,7 +707,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 void Ext::onewayCallProtocol(const std::string protocol, const std::string data)
 // ASync callProtocol
 {
-	boost::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
+	std::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
 	if (itr != unordered_map_protocol.end())
 	{
 		std::string result;

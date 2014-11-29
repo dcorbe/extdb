@@ -20,6 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <Poco/AutoPtr.h>
 #include <Poco/Data/Session.h>
+#include <Poco/Data/SessionPool.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
 #include <boost/log/core.hpp>
@@ -33,6 +34,7 @@ class AbstractExt
 {
 	public:
 		virtual Poco::Data::Session getDBSession_mutexlock()=0;
+		virtual std::pair<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap> getDBSessionCustom_mutexlock()=0;
 		virtual std::string getAPIKey()=0;
 		
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;

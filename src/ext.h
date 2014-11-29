@@ -20,9 +20,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/asio.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/thread.hpp>
-#include <boost/unordered_map.hpp>
 
 #include <Poco/Data/SessionPool.h>
+
+#include <unordered_map>
 
 #include "uniqueid.h"
 
@@ -33,14 +34,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class DBPool : public Poco::Data::SessionPool
 {
 	public:
+
 		DBPool(const std::string& sessionKey, const std::string& connectionString, int minSessions, int maxSessions, int idleTime): Poco::Data::SessionPool(sessionKey, connectionString, minSessions, maxSessions, idleTime)
 		{
 		}
 		virtual ~DBPool()
 		{
 		}
-
-		
+	
 	protected:
 		void customizeSession (Poco::Data::Session& session);
 };
@@ -48,6 +49,7 @@ class DBPool : public Poco::Data::SessionPool
 class Ext: public AbstractExt
 {
 	public:
+
 		Ext();
 		~Ext();
 
@@ -57,6 +59,7 @@ class Ext: public AbstractExt
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
 
 		Poco::Data::Session getDBSession_mutexlock();
+		std::pair<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap> getDBSessionCustom_mutexlock();
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
 		void stop();
 
@@ -101,20 +104,20 @@ class Ext: public AbstractExt
 		void getMultiPartResult_mutexlock(const int &unique_id, char *output, const int &output_size);
 		void sendResult_mutexlock(const std::string &result, char *output, const int &output_size);
 
-		// boost::unordered_map + mutex -- for Plugin Loaded
-		boost::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> > unordered_map_protocol;
+		// std::unordered_map + mutex -- for Plugin Loaded
+		std::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> > unordered_map_protocol;
 		boost::mutex mutex_unordered_map_protocol;
 
-		// boost::unordered_map + mutex -- for Stored Results to long for outputsize
-		boost::unordered_map<int, bool> unordered_map_wait;
-		boost::unordered_map<int, std::string> unordered_map_results;
+		// std::unordered_map + mutex -- for Stored Results to long for outputsize
+		std::unordered_map<int, bool> unordered_map_wait;
+		std::unordered_map<int, std::string> unordered_map_results;
 		boost::mutex mutex_unordered_map_results;  // Using Same Lock for Wait / Results / Plugins
 
 		// Unique ID for key for ^^
 		boost::shared_ptr<IdManager> mgr;
 		boost::mutex mutex_unique_id;
 
-		// Plugins
+		// Protocols
 		void addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name, const std::string &init_data);
 
 		void syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data);

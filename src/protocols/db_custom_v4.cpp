@@ -370,7 +370,7 @@ void DB_CUSTOM_V4::getBEGUID(std::string &input_str, std::string &result)
 }
 
 
-void DB_CUSTOM_V4::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result)
+void DB_CUSTOM_V4::callCustomProtocol(AbstractExt *extension, std::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result)
 {
 	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 	Poco::Data::Statement sql_current(db_session);
@@ -635,7 +635,7 @@ void DB_CUSTOM_V4::callProtocol(AbstractExt *extension, std::string input_str, s
 	Poco::StringTokenizer tokens(input_str, ":");
 	
 	int token_count = tokens.count();
-	boost::unordered_map<std::string, Template_Calls>::const_iterator itr = custom_protocol.find(tokens[0]);
+	std::unordered_map<std::string, Template_Calls>::const_iterator itr = custom_protocol.find(tokens[0]);
 	if (itr == custom_protocol.end())
 	{
 		result = "[0,\"Error No Custom Call Not Found\"]";
@@ -718,10 +718,7 @@ void DB_CUSTOM_V4::callProtocol(AbstractExt *extension, std::string input_str, s
 			}
 			else
 			{
-				for(int i = 1; i < token_count; ++i) 
-				{
-					inputs.push_back(tokens[i]);	
-				}
+				inputs.insert( inputs.end(), tokens.begin(), tokens.end());
 			}
 
 			if (!(bad_chars_error))

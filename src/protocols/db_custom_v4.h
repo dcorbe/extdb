@@ -19,12 +19,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <boost/thread/thread.hpp>
-#include <boost/unordered_map.hpp>
 
 #include <Poco/DynamicAny.h>
 #include <Poco/StringTokenizer.h>
-
 #include <Poco/MD5Engine.h>
+
+#include <unordered_map>
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
@@ -52,8 +52,8 @@ class DB_CUSTOM_V4: public AbstractProtocol
 			std::vector< std::list<Poco::DynamicAny> > sql_statements;
 			std::vector< int > sql_output;
 		};
-		boost::unordered_map<std::string, Template_Calls> custom_protocol;
+		std::unordered_map<std::string, Template_Calls> custom_protocol;
 
-		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result);
+		void callCustomProtocol(AbstractExt *extension, std::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result);
 		void getBEGUID(std::string &input_str, std::string &result);
 };
