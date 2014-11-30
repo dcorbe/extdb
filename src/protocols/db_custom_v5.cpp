@@ -580,6 +580,8 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 		}
 		else
 		{
+			bool sanitize_value_check_ok = true;
+
 			std::vector< std::string > inputs;
 			std::string input_value_str;
 
@@ -603,14 +605,30 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 						// 2 Convert to BEGUID
 					{
 						case 1:
-						{
+						{					
 							boost::erase_all(input_value_str, "\"");
 							input_value_str = "\"" + input_value_str + "\"";
+
+							if (itr->second.sanitize_value_check)
+							{
+								if (!Sqf::check(input_value_str))
+								{
+									sanitize_value_check_ok = false;
+								}
+							}
 							break;
 						}
 						case 2:
 						{
 							getBEGUID(input_value_str, input_value_str);
+
+							if (itr->second.sanitize_value_check)
+							{
+								if (!Sqf::check(input_value_str))
+								{
+									sanitize_value_check_ok = false;
+								}
+							}
 							break;
 						}
 					}
@@ -646,11 +664,27 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 						{
 							boost::erase_all(input_value_str, "\"");
 							input_value_str = "\"" + input_value_str + "\"";
+
+							if (itr->second.sanitize_value_check)
+							{
+								if (!Sqf::check(input_value_str))
+								{
+									sanitize_value_check_ok = false;
+								}
+							}
 							break;
 						}
 						case 2:
 						{
 							getBEGUID(input_value_str, input_value_str);
+
+							if (itr->second.sanitize_value_check)
+							{
+								if (!Sqf::check(input_value_str))
+								{
+									sanitize_value_check_ok = false;
+								}
+							}
 							break;
 						}
 					}
@@ -687,11 +721,27 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 						{
 							boost::erase_all(input_value_str, "\"");
 							input_value_str = "\"" + input_value_str + "\"";
+
+							if (itr->second.sanitize_value_check)
+							{
+								if (!Sqf::check(input_value_str))
+								{
+									sanitize_value_check_ok = false;
+								}
+							}
 							break;
 						}
 						case 2:
 						{
 							getBEGUID(input_value_str, input_value_str);
+
+							if (itr->second.sanitize_value_check)
+							{
+								if (!Sqf::check(input_value_str))
+								{
+									sanitize_value_check_ok = false;
+								}
+							}
 							break;
 						}
 					}
@@ -706,12 +756,14 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 
 			if (!(bad_chars_error))
 			{
-				bool sanitize_value_check_ok = true;
-				callCustomProtocol(extension, tokens[0], itr, inputs, input_str, sanitize_value_check_ok, result);
 				if (!sanitize_value_check_ok)
 				{
 					result = "[0,\"Error Values Input is not sanitized\"]";
 					BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Sanitize Check error: Input:" + input_str;
+				}
+				else
+				{
+					callCustomProtocol(extension, tokens[0], itr, inputs, input_str, sanitize_value_check_ok, result);
 				}
 			}
 			else
