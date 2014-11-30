@@ -429,6 +429,7 @@ void Ext::freeUniqueID_mutexlock(const int &unique_id)
 	mgr.get()->FreeId(unique_id);
 }
 
+
 Poco::Data::Session Ext::getDBSession_mutexlock()
 // Gets available DB Session (mutex lock)
 {
@@ -446,6 +447,15 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 		return new_session;
 	}
 }
+
+/*
+void Ext::putbackDBSession_mutexlock(Poco::Data::Session session)
+// Gets available DB Session (mutex lock)
+{
+	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
+	db_pool->putback(session);
+}
+*/
 
 
 std::pair<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap> Ext::getDBSessionCustom_mutexlock()

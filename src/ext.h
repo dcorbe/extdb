@@ -60,6 +60,7 @@ class Ext: public AbstractExt
 
 		Poco::Data::Session getDBSession_mutexlock();
 		std::pair<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap> getDBSessionCustom_mutexlock();
+		//void putbackDBSession_mutexlock(Poco::Data::Session session);
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
 		void stop();
 

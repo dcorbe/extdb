@@ -169,7 +169,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 							{
 								// 0 Nothing
 								// 1 Add Quotes
-								// 2 Auto String Check
+								// 2 Convert to BEGUID
 
 								if ((boost::iequals(tokens_input[x], std::string("N")) == 1) || (boost::iequals(tokens_input[x], std::string("Nothing")) == 1))
 								{
@@ -179,7 +179,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 								{
 									custom_protocol[call_name].sql_inputs.push_back(1);
 								}
-								else if ((boost::iequals(tokens_input[x], std::string("A")) == 1) || (boost::iequals(tokens_input[x], std::string("Auto")) == 1))
+								else if ((boost::iequals(tokens_input[x], std::string("B")) == 1) || (boost::iequals(tokens_input[x], std::string("BEGUID")) == 1))
 								{
 									custom_protocol[call_name].sql_inputs.push_back(2);
 								}
@@ -202,7 +202,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 							{
 								// 0 Nothing
 								// 1 Add Quotes
-								// 2 Auto String Check
+								// 9 Auto String Check
 
 								if ((boost::iequals(tokens_output[x], std::string("N")) == 1) || (boost::iequals(tokens_output[x], std::string("Nothing")) == 1))
 								{
@@ -214,7 +214,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 								}
 								else if ((boost::iequals(tokens_output[x], std::string("A")) == 1) || (boost::iequals(tokens_output[x], std::string("Auto")) == 1))
 								{
-									custom_protocol[call_name].sql_outputs.push_back(2);
+									custom_protocol[call_name].sql_outputs.push_back(9);
 								}
 								else
 								{
@@ -317,8 +317,8 @@ void DB_CUSTOM_V5::getBEGUID(std::string &input_str, std::string &result)
 
 void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::Data::Statement &sql_statement, std::string &result)
 {
-	//Poco::Data::RecordSet rs(sql_current);  TODO FIX
 	Poco::Data::RecordSet rs(sql_statement);
+	
 	result = "[1,[";
 	std::size_t cols = rs.columnCount();
 	if (cols >= 1)
@@ -429,8 +429,6 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Calls>::co
 	}
 	result += "]]";
 
-	// TODO PutBack Session -> SessionPool
-
 	#ifdef TESTING
 		std::cout << "extDB: DB_CUSTOM_V5: Trace: Result: " + result << std::endl;
 	#endif
@@ -444,36 +442,27 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 {
 	// TODO Sanitize Value Check
 
-	// TODO Add Support for Multiple SQL Prepared Statements
-
 	if (sanitize_value_check_ok)
 	{
 		std::pair<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap > db_customSession = extension->getDBSessionCustom_mutexlock();
 
-		Poco::Data::SessionPool::StatementCacheMap::iterator statement_cache_itr = db_customSession.second.find(call_name); // TODO FIX
+		Poco::Data::SessionPool::StatementCacheMap::iterator statement_cache_itr = db_customSession.second.find(call_name);
 		if (statement_cache_itr == db_customSession.second.end())
 		{
 			// NO CACHE
-			Poco::Data::SessionPool::StatementCache sql_statement_cache;
-
 			int i = 0;
 			for (std::vector< std::string >::const_iterator it_sql_prepared_statements_vector = itr->second.sql_prepared_statements.begin(); it_sql_prepared_statements_vector != itr->second.sql_prepared_statements.end(); ++it_sql_prepared_statements_vector)
 			{
 				i++;
 
+				db_customSession.second[call_name].inputs[i].insert(db_customSession.second[call_name].inputs[i].begin(), tokens.begin(), tokens.end());
+
 				Poco::Data::Statement sql_statement(db_customSession.first);
-				sql_statement_cache.statements.push_back(sql_statement); //TODO Unique Pointer etc..
-				
-				
-				//Poco::Data::SessionPool::StatementCachePtr sql_statement_ptr(sql_statement_cache);
-		
-				sql_statement << *it_sql_prepared_statements_vector, Poco::Data::use(sql_statement_cache.inputs[i]);
-
-				sql_statement_cache.inputs[i].insert(sql_statement_cache.inputs[i].begin(), tokens.begin(), tokens.end());
+				db_customSession.second[call_name].statements.push_back(sql_statement);
+				sql_statement << *it_sql_prepared_statements_vector, Poco::Data::use(db_customSession.second[call_name].inputs[i]);
 				sql_statement.execute();
-				sql_statement_cache.inputs[i].clear();
 
-				db_customSession.second[call_name] = sql_statement_cache;
+				db_customSession.second[call_name].inputs[i].clear();
 
 				if ( it_sql_prepared_statements_vector+1 == itr->second.sql_prepared_statements.end() )
 				{
@@ -483,10 +472,9 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 		}
 		else
 		{
-			// CACHED
+			// CACHE
 			for (std::vector<int>::size_type i = 0; i != db_customSession.second[call_name].statements.size(); i++)
 			{
-				statement_cache_itr->second.inputs[i].clear();
 				statement_cache_itr->second.inputs[i].insert(statement_cache_itr->second.inputs[i].begin(), tokens.begin(), tokens.end());
 
 				statement_cache_itr->second.statements[i].execute();
@@ -498,7 +486,10 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 				}
 			}
 		}
+		extension->putbackDBSession_mutexlock(db_customSession.first);
 	}
+
+	//TODO IF Exception Encountered REMOVE CACHED PREPARED STATEMENT, reduces code complexity
 }
 
 
@@ -530,7 +521,6 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 		else
 		{
 			std::vector< std::string > inputs;
-			inputs.push_back(""); // We ignore [0] Entry, makes logic simplier when using -x value to indicate $INPUT_STRING_X
 			std::string input_value_str;
 
 			bool bad_chars_error = false;
