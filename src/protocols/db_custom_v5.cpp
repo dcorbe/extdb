@@ -499,7 +499,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 	if (sanitize_value_check_ok)
 	{
 		bool status = true;
-		std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::const_iterator> db_customSession = extension->getDBSessionCustom_mutexlock();
+		std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::iterator> db_customSession = extension->getDBSessionCustom_mutexlock();
 
 		Poco::Data::SessionPool::StatementCacheMap::iterator statement_cache_itr = std::get<1>(db_customSession).find(call_name);
 		if (statement_cache_itr == std::get<1>(db_customSession).end())

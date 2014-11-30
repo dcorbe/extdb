@@ -60,7 +60,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "uniqueid.h"
 #include "protocols/abstract_protocol.h"
 #include "protocols/db_custom_v5.h"
-#include "protocols/db_custom_v4.h"
 #include "protocols/db_procedure_v2.h"
 #include "protocols/db_raw_v2.h"
 #include "protocols/db_raw_no_extra_quotes_v2.h"
@@ -452,16 +451,16 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 }
 
 
-std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::const_iterator> Ext::getDBSessionCustom_mutexlock()
+std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::iterator> Ext::getDBSessionCustom_mutexlock()
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::const_iterator> free_session = db_pool->extDB_get();
+	std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::iterator> free_session = db_pool->extDB_get();
 	return free_session;
 }
 
 
-void Ext::putbackDBSessionPtr_mutexlock(Poco::Data::SessionPool::SessionList::const_iterator ptr)
+void Ext::putbackDBSessionPtr_mutexlock(Poco::Data::SessionPool::SessionList::iterator ptr)
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
@@ -583,20 +582,6 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("LOG")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new LOG());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V4")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V4());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
