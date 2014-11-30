@@ -56,7 +56,8 @@ class DB_CUSTOM_V5: public AbstractProtocol
 		};
 		std::unordered_map<std::string, Template_Calls> custom_protocol;
 
-		void callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result);
+		void callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, std::string &input_str, bool &sanitize_value_check_ok, std::string &result);
+		void executeSQL(AbstractExt *extension, Poco::Data::Statement &sql_statement, std::string &result, bool &status);
 
 		void getBEGUID(std::string &input_str, std::string &result);
 		void getResult(std::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::Data::Statement &sql_statement, std::string &result);

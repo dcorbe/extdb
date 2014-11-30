@@ -318,7 +318,7 @@ void DB_CUSTOM_V5::getBEGUID(std::string &input_str, std::string &result)
 void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::Data::Statement &sql_statement, std::string &result)
 {
 	Poco::Data::RecordSet rs(sql_statement);
-	
+
 	result = "[1,[";
 	std::size_t cols = rs.columnCount();
 	if (cols >= 1)
@@ -438,16 +438,71 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Calls>::co
 }
 
 
-void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result)
+void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql_statement, std::string &result, bool &status)
+{
+	try
+	{
+		sql_statement.execute();
+	}
+
+	catch (Poco::Data::SQLite::DBLockedException& e)
+	{
+		status = false;
+		#ifdef TESTING
+			std::cout << "extDB: DB_CUSTOM_V4: Error DBLockedException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error DBLockedException: " + e.displayText();
+		result = "[0,\"Error DBLocked Exception\"]";
+	}
+	catch (Poco::Data::MySQL::ConnectionException& e)
+	{
+		status = false;
+		#ifdef TESTING
+			std::cout << "extDB: DB_CUSTOM_V4: Error ConnectionException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error ConnectionException: " + e.displayText();
+	}
+	catch(Poco::Data::MySQL::StatementException& e)
+	{
+		status = false;
+		#ifdef TESTING
+			std::cout << "extDB: DB_CUSTOM_V4: Error StatementException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error StatementException: " + e.displayText();
+		result = "[0,\"Error Statement Exception\"]";
+	}
+	catch (Poco::Data::DataException& e)
+	{
+		status = false;
+		#ifdef TESTING
+			std::cout << "extDB: DB_CUSTOM_V4: Error DataException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error DataException: " + e.displayText();
+		result = "[0,\"Error Data Exception\"]";
+	}
+	catch (Poco::Exception& e)
+	{
+		status = false;
+		#ifdef TESTING
+			std::cout << "extDB: DB_CUSTOM_V4: Error Exception: " + e.displayText() << std::endl;
+		#endif
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error Exception: " + e.displayText();
+		result = "[0,\"Error Exception\"]";
+	}
+}
+
+
+void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, std::string &input_str, bool &sanitize_value_check_ok, std::string &result)
 {
 	// TODO Sanitize Value Check
 
 	if (sanitize_value_check_ok)
 	{
-		std::pair<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap > db_customSession = extension->getDBSessionCustom_mutexlock();
+		bool status = true;
+		std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::const_iterator> db_customSession = extension->getDBSessionCustom_mutexlock();
 
-		Poco::Data::SessionPool::StatementCacheMap::iterator statement_cache_itr = db_customSession.second.find(call_name);
-		if (statement_cache_itr == db_customSession.second.end())
+		Poco::Data::SessionPool::StatementCacheMap::iterator statement_cache_itr = std::get<1>(db_customSession).find(call_name);
+		if (statement_cache_itr == std::get<1>(db_customSession).end())
 		{
 			// NO CACHE
 			int i = 0;
@@ -455,14 +510,14 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 			{
 				i++;
 
-				db_customSession.second[call_name].inputs[i].insert(db_customSession.second[call_name].inputs[i].begin(), tokens.begin(), tokens.end());
+				std::get<1>(db_customSession)[call_name].inputs[i].insert(std::get<1>(db_customSession)[call_name].inputs[i].begin(), tokens.begin(), tokens.end());
 
-				Poco::Data::Statement sql_statement(db_customSession.first);
-				db_customSession.second[call_name].statements.push_back(sql_statement);
-				sql_statement << *it_sql_prepared_statements_vector, Poco::Data::use(db_customSession.second[call_name].inputs[i]);
-				sql_statement.execute();
+				Poco::Data::Statement sql_statement(std::get<0>(db_customSession));
+				std::get<1>(db_customSession)[call_name].statements.push_back(sql_statement);
+				sql_statement << *it_sql_prepared_statements_vector, Poco::Data::use(std::get<1>(db_customSession)[call_name].inputs[i]);
+				executeSQL(extension, sql_statement, result, status);
 
-				db_customSession.second[call_name].inputs[i].clear();
+				std::get<1>(db_customSession)[call_name].inputs[i].clear();
 
 				if ( it_sql_prepared_statements_vector+1 == itr->second.sql_prepared_statements.end() )
 				{
@@ -473,20 +528,25 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 		else
 		{
 			// CACHE
-			for (std::vector<int>::size_type i = 0; i != db_customSession.second[call_name].statements.size(); i++)
+			for (std::vector<int>::size_type i = 0; i != std::get<1>(db_customSession)[call_name].statements.size(); i++)
 			{
 				statement_cache_itr->second.inputs[i].insert(statement_cache_itr->second.inputs[i].begin(), tokens.begin(), tokens.end());
 
-				statement_cache_itr->second.statements[i].execute();
+				executeSQL(extension, statement_cache_itr->second.statements[i], result, status);
 				statement_cache_itr->second.inputs[i].clear();
 
-				if (i == (db_customSession.second[call_name].statements.size() - 1))
+				if (i == (std::get<1>(db_customSession)[call_name].statements.size() - 1))
 				{
 					getResult(itr, statement_cache_itr->second.statements[i], result);
 				}
 			}
 		}
-		extension->putbackDBSession_mutexlock(db_customSession.first);
+		extension->putbackDBSessionPtr_mutexlock(std::get<2>(db_customSession));
+
+		if (!status)
+		{
+			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error Exception: SQL:" + input_str;
+		}
 	}
 
 	//TODO IF Exception Encountered REMOVE CACHED PREPARED STATEMENT, reduces code complexity
@@ -536,8 +596,26 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 						boost::erase_all(input_value_str, std::string(1,itr->second.bad_chars[i2]));
 					}
 
+					// Convert Input
+					switch (itr->second.sql_inputs[i])
+						// 0 Nothing
+						// 1 Add Quotes
+						// 2 Convert to BEGUID
+					{
+						case 1:
+						{
+							boost::erase_all(input_value_str, "\"");
+							input_value_str = "\"" + input_value_str + "\"";
+							break;
+						}
+						case 2:
+						{
+							getBEGUID(input_value_str, input_value_str);
+							break;
+						}
+					}
 					// Add String to List
-					inputs.push_back(input_value_str);	
+					inputs.push_back(input_value_str);
 				}
 			}
 			else if (boost::iequals(itr->second.bad_chars_action, std::string("STRIP+LOG")) == 1)
@@ -558,8 +636,26 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 						BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Error Bad Char Detected: Token:" + tokens[i];
 					}
 
+					// Convert Input
+					switch (itr->second.sql_inputs[i])
+						// 0 Nothing
+						// 1 Add Quotes
+						// 2 Convert to BEGUID
+					{
+						case 1:
+						{
+							boost::erase_all(input_value_str, "\"");
+							input_value_str = "\"" + input_value_str + "\"";
+							break;
+						}
+						case 2:
+						{
+							getBEGUID(input_value_str, input_value_str);
+							break;
+						}
+					}
 					// Add String to List
-					inputs.push_back(input_value_str);	
+					inputs.push_back(input_value_str);
 				}
 			}
 			else if (boost::iequals(itr->second.bad_chars_action, std::string("STRIP+ERROR")) == 1)
@@ -581,8 +677,26 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 						bad_chars_error = true;
 					}
 
+					// Convert Input
+					switch (itr->second.sql_inputs[i])
+						// 0 Nothing
+						// 1 Add Quotes
+						// 2 Convert to BEGUID
+					{
+						case 1:
+						{
+							boost::erase_all(input_value_str, "\"");
+							input_value_str = "\"" + input_value_str + "\"";
+							break;
+						}
+						case 2:
+						{
+							getBEGUID(input_value_str, input_value_str);
+							break;
+						}
+					}
 					// Add String to List
-					inputs.push_back(input_value_str);	
+					inputs.push_back(input_value_str);
 				}
 			}
 			else
@@ -593,7 +707,7 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 			if (!(bad_chars_error))
 			{
 				bool sanitize_value_check_ok = true;
-				callCustomProtocol(extension, tokens[0], itr, inputs, sanitize_value_check_ok, result);
+				callCustomProtocol(extension, tokens[0], itr, inputs, input_str, sanitize_value_check_ok, result);
 				if (!sanitize_value_check_ok)
 				{
 					result = "[0,\"Error Values Input is not sanitized\"]";

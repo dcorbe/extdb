@@ -222,10 +222,12 @@ Ext::Ext(void) {
 	}
 }
 
+
 Ext::~Ext(void)
 {
 	stop();
 }
+
 
 void Ext::stop()
 {
@@ -239,6 +241,7 @@ void Ext::stop()
 
 	boost::log::core::get()->remove_all_sinks();
 }
+
 
 void Ext::connectDatabase(char *output, const int &output_size, const std::string &conf_option)
 {
@@ -406,7 +409,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::version() const
 {
-	return "22";
+	return "23";
 }
 
 
@@ -448,36 +451,22 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 	}
 }
 
-/*
-void Ext::putbackDBSession_mutexlock(Poco::Data::Session session)
+
+std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::const_iterator> Ext::getDBSessionCustom_mutexlock()
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	db_pool->putback(session);
+	std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::const_iterator> free_session = db_pool->extDB_get();
+	return free_session;
 }
-*/
 
 
-std::pair<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap> Ext::getDBSessionCustom_mutexlock()
+void Ext::putbackDBSessionPtr_mutexlock(Poco::Data::SessionPool::SessionList::const_iterator ptr)
 // Gets available DB Session (mutex lock)
 {
-	try
-	{
-		boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-		std::pair<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap > free_session = db_pool->extDB_get();
-		return free_session;
-	}
-	catch (Poco::Data::SessionPoolExhaustedException&)
-	//	Exceptiontal Handling in event of scenario if all asio worker threads are busy using all db connections
-	//		And there is SYNC call using db & db_pool = exhausted
-	{
-		Poco::Data::Session new_session(db_conn_info.db_type, db_conn_info.connection_str);
-		Poco::Data::SessionPool::StatementCacheMap statement_list;
-		return (std::make_pair(new_session, statement_list));
-	}
+	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
+	db_pool->putBack(ptr);
 }
-
-//std::pair<Session, std::unordered_map <std::string, Poco::SharedPtr<Poco::Data::Statement> > > SessionPool::extDB_get()
 
 
 std::string Ext::getDBType()

@@ -34,8 +34,8 @@ class AbstractExt
 {
 	public:
 		virtual Poco::Data::Session getDBSession_mutexlock()=0;
-		virtual void putbackDBSession_mutexlock(Poco::Data::Session session)=0;
-		virtual std::pair<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap> getDBSessionCustom_mutexlock()=0;
+		virtual void putbackDBSessionPtr_mutexlock(Poco::Data::SessionPool::SessionList::const_iterator ptr)=0;
+		virtual std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::const_iterator> getDBSessionCustom_mutexlock()=0;
 		virtual std::string getAPIKey()=0;
 		
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
