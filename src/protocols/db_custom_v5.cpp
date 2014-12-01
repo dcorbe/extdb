@@ -519,8 +519,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 		{
 			i++;
 
-			// all_processed_inputs
-			//std::get<1>(db_customSession)[call_name].inputs[i].insert(std::get<1>(db_customSession)[call_name].inputs[i].begin(), tokens.begin(), tokens.end());
+			std::get<1>(db_customSession)[call_name].inputs[i].insert(std::get<1>(db_customSession)[call_name].inputs[i].begin(), all_processed_inputs[i].begin(), all_processed_inputs[i].end());
 
 			Poco::Data::Statement sql_statement(std::get<0>(db_customSession));
 			std::get<1>(db_customSession)[call_name].statements.push_back(sql_statement);
@@ -540,8 +539,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 		// CACHE
 		for (std::vector<int>::size_type i = 0; i != std::get<1>(db_customSession)[call_name].statements.size(); i++)
 		{
-			// all_processed_inputs
-			//statement_cache_itr->second.inputs[i].insert(statement_cache_itr->second.inputs[i].begin(), tokens.begin(), tokens.end());
+			statement_cache_itr->second.inputs[i].insert(statement_cache_itr->second.inputs[i].begin(), all_processed_inputs[i].begin(), all_processed_inputs[i].end());
 
 			executeSQL(extension, statement_cache_itr->second.statements[i], result, status);
 			statement_cache_itr->second.inputs[i].clear();
@@ -600,18 +598,17 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 		}
 		else
 		{
+			// GOOD Number of Inputs
 			bool sanitize_value_check_ok = true;
 			std::vector< std::string > inputs;
 
 			if ((boost::iequals(itr->second.bad_chars_action, std::string("STRIP")) == 1) || (boost::iequals(itr->second.bad_chars_action, std::string("STRIP+LOG")) == 1) || (boost::iequals(itr->second.bad_chars_action, std::string("STRIP+ERROR")) == 1))
 			{
-				// STRIP CHARS
+				// Strip Chars
 				std::string temp_str;
 				for (std::vector<std::string>::const_iterator token_itr = tokens.begin(); token_itr != tokens.end(); ++token_itr)
 				{
 					temp_str = *token_itr;
-
-					// Strip Chars
 					for (int i = 0; (i < (itr->second.bad_chars.size() - 1)); ++i)
 					{
 						boost::erase_all(temp_str, std::string(1, itr->second.bad_chars[i]));
@@ -621,11 +618,11 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 			}
 			else
 			{
-				// NO STRIP CHARS
+				// DONT Strip Chars
 				inputs.insert(inputs.end(), tokens.begin(), tokens.end());
 			}
 
-			// Multiple INPUT LINES
+			// Multiple INPUT Lines
 			std::vector<std::string>::size_type num_inputs = inputs.size();	
 			std::vector<std::string>::size_type num_sql_inputs_options = itr->second.sql_inputs_options.size();
 
@@ -637,7 +634,7 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 				for(int x = 0; x < num_inputs; ++x)
 				{
 					std::string temp_str = inputs[i];
-					// INPUT OPTIONS
+					// INPUT Options
 						// BEGUID
 					if (itr->second.sql_inputs_options[i][x].beguid)
 					{
@@ -672,7 +669,7 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 				all_processed_inputs.push_back(processed_inputs);
 			}
 
-			// TODO RE-ADD BAD CHARS
+			// TODO RE-ADD BAD CHARS DETECTION
 			bool bad_chars_error = false;
 			if (!(bad_chars_error))
 			{
