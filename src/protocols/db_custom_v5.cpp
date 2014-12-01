@@ -526,11 +526,20 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 			sql_statement << *it_sql_prepared_statements_vector, Poco::Data::use(std::get<1>(db_customSession)[call_name].inputs[i]);
 			executeSQL(extension, sql_statement, result, status);
 
-			std::get<1>(db_customSession)[call_name].inputs[i].clear();
-
-			if ( it_sql_prepared_statements_vector+1 == itr->second.sql_prepared_statements.end() )
+			if (status)
 			{
-				getResult(itr, sql_statement, result);
+				std::get<1>(db_customSession)[call_name].inputs[i].clear();
+
+				if ( it_sql_prepared_statements_vector+1 == itr->second.sql_prepared_statements.end() )
+				{
+					getResult(itr, sql_statement, result);
+				}
+			}
+			else
+			{
+				// Exception Encountered, BREAK + Remove Cache
+				std::get<1>(db_customSession).erase(call_name);
+				break;
 			}
 		}
 	}
@@ -542,11 +551,20 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 			statement_cache_itr->second.inputs[i].insert(statement_cache_itr->second.inputs[i].begin(), all_processed_inputs[i].begin(), all_processed_inputs[i].end());
 
 			executeSQL(extension, statement_cache_itr->second.statements[i], result, status);
-			statement_cache_itr->second.inputs[i].clear();
 
-			if (i == (std::get<1>(db_customSession)[call_name].statements.size() - 1))
+			if (status)
 			{
-				getResult(itr, statement_cache_itr->second.statements[i], result);
+				statement_cache_itr->second.inputs[i].clear();
+				if (i == (std::get<1>(db_customSession)[call_name].statements.size() - 1))
+				{
+					getResult(itr, statement_cache_itr->second.statements[i], result);
+				}
+			}
+			else
+			{
+				// Exception Encountered, BREAK + Remove Cache
+				std::get<1>(db_customSession).erase(call_name);
+				break;
 			}
 		}
 	}
@@ -565,7 +583,6 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_CUSTOM_V5: Trace: Result: " + result;
 		#endif
 	}
-	//TODO IF Exception Encountered REMOVE CACHED PREPARED STATEMENT, reduces code complexity
 }
 
 
