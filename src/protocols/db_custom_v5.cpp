@@ -128,9 +128,9 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 			else
 			{
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V5: " << callname << ": Invalid Bad Chars Action: " << bad_chars_action_str << std::endl;
+					std::cout << "extDB: DB_CUSTOM_V5: Invalid Default Bad Chars Action: " << bad_chars_action_str << std::endl;
 				#endif
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: " << callname << ": Invalid Bad Chars Action: " << bad_chars_action_str;
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Invalid Default Bad Chars Action: " << bad_chars_action_str;
 			}
 
 			if ((template_ini->getInt("Default.Version", 1)) == 5)
@@ -168,7 +168,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 						else
 						{
 							#ifdef TESTING
-								std::cout << "extDB: DB_CUSTOM_V5: " << callname << ": Invalid Bad Chars Action: " << bad_chars_action_str << std::endl;
+								std::cout << "extDB: DB_CUSTOM_V5: " << call_name << ": Invalid Bad Chars Action: " << bad_chars_action_str << std::endl;
 							#endif
 							BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: " << call_name << ": Invalid Bad Chars Action: " << bad_chars_action_str;
 						}
@@ -177,9 +177,6 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 					{
 						custom_protocol[call_name].bad_chars_action = default_bad_chars_action;
 					}
-
-
-					custom_protocol[call_name].bad_chars_action = template_ini->getString(call_name + ".Bad Chars Action", default_bad_chars_action);
 					
 					custom_protocol[call_name].bad_chars = template_ini->getString(call_name + ".Bad Chars", default_bad_chars);
 
@@ -188,10 +185,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 
 					while (true)
 					{
-						if ((boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("NONE")) == 1) || 
-							(boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("STRIP")) == 1)  ||
-							(boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("STRIP+LOG")) == 1)  ||
-							(boost::iequals(custom_protocol[call_name].bad_chars_action, std::string("STRIP+ERROR")) == 1)) 
+						if (custom_protocol[call_name].bad_chars_action > 0)
 						{
 							// Prepared Statement
 							sql_line_num++;
@@ -203,10 +197,39 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 								Value_Options outputs_options;
 								outputs_options.check = default_output_sanitize_value_check;
 
-								// Outputs
-								Poco::StringTokenizer tokens_output((template_ini->getString(call_name + ".OUTPUT", "")), ",");
+								// Get Output Options
+								Poco::StringTokenizer tokens_output_options((template_ini->getString(call_name + ".OUTPUT", "")), ",");
 
-								// TODO
+								for (int i = 0; i < (tokens_output_options.count()); i++)
+								{
+									if (!(Poco::NumberParser::tryParse(tokens_output_options[i], outputs_options.number)))
+									{
+										if (boost::iequals(tokens_output_options[i], std::string("STRING")) == 1)
+										{
+											custom_protocol[call_name].sql_outputs_options[i].string = true;
+										}
+										else if (boost::iequals(tokens_output_options[i], std::string("BEGUID")) == 1)
+										{
+											custom_protocol[call_name].sql_outputs_options[i].beguid = true;
+										}
+										else if (boost::iequals(tokens_output_options[i], std::string("CHECK")) == 1)
+										{
+											custom_protocol[call_name].sql_outputs_options[i].check = true;
+										}
+										else if (boost::iequals(tokens_output_options[i], std::string("NOCHECK")) == 1)
+										{
+											custom_protocol[call_name].sql_outputs_options[i].check = false;
+										}
+										else
+										{
+											status = false;
+											#ifdef TESTING
+												std::cout << "extDB: DB_CUSTOM_V5: Bad Output Option: " << call_name << ":" << tokens_output_options[i] << std::endl;
+											#endif
+											BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Output Option " << call_name << ":" << tokens_output_options[i];
+										}
+									}
+								}
 								break;
 							}
 							
@@ -249,7 +272,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 								
 								for (Poco::StringTokenizer::Iterator tokens_input_options_it = tokens_input_options.begin(); tokens_input_options_it != tokens_input_options.end(); ++tokens_input_options_it)
 								{
-									if (!(Poco::NumberParser::tryParse(*tokens_input_options_it, inputs_options.input)))
+									if (!(Poco::NumberParser::tryParse(*tokens_input_options_it, inputs_options.number)))
 									{
 										if (boost::iequals(*tokens_input_options_it, std::string("STRING")) == 1)
 										{
@@ -271,9 +294,9 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 										{
 											status = false;
 											#ifdef TESTING
-											std::cout << "extDB: DB_CUSTOM_V5: Bad Output Option: " << call_name << ":" << *tokens_input_options_it << std::endl;
+												std::cout << "extDB: DB_CUSTOM_V5: Bad Output Option: " << call_name << ":" << *tokens_input_options_it << std::endl;
 											#endif
-											BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Output Option " << call_name << ":" << tokens_input[x];
+											BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Output Option " << call_name << ":" << *tokens_input_options_it;
 										}
 									}
 								}
@@ -680,7 +703,7 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 
 			std::vector< std::string > inputs;
 
-			if ((boost::iequals(itr->second.bad_chars_action, std::string("STRIP")) == 1) || (boost::iequals(itr->second.bad_chars_action, std::string("STRIP+LOG")) == 1) || (boost::iequals(itr->second.bad_chars_action, std::string("STRIP+ERROR")) == 1))
+			if (itr->second.bad_chars_action > 0)
 			{
 				// Strip Chars
 				std::string temp_str;
@@ -692,11 +715,10 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 						boost::erase_all(temp_str, std::string(1, itr->second.bad_chars[i]));
 					}
 					inputs.push_back(temp_str);
-				}
-
-				if (temp_str != *token_itr)
-				{
-					bad_chars_detected = true;
+					if (temp_str != *token_itr)
+					{
+						bad_chars_detected = true;
+					}
 				}
 			}
 			else
@@ -711,6 +733,8 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 
 			std::vector< std::vector< std::string > > all_processed_inputs;
 
+
+// TODO FIX   Input Order for random order + diffent number of INPUTS per Statement
 			for(int i = 0; i < num_sql_inputs_options; ++i)
 			{
 				std::vector< std::string > processed_inputs;

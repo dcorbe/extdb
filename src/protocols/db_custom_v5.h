@@ -44,7 +44,7 @@ class DB_CUSTOM_V5: public AbstractProtocol
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
 
 		struct Value_Options {
-			int input = -1;
+			int number = -1;
 
 			bool check;
 			bool beguid = false;
@@ -56,7 +56,7 @@ class DB_CUSTOM_V5: public AbstractProtocol
 			int number_of_inputs;
 			bool string_datatype_check;
 			std::string bad_chars;
-			std::string bad_chars_action; // TODO Change to INT
+			int bad_chars_action = -1;
 
 			bool input_sanitize_value_check;
 			bool output_sanitize_value_check;
