@@ -734,7 +734,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 			const std::string sep_char(":");
 
 			// Async / Sync
-			const int async = Poco::NumberParser::parse(input_str.substr(0,1));
+			const int async = Poco::NumberParser::parse(input_str.substr(0,1)); // TODO FIX
 
 			switch (async)  // TODO Profile using Numberparser versus comparsion of char[0] + if statement checking length of *function
 			{

@@ -42,23 +42,36 @@ class DB_CUSTOM_V5: public AbstractProtocol
 
 		std::string db_custom_name;
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
+
+		struct Value_Options {
+			int input = -1;
+
+			bool check;
+			bool beguid = false;
+			bool string = false;
+			bool string_datatype_check = false;
+		};
 		
-		struct Template_Calls {
+		struct Template_Call {
 			int number_of_inputs;
-			bool sanitize_value_check;
 			bool string_datatype_check;
 			std::string bad_chars;
-			std::string bad_chars_action;
+			std::string bad_chars_action; // TODO Change to INT
+
+			bool input_sanitize_value_check;
+			bool output_sanitize_value_check;
 
 			std::vector< std::string > sql_prepared_statements;
-			std::vector< int > sql_inputs;
-			std::vector< int > sql_outputs;
-		};
-		std::unordered_map<std::string, Template_Calls> custom_protocol;
 
-		void callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, std::string &input_str, bool &sanitize_value_check_ok, std::string &result);
+			std::vector< std::vector< Value_Options > > sql_inputs_options;
+			std::vector< Value_Options > sql_outputs_options;
+		};
+
+		std::unordered_map<std::string, Template_Call> custom_protocol;
+
+		void callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, Template_Call>::const_iterator itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result);
 		void executeSQL(AbstractExt *extension, Poco::Data::Statement &sql_statement, std::string &result, bool &status);
 
 		void getBEGUID(std::string &input_str, std::string &result);
-		void getResult(std::unordered_map<std::string, Template_Calls>::const_iterator itr, Poco::Data::Statement &sql_statement, std::string &result);
+		void getResult(std::unordered_map<std::string, Template_Call>::const_iterator itr, Poco::Data::Statement &sql_statement, std::string &result);
 };
