@@ -103,11 +103,35 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 		{
 			bool default_input_sanitize_value_check = template_ini->getBool("Default.Sanitize Input Value Check", true);
 			bool default_output_sanitize_value_check = template_ini->getBool("Default.Sanitize Output Value Check", true);
-
 			bool default_string_datatype_check = template_ini->getBool("Default.String Datatype Check", true);
 
 			std::string default_bad_chars = template_ini->getString("Default.Bad Chars");
-			std::string default_bad_chars_action = template_ini->getString("Default.Bad Chars Action", "STRIP");
+			int default_bad_chars_action = 0;
+
+			std::string bad_chars_action_str = template_ini->getString("Default.Bad Chars Action", "STRIP");
+			if	(boost::iequals(bad_chars_action_str, std::string("STRIP")) == 1)
+			{
+				default_bad_chars_action = 1;
+			}
+			else if	(boost::iequals(bad_chars_action_str, std::string("STRIP+LOG")) == 1)
+			{
+				default_bad_chars_action = 2;
+			}
+			else if	(boost::iequals(bad_chars_action_str, std::string("STRIP+ERROR")) == 1)
+			{
+				default_bad_chars_action = 3;
+			}
+			else if (boost::iequals(bad_chars_action_str, std::string("NONE")) == 1)
+			{
+				default_bad_chars_action = 0;
+			}
+			else
+			{
+				#ifdef TESTING
+					std::cout << "extDB: DB_CUSTOM_V5: " << callname << ": Invalid Bad Chars Action: " << bad_chars_action_str << std::endl;
+				#endif
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: " << callname << ": Invalid Bad Chars Action: " << bad_chars_action_str;
+			}
 
 			if ((template_ini->getInt("Default.Version", 1)) == 5)
 			{
@@ -121,7 +145,42 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 					std::string sql_part_num_str;
 
 					custom_protocol[call_name].string_datatype_check = template_ini->getBool(call_name + ".String Datatype Check", default_string_datatype_check);
+
+					if (template_ini->has(call_name + ".Bad Chars Action"))
+					{
+						bad_chars_action_str = template_ini->getString(call_name + ".Bad Chars Action", "");
+						if	(boost::iequals(bad_chars_action_str, std::string("STRIP")) == 1)
+						{
+							custom_protocol[call_name].bad_chars_action = 1;
+						}
+						else if	(boost::iequals(bad_chars_action_str, std::string("STRIP+LOG")) == 1)
+						{
+							custom_protocol[call_name].bad_chars_action = 2;
+						}
+						else if	(boost::iequals(bad_chars_action_str, std::string("STRIP+ERROR")) == 1)
+						{
+							custom_protocol[call_name].bad_chars_action = 3;
+						}
+						else if (boost::iequals(bad_chars_action_str, std::string("NONE")) == 1)
+						{
+							custom_protocol[call_name].bad_chars_action = 0;
+						}
+						else
+						{
+							#ifdef TESTING
+								std::cout << "extDB: DB_CUSTOM_V5: " << callname << ": Invalid Bad Chars Action: " << bad_chars_action_str << std::endl;
+							#endif
+							BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: " << call_name << ": Invalid Bad Chars Action: " << bad_chars_action_str;
+						}
+					}
+					else
+					{
+						custom_protocol[call_name].bad_chars_action = default_bad_chars_action;
+					}
+
+
 					custom_protocol[call_name].bad_chars_action = template_ini->getString(call_name + ".Bad Chars Action", default_bad_chars_action);
+					
 					custom_protocol[call_name].bad_chars = template_ini->getString(call_name + ".Bad Chars", default_bad_chars);
 
 					custom_protocol[call_name].input_sanitize_value_check = template_ini->getBool(call_name + ".Sanitize Value Check", default_input_sanitize_value_check);
@@ -236,9 +295,9 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 			{
 				status = false;
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V5: Template File Missing Incompatiable Version" << db_template_file << std::endl;
+					std::cout << "extDB: DB_CUSTOM_V5: Template File Missing Incompatible Version" << db_template_file << std::endl;
 				#endif
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Template File Missing Incompatiable Version: " << db_template_file;
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Template File Missing Incompatible Version: " << db_template_file;
 			}
 		}
 		else
@@ -264,7 +323,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 
 void DB_CUSTOM_V5::getBEGUID(std::string &input_str, std::string &result)
 // From Frank https://gist.github.com/Fank/11127158
-// Modified to use libpoco
+// Modified to use lib poco
 {
 	bool status = true;
 	
@@ -462,7 +521,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V4: Error DBLockedException: " + e.displayText() << std::endl;
+			std::cout << "extDB: DB_CUSTOM_V5: Error DBLockedException: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error DBLockedException: " + e.displayText();
 		result = "[0,\"Error DBLocked Exception\"]";
@@ -471,7 +530,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V4: Error ConnectionException: " + e.displayText() << std::endl;
+			std::cout << "extDB: DB_CUSTOM_V5: Error ConnectionException: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error ConnectionException: " + e.displayText();
 	}
@@ -479,7 +538,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V4: Error StatementException: " + e.displayText() << std::endl;
+			std::cout << "extDB: DB_CUSTOM_V5: Error StatementException: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error StatementException: " + e.displayText();
 		result = "[0,\"Error Statement Exception\"]";
@@ -488,7 +547,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V4: Error DataException: " + e.displayText() << std::endl;
+			std::cout << "extDB: DB_CUSTOM_V5: Error DataException: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error DataException: " + e.displayText();
 		result = "[0,\"Error Data Exception\"]";
@@ -497,7 +556,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V4: Error Exception: " + e.displayText() << std::endl;
+			std::cout << "extDB: DB_CUSTOM_V5: Error Exception: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error Exception: " + e.displayText();
 		result = "[0,\"Error Exception\"]";
@@ -616,7 +675,9 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 		else
 		{
 			// GOOD Number of Inputs
+			bool bad_chars_detected = false;
 			bool sanitize_value_check_ok = true;
+
 			std::vector< std::string > inputs;
 
 			if ((boost::iequals(itr->second.bad_chars_action, std::string("STRIP")) == 1) || (boost::iequals(itr->second.bad_chars_action, std::string("STRIP+LOG")) == 1) || (boost::iequals(itr->second.bad_chars_action, std::string("STRIP+ERROR")) == 1))
@@ -631,6 +692,11 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 						boost::erase_all(temp_str, std::string(1, itr->second.bad_chars[i]));
 					}
 					inputs.push_back(temp_str);
+				}
+
+				if (temp_str != *token_itr)
+				{
+					bad_chars_detected = true;
 				}
 			}
 			else
@@ -686,18 +752,16 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 				all_processed_inputs.push_back(processed_inputs);
 			}
 
-			// TODO RE-ADD BAD CHARS DETECTION
-			bool bad_chars_error = false;
-			if (!(bad_chars_error))
+			if (!(bad_chars_detected))
 			{
-				if (!sanitize_value_check_ok)
+				if (sanitize_value_check_ok)
 				{
-					result = "[0,\"Error Values Input is not sanitized\"]";
-					BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Sanitize Check error: Input:" + input_str;
+					callCustomProtocol(extension, tokens[0], itr, all_processed_inputs, input_str, result);
 				}
 				else
 				{
-					callCustomProtocol(extension, tokens[0], itr, all_processed_inputs, input_str, result);
+					result = "[0,\"Error Values Input is not sanitized\"]";
+					BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Sanitize Check error: Input:" + input_str;
 				}
 			}
 			else
