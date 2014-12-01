@@ -733,21 +733,19 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 
 			std::vector< std::vector< std::string > > all_processed_inputs;
 
-
-// TODO FIX   Input Order for random order + diffent number of INPUTS per Statement
 			for(int i = 0; i < num_sql_inputs_options; ++i)
 			{
 				std::vector< std::string > processed_inputs;
-				for(int x = 0; x < num_inputs; ++x)
+
+				for(int x = 0; x < itr->second.sql_inputs_options[i].size(); ++x)
 				{
-					std::string temp_str = inputs[i];
+					std::string temp_str = inputs[itr->second.sql_inputs_options[i][x].number];
 					// INPUT Options
-						// BEGUID
+						// BEGUID					
 					if (itr->second.sql_inputs_options[i][x].beguid)
 					{
 						getBEGUID(temp_str, temp_str);
 					}
-
 						// STRING
 					if (itr->second.sql_inputs_options[i][x].string)
 					{
@@ -770,7 +768,6 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 							sanitize_value_check_ok = false;
 						}
 					}
-
 					processed_inputs.push_back(temp_str);
 				}
 				all_processed_inputs.push_back(processed_inputs);
