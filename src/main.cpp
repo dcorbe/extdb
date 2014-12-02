@@ -10,7 +10,8 @@ namespace {
 };
 
 #ifdef __GNUC__
-	//#include <dlfcn.h>
+	#include <dlfcn.h>
+	#include <Poco/UnicodeConverter.h>
 	//#include <stdio.h>
 	// Code for GNU C compiler
 	static void __attribute__((constructor))
@@ -18,7 +19,11 @@ namespace {
 	{
 		Dl_info dl_info;
 		dladdr((void*)extension_init, &dl_info);
-		extension = (new Ext(std::wstring(dl_info.dli_fname)));
+
+		std::string path(dl_info.dli_fname);
+		std::wstring wpath;
+		Poco::UnicodeConverter::toUTF16(path, wpath);
+		extension = (new Ext(wpath));
 	}
 
 	static void __attribute__((destructor))
