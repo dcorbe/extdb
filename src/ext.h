@@ -50,7 +50,7 @@ class Ext: public AbstractExt
 {
 	public:
 
-		Ext();
+		Ext(std::wstring path);
 		~Ext();
 
 		void callExtenion(char *output, const int &output_size, const char *function);

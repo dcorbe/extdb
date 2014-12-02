@@ -81,7 +81,7 @@ void DBPool::customizeSession (Poco::Data::Session& session)
 }
 
 
-Ext::Ext(void) {
+Ext::Ext(std::wstring dll_path) {
 	mgr.reset (new IdManager);
 	extDB_lock = false;
 	extDB_error_db_kill_server = true;
@@ -107,19 +107,25 @@ Ext::Ext(void) {
 	bool conf_found = false;
 	bool conf_randomized = false;
 	
-	if (boost::filesystem::exists("extdb-conf.ini"))
+	std::string extDB_config_path = (boost::filesystem::path(dll_path).make_preferred().string());
+	extDB_config_path = (boost::filesystem::path(extDB_config_path + "extdb-conf.ini").make_preferred().string());
+	if (boost::filesystem::exists(extDB_config_path))
 	{
 		conf_found = true;
-		pConf = (new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
+	}
+	else if (boost::filesystem::exists("extdb-conf.ini"))
+	{
+		conf_found = true;
+		extDB_config_path = "extdb-conf.ini";
 	}
 	else
 	{
-		#ifdef _WIN32
+		#ifdef _WIN32	// WINDOWS ONLY, Linux Arma2 Doesn't have extension Support
 			// Search for Randomize Config File -- Legacy Security Support For Arma2Servers
-				// TODO: WINDOWS ONLY ifdef endif
 			boost::regex expression("extdb-conf.*ini");
 
-			for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
+			// CHECK DLL PATH FOR CONFIG
+			for (boost::filesystem::directory_iterator it(dll_path); it != boost::filesystem::directory_iterator(); ++it)
 			{
 				if (is_regular_file(it->path()))
 				{
@@ -127,8 +133,26 @@ Ext::Ext(void) {
 					{
 						conf_found = true;
 						conf_randomized = true;
-						pConf = (new Poco::Util::IniFileConfiguration(it->path().string()));  // Load Randomized Conf
+						extDB_config_path = it->path().string();
 						break;
+					}
+				}
+			}
+
+			// CHECK ARMA ROOT DIRECTORY FOR CONFIG
+			if (!conf_found)
+			{
+				for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
+				{
+					if (is_regular_file(it->path()))
+					{
+						if(boost::regex_search(it->path().string(), expression))
+						{
+							conf_found = true;
+							conf_randomized = true;
+							extDB_config_path = it->path().string();
+							break;
+						}
 					}
 				}
 			}
@@ -149,7 +173,7 @@ Ext::Ext(void) {
 	}
 	else
 	{
-		
+		pConf = (new Poco::Util::IniFileConfiguration(extDB_config_path));
 		#ifdef TESTING
 			std::cout << "extDB: Found extdb-conf.ini" << std::endl;
 		#endif
@@ -952,7 +976,8 @@ int main(int nNumberofArgs, char* pszArgs[])
 	std::string input_str;
 
 	Ext *extension;
-	extension = (new Ext());
+	std::wstring current_path;
+	extension = (new Ext(current_path));
 	for (;;) {
 		std::getline(std::cin, input_str);
 		if (input_str == "quit")
