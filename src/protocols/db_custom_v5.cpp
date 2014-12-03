@@ -85,11 +85,22 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "Missing Parameter or No Template Filename given";
 		return false;
 	}
-	
-	std::string db_custom_dir = boost::filesystem::path(extension->getExtensionPath() + "/db_custom").make_preferred().string();
-	boost::filesystem::create_directories(db_custom_dir); // Creating Directory if missing
-	std::string db_template_file = boost::filesystem::path(db_custom_dir + "/" + init_str + ".ini").make_preferred().string();
 
+	boost::filesystem::path extension_path(extension->getExtensionPath());
+	if (extension->getExtensionPath().empty())
+	{
+		extension_path /= "extDB";
+	}
+	extension_path /= "db_custom";
+
+	boost::filesystem::create_directories(extension_path); // Creating Directory if missing
+	extension_path /= (init_str + ".ini");
+	std::string db_template_file = extension_path.make_preferred().string();
+
+	#ifdef TESTING
+		std::cout << "extDB: DB_CUSTOM_V5: Loading Template Filename: " << db_template_file << std::endl;
+	#endif
+	BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Loading Template Filename: " << db_template_file;
 	
 	// Read Template File
 	if (boost::filesystem::exists(db_template_file))
@@ -101,6 +112,8 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 
 		if (template_ini->hasOption("Default.Version"))
 		{
+			int default_number_of_inputs = template_ini->getInt("Default.Number of Inputs", 0);
+
 			bool default_input_sanitize_value_check = template_ini->getBool("Default.Sanitize Input Value Check", true);
 			bool default_output_sanitize_value_check = template_ini->getBool("Default.Sanitize Output Value Check", true);
 			bool default_string_datatype_check = template_ini->getBool("Default.String Datatype Check", true);
@@ -144,6 +157,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 					std::string sql_line_num_str;
 					std::string sql_part_num_str;
 
+					custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", default_number_of_inputs);
 					custom_protocol[call_name].string_datatype_check = template_ini->getBool(call_name + ".String Datatype Check", default_string_datatype_check);
 
 					if (template_ini->has(call_name + ".Bad Chars Action"))
@@ -257,17 +271,17 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 
 							custom_protocol[call_name].sql_prepared_statements.push_back(sql_str);
 
-
 							// Get Input Options
-							Poco::StringTokenizer tokens_input(template_ini->getString((call_name + ".SQL" + sql_line_num_str + "_INPUTS", "")), ",");
+							Poco::StringTokenizer tokens_input(template_ini->getString((call_name + ".SQL" + sql_line_num_str + "_INPUTS"), ""), ",");
 
 							// Initialize Default Input Options
 							Value_Options inputs_options;
 							inputs_options.check = default_input_sanitize_value_check;
 
+							custom_protocol[call_name].sql_inputs_options.push_back(std::vector < Value_Options >());
+
 							for (int x = 0; x < (tokens_input.count()); x++)
 							{
-								custom_protocol[call_name].sql_inputs_options[sql_line_num] = std::vector < Value_Options >();
 								Poco::StringTokenizer tokens_input_options(tokens_input[x], "-");
 								
 								for (Poco::StringTokenizer::Iterator tokens_input_options_it = tokens_input_options.begin(); tokens_input_options_it != tokens_input_options.end(); ++tokens_input_options_it)
@@ -294,13 +308,13 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 										{
 											status = false;
 											#ifdef TESTING
-												std::cout << "extDB: DB_CUSTOM_V5: Bad Output Option: " << call_name << ":" << *tokens_input_options_it << std::endl;
+												std::cout << "extDB: DB_CUSTOM_V5: Bad Input Option: " << call_name << ":" << *tokens_input_options_it << std::endl;
 											#endif
-											BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Output Option " << call_name << ":" << *tokens_input_options_it;
+											BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Input Option " << call_name << ":" << *tokens_input_options_it;
 										}
 									}
 								}
-								custom_protocol[call_name].sql_inputs_options[sql_line_num].push_back(inputs_options);
+								custom_protocol[call_name].sql_inputs_options[sql_line_num - 1].push_back(inputs_options);
 							}
 						}
 						else
@@ -318,9 +332,9 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 			{
 				status = false;
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V5: Template File Missing Incompatible Version" << db_template_file << std::endl;
+					std::cout << "extDB: DB_CUSTOM_V5: Template File Incompatible Version" << db_template_file << std::endl;
 				#endif
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Template File Missing Incompatible Version: " << db_template_file;
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Template File Incompatible Version: " << db_template_file;
 			}
 		}
 		else
@@ -336,7 +350,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V5: Template File Not Found" << db_template_file << std::endl;
+			std::cout << "extDB: DB_CUSTOM_V5: Template File Not Found: " << db_template_file << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: No Template File Found: " << db_template_file;
 	}

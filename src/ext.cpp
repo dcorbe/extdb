@@ -998,7 +998,7 @@ int main(int nNumberofArgs, char* pszArgs[])
 	std::string input_str;
 
 	Ext *extension;
-	std::wstring current_path;
+	std::string current_path;
 	extension = (new Ext(current_path));
 	for (;;) {
 		std::getline(std::cin, input_str);
