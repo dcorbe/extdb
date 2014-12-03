@@ -10,6 +10,8 @@
 		0: ClientID
 */
 
+private["_string","_array"];
+
 _string = (_this select 0);
 
 _array = toArray _string;

@@ -11,6 +11,8 @@
 		2: STRING Optional Protocol Options i.e db_conf name for DB_CUSTOM
 */
 
+private["_database","_protocol","_protocol_options","_return","_result","_extDB_ID"];
+
 _database = [_this,0,"",[""]] call BIS_fnc_param;
 _protocol = [_this,1,"",[""]] call BIS_fnc_param;
 _protocol_options = [_this,2,"",[""]] call BIS_fnc_param;
