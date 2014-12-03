@@ -1,7 +1,4 @@
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-
+#include <boost/filesystem.hpp>
 
 #include "ext.h"
 
@@ -11,19 +8,14 @@ namespace {
 
 #ifdef __GNUC__
 	#include <dlfcn.h>
-	#include <Poco/UnicodeConverter.h>
-	//#include <stdio.h>
 	// Code for GNU C compiler
 	static void __attribute__((constructor))
 	extension_init(void)
 	{
 		Dl_info dl_info;
 		dladdr((void*)extension_init, &dl_info);
-
-		std::string path(dl_info.dli_fname);
-		std::wstring wpath;
-		Poco::UnicodeConverter::toUTF16(path, wpath);
-		extension = (new Ext(wpath));
+//		std::string path(dl_info.dli_fname);
+		extension = (new Ext(boost::filesystem::path (dl_info.dli_fname).string()));
 	}
 
 	static void __attribute__((destructor))
@@ -55,8 +47,7 @@ namespace {
 		case DLL_PROCESS_ATTACH:
 			WCHAR path[MAX_PATH+1];
 			GetModuleFileNameW (NULL, path, (MAX_PATH + 1));
-
-			extension = new Ext(std::wstring(path));
+			extension = new Ext(boost::filesystem::path (path).string());
 			break;
 		case DLL_THREAD_ATTACH:
 			break;

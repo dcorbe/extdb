@@ -50,11 +50,12 @@ class Ext: public AbstractExt
 {
 	public:
 
-		Ext(std::wstring path);
+		Ext(std::string path);
 		~Ext();
 
 		void callExtenion(char *output, const int &output_size, const char *function);
-		std::string version() const;
+		std::string getVersion() const;
+		std::string getExtensionPath();
 
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
 
@@ -76,6 +77,7 @@ class Ext: public AbstractExt
 		
 		int max_threads;
 
+		std::string extDB_path;
 		std::string steam_api_key;
 		
 		struct DBConnectionInfo {

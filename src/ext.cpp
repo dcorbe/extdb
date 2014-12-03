@@ -81,34 +81,17 @@ void DBPool::customizeSession (Poco::Data::Session& session)
 }
 
 
-Ext::Ext(std::wstring dll_path) {
+Ext::Ext(std::string dll_path) {
 	mgr.reset (new IdManager);
 	extDB_lock = false;
 	extDB_error_db_kill_server = true;
 
-	Poco::DateTime now;
-	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n/%d/%H-%M-%S.log");
-	std::string log_relative_path = boost::filesystem::path("extDB/logs/" + log_filename).make_preferred().string();
-	
-	boost::log::add_common_attributes();
-
-	boost::log::add_file_log
-	(
-		boost::log::keywords::auto_flush = true, 
-		boost::log::keywords::file_name = log_relative_path,
-		boost::log::keywords::format = "[%TimeStamp%]: ThreadID %ThreadID%: %Message%"
-	);
-	boost::log::core::get()->set_filter
-	(
-		boost::log::trivial::severity >= boost::log::trivial::info
-	);
-	
-
 	bool conf_found = false;
 	bool conf_randomized = false;
 	
-	std::string extDB_config_path = (boost::filesystem::path(dll_path).make_preferred().string());
-	extDB_config_path = (boost::filesystem::path(extDB_config_path + "extdb-conf.ini").make_preferred().string());
+	boost::filesystem::path extDB_config_path;
+
+	extDB_config_path = (boost::filesystem::path(dll_path + "extdb-conf.ini").make_preferred());
 	if (boost::filesystem::exists(extDB_config_path))
 	{
 		conf_found = true;
@@ -116,7 +99,7 @@ Ext::Ext(std::wstring dll_path) {
 	else if (boost::filesystem::exists("extdb-conf.ini"))
 	{
 		conf_found = true;
-		extDB_config_path = "extdb-conf.ini";
+		extDB_config_path = boost::filesystem::path("extdb-conf.ini");
 	}
 	else
 	{
@@ -133,7 +116,8 @@ Ext::Ext(std::wstring dll_path) {
 					{
 						conf_found = true;
 						conf_randomized = true;
-						extDB_config_path = it->path().string();
+						extDB_config_path = boost::filesystem::path(it->path().string());
+						extDB_path = boost::filesystem::path (dll_path).string();
 						break;
 					}
 				}
@@ -150,7 +134,8 @@ Ext::Ext(std::wstring dll_path) {
 						{
 							conf_found = true;
 							conf_randomized = true;
-							extDB_config_path = it->path().string();
+							extDB_config_path = boost::filesystem::path(it->path().string());
+							extDB_path = boost::filesystem::current_path().string();
 							break;
 						}
 					}
@@ -159,7 +144,38 @@ Ext::Ext(std::wstring dll_path) {
 		#endif
 	}
 
-	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Version: " + version();
+	// Initialize Logger
+	Poco::DateTime now;
+	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n/%d/%H-%M-%S.log");
+
+	boost::filesystem::path log_relative_path;
+	if (extDB_path.empty())
+	{
+		// Arma3_Root/extDB/logs
+		log_relative_path =  boost::filesystem::path("extDB/logs/");
+	}
+	else
+	{
+		// Location_of_extension/extDB/logs
+		log_relative_path = boost::filesystem::path(extDB_path);
+		log_relative_path /= "logs";
+	};
+
+	log_relative_path /= log_filename;
+
+	boost::log::add_common_attributes();
+	boost::log::add_file_log
+	(
+		boost::log::keywords::auto_flush = true, 
+		boost::log::keywords::file_name = log_relative_path.make_preferred().string(),
+		boost::log::keywords::format = "[%TimeStamp%]: ThreadID %ThreadID%: %Message%"
+	);
+	boost::log::core::get()->set_filter
+	(
+		boost::log::trivial::severity >= boost::log::trivial::info
+	);
+
+	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Version: " + getVersion();
 	
 	if (!conf_found) 
 	{
@@ -173,7 +189,7 @@ Ext::Ext(std::wstring dll_path) {
 	}
 	else
 	{
-		pConf = (new Poco::Util::IniFileConfiguration(extDB_config_path));
+		pConf = (new Poco::Util::IniFileConfiguration(extDB_config_path.make_preferred().string()));
 		#ifdef TESTING
 			std::cout << "extDB: Found extdb-conf.ini" << std::endl;
 		#endif
@@ -239,7 +255,9 @@ Ext::Ext(std::wstring dll_path) {
 					randomized_filename += chars[index_dist(rng)];
 				}
 				randomized_filename += ".ini";
-				boost::filesystem::rename("extdb-conf.ini", randomized_filename);
+
+				boost::filesystem::path randomize_configfile_path = extDB_config_path.parent_path() /= randomized_filename;
+				boost::filesystem::rename(extDB_config_path, randomized_filename);
 			}
 		#endif
 	}
@@ -355,8 +373,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					db_conn_info.db_type = "SQLite";
 					Poco::Data::SQLite::Connector::registerConnector();
 
-					std::string sqlite_file = boost::filesystem::path("extDB/sqlite/" + db_name).make_preferred().string();
-					db_conn_info.connection_str = sqlite_file;
+					db_conn_info.connection_str = boost::filesystem::path(getExtensionPath() + "/sqlite/" + db_name).make_preferred().string();
 
 					db_pool.reset(new DBPool(db_conn_info.db_type, 
 																db_conn_info.connection_str, 
@@ -430,11 +447,16 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 }
 
 
-std::string Ext::version() const
+std::string Ext::getVersion() const
 {
 	return "23";
 }
 
+
+std::string Ext::getExtensionPath()
+{
+	return extDB_path;
+}
 
 std::string Ext::getAPIKey()
 {
@@ -897,7 +919,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 									// LOCK / VERSION
 									if (tokens[1] == "VERSION")
 									{
-										std::strcpy(output, version().c_str());
+										std::strcpy(output, getVersion().c_str());
 									}
 									else if (tokens[1] == "LOCK")
 									{

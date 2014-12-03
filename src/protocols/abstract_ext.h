@@ -44,6 +44,7 @@ class AbstractExt
 		virtual int getUniqueID_mutexlock()=0;
 		
 		virtual std::string getDBType()=0;
+		virtual std::string getExtensionPath()=0;
 		
 		boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
 };

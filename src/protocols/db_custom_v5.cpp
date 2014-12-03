@@ -86,7 +86,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 		return false;
 	}
 	
-	std::string db_custom_dir = boost::filesystem::path("extDB/db_custom").make_preferred().string();
+	std::string db_custom_dir = boost::filesystem::path(extension->getExtensionPath() + "/db_custom").make_preferred().string();
 	boost::filesystem::create_directories(db_custom_dir); // Creating Directory if missing
 	std::string db_template_file = boost::filesystem::path(db_custom_dir + "/" + init_str + ".ini").make_preferred().string();
 
