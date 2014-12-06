@@ -496,21 +496,28 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 	}
 }
 
-
-std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::iterator> Ext::getDBSessionCustom_mutexlock()
+ 
+Poco::Data::Session Ext::getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::iterator> free_session = db_pool->extDB_get();
+	Poco::Data::Session free_session =  db_pool->extDB_get(itr);
 	return free_session;
 }
 
 
-void Ext::putbackDBSessionPtr_mutexlock(Poco::Data::SessionPool::SessionList::iterator ptr)
+void Ext::updateDBSession_mutexlock(Poco::Data::SessionPool::StatementCacheMap &statement_cachemap, Poco::Data::SessionPool::SessionList::iterator &itr)
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	db_pool->putBack(ptr);
+	//db_pool->extDB_updateStatementCacheMap(statement_cachemap, itr);
+}
+
+void Ext::putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
+// Gets available DB Session (mutex lock)
+{
+	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
+//	db_pool->putBack(itr);
 }
 
 

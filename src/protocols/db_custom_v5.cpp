@@ -17,7 +17,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "db_custom_v5.h"
 
-#include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/Session.h>
@@ -603,68 +602,99 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 
 void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, Template_Call>::const_iterator itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result)
 {
-	bool status = true;
-	std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::iterator> db_customSession = extension->getDBSessionCustom_mutexlock();
 
-	Poco::Data::SessionPool::StatementCacheMap::iterator statement_cache_itr = std::get<1>(db_customSession).find(call_name);
-	if (statement_cache_itr == std::get<1>(db_customSession).end())
+//	remove add binding
+//	http://pocoproject.org/docs-1.5.0/Poco.Data.Statement.html#7012
+
+	boost::lock_guard<boost::mutex> lock(extension->mutex_poco_cached_preparedStatements);
+
+	bool status = true;
+
+	Poco::Data::SessionPool::SessionList::iterator session_itr;
+	Poco::Data::Session session = extension->getDBSessionCustom_mutexlock(session_itr);
+
+	std::unordered_map <std::string, Poco::Data::SessionPool::StatementCache>::iterator statement_cache_itr = session_itr->second.find(call_name);
+	if (statement_cache_itr == session_itr->second.end())
 	{
 		// NO CACHE
+		std::cout << "NO CACHED STATEMENT" << std::endl;
+		session_itr->second[call_name].inputs = std::vector<std::vector <std::string> > ();
+
 		int i = 0;
 		for (std::vector< std::string >::const_iterator it_sql_prepared_statements_vector = itr->second.sql_prepared_statements.begin(); it_sql_prepared_statements_vector != itr->second.sql_prepared_statements.end(); ++it_sql_prepared_statements_vector)
 		{
-			i++;
+			session_itr->second[call_name].inputs.push_back(std::vector <std::string> ());
 
-			std::get<1>(db_customSession)[call_name].inputs[i].insert(std::get<1>(db_customSession)[call_name].inputs[i].begin(), all_processed_inputs[i].begin(), all_processed_inputs[i].end());
+			if (itr->second.number_of_inputs > 0)
+			{
+				std::cout << ".." << all_processed_inputs[i].size() << ".." << std::endl;
+				session_itr->second[call_name].inputs[i].insert(session_itr->second[call_name].inputs[i].begin(), all_processed_inputs[i].begin(), all_processed_inputs[i].end());
+			}
 
-			Poco::Data::Statement sql_statement(std::get<0>(db_customSession));
-			std::get<1>(db_customSession)[call_name].statements.push_back(sql_statement);
-			sql_statement << *it_sql_prepared_statements_vector, Poco::Data::use(std::get<1>(db_customSession)[call_name].inputs[i]);
+			Poco::Data::Statement sql_statement(session);
+			sql_statement << *it_sql_prepared_statements_vector, Poco::Data::Keywords::use(session_itr->second[call_name].inputs[i]);
 			executeSQL(extension, sql_statement, result, status);
 
 			if (status)
 			{
-				std::get<1>(db_customSession)[call_name].inputs[i].clear();
-
 				if ( it_sql_prepared_statements_vector+1 == itr->second.sql_prepared_statements.end() )
 				{
 					getResult(itr, sql_statement, result);
 				}
+				session_itr->second[call_name].statements.push_back(sql_statement);
 			}
 			else
 			{
-				// Exception Encountered, BREAK + Remove Cache
-				std::get<1>(db_customSession).erase(call_name);
 				break;
 			}
+
+			statement_cache_itr = session_itr->second.find(call_name);
+			if (statement_cache_itr == session_itr->second.end())
+			{
+				std::cout << "11111111" << std::endl;
+			}
+			else
+			{
+				std::cout << "22222222" << std::endl;
+			}
+
+			i = i + 1;
 		}
 	}
 	else
 	{
 		// CACHE
-		for (std::vector<int>::size_type i = 0; i != std::get<1>(db_customSession)[call_name].statements.size(); i++)
+		std::cout << "CACHED STATEMENT" << std::endl;	
+		for (std::vector<int>::size_type i = 0; i != session_itr->second[call_name].statements.size(); i++)
 		{
-			statement_cache_itr->second.inputs[i].insert(statement_cache_itr->second.inputs[i].begin(), all_processed_inputs[i].begin(), all_processed_inputs[i].end());
+			std::cout << ".." << all_processed_inputs[i].size() << ".." << std::endl;
+			session_itr->second[call_name].inputs[i].clear();
+			session_itr->second[call_name].inputs[i].insert(session_itr->second[call_name].inputs[i].begin(), all_processed_inputs[i].begin(), all_processed_inputs[i].end());
+
+//			statement_cache_itr->second.statements[i].impl().resetBinding();
 
 			executeSQL(extension, statement_cache_itr->second.statements[i], result, status);
 
 			if (status)
 			{
-				statement_cache_itr->second.inputs[i].clear();
-				if (i == (std::get<1>(db_customSession)[call_name].statements.size() - 1))
+				if (i == (session_itr->second[call_name].statements.size() - 1))
 				{
 					getResult(itr, statement_cache_itr->second.statements[i], result);
 				}
+				session_itr->second[call_name].inputs[i].clear();
 			}
 			else
 			{
 				// Exception Encountered, BREAK + Remove Cache
-				std::get<1>(db_customSession).erase(call_name);
+				session_itr->second.erase(call_name);
 				break;
 			}
+			
 		}
 	}
-	extension->putbackDBSessionPtr_mutexlock(std::get<2>(db_customSession));
+
+	//extension->updateDBSession_mutexlock(statement_cachemap, session_itr);
+	//extension->putbackDBSession_mutexlock(session_itr);
 
 	if (!status)
 	{
@@ -750,39 +780,43 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 			for(int i = 0; i < num_sql_inputs_options; ++i)
 			{
 				std::vector< std::string > processed_inputs;
+				processed_inputs.clear();
 
-				for(int x = 0; x < itr->second.sql_inputs_options[i].size(); ++x)
+				if (itr->second.number_of_inputs > 0)
 				{
-					std::string temp_str = inputs[itr->second.sql_inputs_options[i][x].number];
-					// INPUT Options
-						// BEGUID					
-					if (itr->second.sql_inputs_options[i][x].beguid)
+					for(int x = 0; x < itr->second.sql_inputs_options[i].size(); ++x)
 					{
-						getBEGUID(temp_str, temp_str);
-					}
-						// STRING
-					if (itr->second.sql_inputs_options[i][x].string)
-					{
-						if (temp_str.empty())
+						std::string temp_str = inputs[itr->second.sql_inputs_options[i][x].number];
+						// INPUT Options
+							// BEGUID					
+						if (itr->second.sql_inputs_options[i][x].beguid)
 						{
-							temp_str = ("\"\"");
+							getBEGUID(temp_str, temp_str);
 						}
-						else
+							// STRING
+						if (itr->second.sql_inputs_options[i][x].string)
 						{
-							temp_str = "\"" + temp_str + "\"";
+							if (temp_str.empty())
+							{
+								temp_str = ("\"\"");
+							}
+							else
+							{
+								temp_str = "\"" + temp_str + "\"";
+							}
+							break;												
 						}
-						break;												
-					}
 
-						// SANITIZE CHECK
-					if (itr->second.sql_inputs_options[i][x].check)
-					{
-						if (!Sqf::check(temp_str))
+							// SANITIZE CHECK
+						if (itr->second.sql_inputs_options[i][x].check)
 						{
-							sanitize_value_check_ok = false;
+							if (!Sqf::check(temp_str))
+							{
+								sanitize_value_check_ok = false;
+							}
 						}
+						processed_inputs.push_back(temp_str);
 					}
-					processed_inputs.push_back(temp_str);
 				}
 				all_processed_inputs.push_back(processed_inputs);
 			}

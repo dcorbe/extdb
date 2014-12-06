@@ -60,8 +60,12 @@ class Ext: public AbstractExt
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
 
 		Poco::Data::Session getDBSession_mutexlock();
-		std::tuple<Poco::Data::Session, Poco::Data::SessionPool::StatementCacheMap, Poco::Data::SessionPool::SessionList::iterator> getDBSessionCustom_mutexlock();
-		void putbackDBSessionPtr_mutexlock(Poco::Data::SessionPool::SessionList::iterator ptr);
+		Poco::Data::Session getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
+		void updateDBSession_mutexlock(Poco::Data::SessionPool::StatementCacheMap &statement_cachemap, Poco::Data::SessionPool::SessionList::iterator &itr);
+		void putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
+
+
+
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
 		void stop();
 
@@ -70,6 +74,8 @@ class Ext: public AbstractExt
 
 		int getUniqueID_mutexlock();
 		void freeUniqueID_mutexlock(const int &unique_id);
+
+		boost::mutex mutex_poco_cached_preparedStatements;  // Using Same Lock for Wait / Results / Plugins
 
 	private:
 		bool extDB_lock;
@@ -115,6 +121,8 @@ class Ext: public AbstractExt
 		std::unordered_map<int, bool> unordered_map_wait;
 		std::unordered_map<int, std::string> unordered_map_results;
 		boost::mutex mutex_unordered_map_results;  // Using Same Lock for Wait / Results / Plugins
+
+
 
 		// Unique ID for key for ^^
 		boost::shared_ptr<IdManager> mgr;
