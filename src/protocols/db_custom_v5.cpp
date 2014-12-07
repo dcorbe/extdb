@@ -467,6 +467,7 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 						}
 						else
 						{
+							boost::erase_all(temp_str, "\"");
 							result += "\"" + temp_str + "\"";
 						}
 						break;												
