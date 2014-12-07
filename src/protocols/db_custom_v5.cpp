@@ -144,7 +144,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Invalid Default Bad Chars Action: " << bad_chars_action_str;
 			}
 
-			if ((template_ini->getInt("Default.Version", 1)) == 5)
+			if ((template_ini->getInt("Default.Version", 1)) == 6)
 			{
 				for(std::vector<std::string>::iterator it = custom_calls.begin(); it != custom_calls.end(); ++it) 
 				{
@@ -427,30 +427,20 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 				if (col >= sql_output_options_size)
 				{
 					// DEFAULT BEHAVIOUR
-					if (itr->second.string_datatype_check)
+					if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
 					{
-						if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+						if (temp_str.empty())
 						{
-							if (temp_str.empty())
-							{
-								result += ("\"\"");
-							}
-							else
-							{
-								result += "\"" + temp_str + "\"";
-							}
+							result += ("\"\"");
 						}
 						else
 						{
-							if (temp_str.empty())
-							{
-								result += ("\"\"");
-							}
-							else
-							{
-								result += temp_str;
-							}
+							result += "\"" + temp_str + "\"";
 						}
+					}
+					else if (temp_str.empty())
+					{
+						result += ("\"\"");
 					}
 					else
 					{
@@ -483,31 +473,28 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 					}
 
 					// STRING DATATYPE CHECK
-					else if (itr-> second.sql_outputs_options[col].string_datatype_check)
+					else if ((itr-> second.sql_outputs_options[col].string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
 					{
-						if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+						if (temp_str.empty())
 						{
-							if (temp_str.empty())
-							{
-								result += ("\"\"");
-							}
-							else
-							{
-								result += "\"" + temp_str + "\"";
-							}
+							result += ("\"\"");
 						}
 						else
 						{
-							if (temp_str.empty())
-							{
-								result += ("\"\"");
-							}
-							else
-							{
-								result += temp_str;
-							}
-						}						
+							result += "\"" + temp_str + "\"";
+						}
 					}
+					else
+					{
+						if (temp_str.empty())
+						{
+							result += ("\"\"");
+						}
+						else
+						{
+							result += temp_str;
+						}
+					}						
 
 					// SANITIZE CHECK
 					if (itr-> second.sql_outputs_options[col].check)
@@ -612,8 +599,6 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 	if (statement_cache_itr == session_itr->second.end())
 	{
 		// NO CACHE
-		std::cout << "NO CACHED STATEMENT" << std::endl;
-		session_itr->second[call_name].inputs = std::vector<std::vector <std::string> > ();
 
 		int i = -1;
 		for (std::vector< std::string >::const_iterator it_sql_prepared_statements_vector = itr->second.sql_prepared_statements.begin(); it_sql_prepared_statements_vector != itr->second.sql_prepared_statements.end(); ++it_sql_prepared_statements_vector)
@@ -622,15 +607,12 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 
 			Poco::Data::Statement sql_statement(session);
 
-			session_itr->second[call_name].inputs.push_back(std::vector <std::string> ());
 			if (itr->second.number_of_inputs == 0)
 			{
-				std::cout << ".. NUM OF INPUTS 0 .." << std::endl;
 				sql_statement << *it_sql_prepared_statements_vector;
 			}
 			else
 			{
-				std::cout << ".." << all_processed_inputs[i].size() << ".." << std::endl;
 				sql_statement << *it_sql_prepared_statements_vector;
 				for (int x = 0; x < all_processed_inputs[i].size(); x++)
 				{
@@ -646,7 +628,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 				{
 					getResult(itr, sql_statement, result);
 				}
-				session_itr->second[call_name].statements.push_back(sql_statement);
+				session_itr->second[call_name].push_back(sql_statement);
 			}
 			else
 			{
@@ -658,25 +640,23 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 	else
 	{
 		// CACHE
-		std::cout << "CACHED STATEMENT" << std::endl;	
-		for (std::vector<int>::size_type i = 0; i != statement_cache_itr->second.statements.size(); i++)
+		for (std::vector<int>::size_type i = 0; i != statement_cache_itr->second.size(); i++)
 		{
-			statement_cache_itr->second.statements[i].bindClear();
+			statement_cache_itr->second[i].bindClear();
 			for (int x = 0; x < all_processed_inputs[i].size(); x++)
 			{
-				statement_cache_itr->second.statements[i], Poco::Data::use(all_processed_inputs[i][x]);
+				statement_cache_itr->second[i], Poco::Data::use(all_processed_inputs[i][x]);
 			}
-			statement_cache_itr->second.statements[i].bindFixup();
+			statement_cache_itr->second[i].bindFixup();
 
-			executeSQL(extension, statement_cache_itr->second.statements[i], result, status);
+			executeSQL(extension, statement_cache_itr->second[i], result, status);
 
 			if (status)
 			{
-				if (i == (statement_cache_itr->second.statements.size() - 1))
+				if (i == (statement_cache_itr->second.size() - 1))
 				{
-					getResult(itr, statement_cache_itr->second.statements[i], result);
+					getResult(itr, statement_cache_itr->second[i], result);
 				}
-				statement_cache_itr->second.inputs[i].clear();
 			}
 			else
 			{

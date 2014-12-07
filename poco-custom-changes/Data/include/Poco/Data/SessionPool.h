@@ -92,12 +92,8 @@ class Data_API SessionPool
 public:
 	typedef Poco::AutoPtr<PooledSessionHolder> PooledSessionHolderPtr;
 	
-	struct StatementCache {
-		std::vector<std::vector <std::string> > inputs;
-		std::vector<Poco::Data::Statement> statements;
-	};
+	typedef std::vector<Poco::Data::Statement> StatementCache;
 
-	//typedef Poco::SharedPtr < std::unordered_map <std::string, StatementCache> > StatementCacheMap;
 	typedef std::unordered_map <std::string, StatementCache> StatementCacheMap;
 	typedef std::list < std::pair < PooledSessionHolderPtr, StatementCacheMap > > SessionList;
 
