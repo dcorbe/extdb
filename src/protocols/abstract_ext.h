@@ -37,7 +37,6 @@ class AbstractExt
 	public:
 		virtual Poco::Data::Session getDBSession_mutexlock()=0;
 		virtual Poco::Data::Session getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)=0;
-		virtual void updateDBSession_mutexlock(Poco::Data::SessionPool::StatementCacheMap &statement_cachemap, Poco::Data::SessionPool::SessionList::iterator &itr)=0;
 		virtual void putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)=0;
 
 		virtual std::string getAPIKey()=0;

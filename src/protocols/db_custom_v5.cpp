@@ -602,10 +602,6 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 
 void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, Template_Call>::const_iterator itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result)
 {
-
-//	remove add binding
-//	http://pocoproject.org/docs-1.5.0/Poco.Data.Statement.html#7012
-
 	boost::lock_guard<boost::mutex> lock(extension->mutex_poco_cached_preparedStatements);
 
 	bool status = true;
@@ -620,19 +616,30 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 		std::cout << "NO CACHED STATEMENT" << std::endl;
 		session_itr->second[call_name].inputs = std::vector<std::vector <std::string> > ();
 
-		int i = 0;
+		int i = -1;
 		for (std::vector< std::string >::const_iterator it_sql_prepared_statements_vector = itr->second.sql_prepared_statements.begin(); it_sql_prepared_statements_vector != itr->second.sql_prepared_statements.end(); ++it_sql_prepared_statements_vector)
 		{
-			session_itr->second[call_name].inputs.push_back(std::vector <std::string> ());
+			i++;
 
-			if (itr->second.number_of_inputs > 0)
+			Poco::Data::Statement sql_statement(session);
+
+			session_itr->second[call_name].inputs.push_back(std::vector <std::string> ());
+			if (itr->second.number_of_inputs == 0)
+			{
+				std::cout << ".. NUM OF INPUTS 0 .." << std::endl;
+				sql_statement << *it_sql_prepared_statements_vector;
+			}
+			else
 			{
 				std::cout << ".." << all_processed_inputs[i].size() << ".." << std::endl;
 				session_itr->second[call_name].inputs[i].insert(session_itr->second[call_name].inputs[i].begin(), all_processed_inputs[i].begin(), all_processed_inputs[i].end());
+				sql_statement << *it_sql_prepared_statements_vector;
+				for (int x = 0; x < session_itr->second[call_name].inputs[i].size(); x++)
+				{
+					sql_statement, Poco::Data::use(session_itr->second[call_name].inputs[i][x]);
+				}
 			}
 
-			Poco::Data::Statement sql_statement(session);
-			sql_statement << *it_sql_prepared_statements_vector, Poco::Data::Keywords::use(session_itr->second[call_name].inputs[i]);
 			executeSQL(extension, sql_statement, result, status);
 
 			if (status)
@@ -645,47 +652,43 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 			}
 			else
 			{
+				session_itr->second.erase(call_name);
 				break;
 			}
-
-			statement_cache_itr = session_itr->second.find(call_name);
-			if (statement_cache_itr == session_itr->second.end())
-			{
-				std::cout << "11111111" << std::endl;
-			}
-			else
-			{
-				std::cout << "22222222" << std::endl;
-			}
-
-			i = i + 1;
 		}
 	}
 	else
 	{
 		// CACHE
 		std::cout << "CACHED STATEMENT" << std::endl;	
-		for (std::vector<int>::size_type i = 0; i != session_itr->second[call_name].statements.size(); i++)
+		for (std::vector<int>::size_type i = 0; i != statement_cache_itr->second.statements.size(); i++)
 		{
 			std::cout << ".." << all_processed_inputs[i].size() << ".." << std::endl;
-			session_itr->second[call_name].inputs[i].clear();
-			session_itr->second[call_name].inputs[i].insert(session_itr->second[call_name].inputs[i].begin(), all_processed_inputs[i].begin(), all_processed_inputs[i].end());
 
-//			statement_cache_itr->second.statements[i].impl().resetBinding();
+			statement_cache_itr->second.statements[i].bindClear();
+			for (int x = 0; x < all_processed_inputs[i].size(); x++)
+			{
+				std::cout << all_processed_inputs[i][x] << std::endl;
+				statement_cache_itr->second.statements[i], Poco::Data::use(all_processed_inputs[i][x]);
+			}
+			std::cout << "------------------" << std::endl;
+			statement_cache_itr->second.statements[i].bindFixup();
 
+			//statement_cache_itr->second.statements[i], Poco::Data::use(all_processed_inputs[i]);
 			executeSQL(extension, statement_cache_itr->second.statements[i], result, status);
 
 			if (status)
 			{
-				if (i == (session_itr->second[call_name].statements.size() - 1))
+				if (i == (statement_cache_itr->second.statements.size() - 1))
 				{
 					getResult(itr, statement_cache_itr->second.statements[i], result);
 				}
-				session_itr->second[call_name].inputs[i].clear();
+				statement_cache_itr->second.inputs[i].clear();
 			}
 			else
 			{
 				// Exception Encountered, BREAK + Remove Cache
+				
 				session_itr->second.erase(call_name);
 				break;
 			}
@@ -693,8 +696,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 		}
 	}
 
-	//extension->updateDBSession_mutexlock(statement_cachemap, session_itr);
-	//extension->putbackDBSession_mutexlock(session_itr);
+	extension->putbackDBSession_mutexlock(session_itr);
 
 	if (!status)
 	{

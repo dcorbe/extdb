@@ -506,18 +506,11 @@ Poco::Data::Session Ext::getDBSessionCustom_mutexlock(Poco::Data::SessionPool::S
 }
 
 
-void Ext::updateDBSession_mutexlock(Poco::Data::SessionPool::StatementCacheMap &statement_cachemap, Poco::Data::SessionPool::SessionList::iterator &itr)
-// Gets available DB Session (mutex lock)
-{
-	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	//db_pool->extDB_updateStatementCacheMap(statement_cachemap, itr);
-}
-
 void Ext::putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-//	db_pool->putBack(itr);
+	db_pool->putBack(itr);
 }
 
 
@@ -547,13 +540,13 @@ void Ext::getSinglePartResult_mutexlock(const int &unique_id, char *output, cons
 	}
 	else // SEND MSG (Part)
 	{
-		if (it->second.length() > (output_size-1))
+		if (it->second.length() > output_size)
 		{
 			std::strcpy(output, ("[5]"));
 		}
 		else
 		{
-			std::string msg = it->second.substr(0, output_size-1);
+			std::string msg = it->second.substr(0, output_size);
 			std::strcpy(output, msg.c_str());
 			unordered_map_results.erase(unique_id);
 			freeUniqueID_mutexlock(unique_id);
@@ -589,11 +582,11 @@ void Ext::getMultiPartResult_mutexlock(const int &unique_id, char *output, const
 	}
 	else // SEND MSG (Part)
 	{
-		std::string msg = it->second.substr(0, output_size-1);
+		std::string msg = it->second.substr(0, output_size);
 		std::strcpy(output, msg.c_str());
-		if (it->second.length() > (output_size-1))
+		if (it->second.length() > output_size)
 		{
-			unordered_map_results[unique_id] = it->second.substr(output_size-1);
+			unordered_map_results[unique_id] = it->second.substr(output_size);
 		}
 		else
 		{
@@ -659,20 +652,6 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 				std::strcpy(output, "[1]");
 			}
 		}
-		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V2());
@@ -690,6 +669,20 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_NO_EXTRA_QUOTES_V2());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
+		}
+		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{

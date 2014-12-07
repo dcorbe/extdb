@@ -61,7 +61,6 @@ class Ext: public AbstractExt
 
 		Poco::Data::Session getDBSession_mutexlock();
 		Poco::Data::Session getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
-		void updateDBSession_mutexlock(Poco::Data::SessionPool::StatementCacheMap &statement_cachemap, Poco::Data::SessionPool::SessionList::iterator &itr);
 		void putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
 
 
