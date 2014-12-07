@@ -149,7 +149,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 					Poco::Data::Statement sql(db_session);
 
-					sql << sql_str_procedure, Poco::Data::Keywords::now;
+					sql << sql_str_procedure, Poco::Data::now;
 
 					result = "[1,[";
 
@@ -158,7 +158,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 						// If Outputs.. SQL SELECT Statement to get Results
 						
 						Poco::Data::Statement sql2(db_session);
-						sql2 << sql_str_select, Poco::Data::Keywords::now;
+						sql2 << sql_str_select, Poco::Data::now;
 							
 						extension->freeUniqueID_mutexlock(unique_id); // Free Unique ID
 							

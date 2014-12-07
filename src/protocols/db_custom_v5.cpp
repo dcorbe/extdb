@@ -50,7 +50,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "../sanitize.h"
 
-
 bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 {
 	db_custom_name = init_str;
@@ -559,7 +558,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 		#ifdef TESTING
 			std::cout << "extDB: DB_CUSTOM_V5: Error DBLockedException: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error DBLockedException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Error DBLockedException: " + e.displayText();
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
@@ -568,7 +567,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 		#ifdef TESTING
 			std::cout << "extDB: DB_CUSTOM_V5: Error ConnectionException: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error ConnectionException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Error ConnectionException: " + e.displayText();
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
 	{
@@ -576,7 +575,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 		#ifdef TESTING
 			std::cout << "extDB: DB_CUSTOM_V5: Error StatementException: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error StatementException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Error StatementException: " + e.displayText();
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
@@ -585,7 +584,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 		#ifdef TESTING
 			std::cout << "extDB: DB_CUSTOM_V5: Error DataException: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error DataException: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Error DataException: " + e.displayText();
 		result = "[0,\"Error Data Exception\"]";
 	}
 	catch (Poco::Exception& e)
@@ -594,7 +593,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 		#ifdef TESTING
 			std::cout << "extDB: DB_CUSTOM_V5: Error Exception: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error Exception: " + e.displayText();
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Error Exception: " + e.displayText();
 		result = "[0,\"Error Exception\"]";
 	}
 }
@@ -632,11 +631,10 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 			else
 			{
 				std::cout << ".." << all_processed_inputs[i].size() << ".." << std::endl;
-				session_itr->second[call_name].inputs[i].insert(session_itr->second[call_name].inputs[i].begin(), all_processed_inputs[i].begin(), all_processed_inputs[i].end());
 				sql_statement << *it_sql_prepared_statements_vector;
-				for (int x = 0; x < session_itr->second[call_name].inputs[i].size(); x++)
+				for (int x = 0; x < all_processed_inputs[i].size(); x++)
 				{
-					sql_statement, Poco::Data::use(session_itr->second[call_name].inputs[i][x]);
+					sql_statement, Poco::Data::use(all_processed_inputs[i][x]);
 				}
 			}
 
@@ -663,18 +661,13 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 		std::cout << "CACHED STATEMENT" << std::endl;	
 		for (std::vector<int>::size_type i = 0; i != statement_cache_itr->second.statements.size(); i++)
 		{
-			std::cout << ".." << all_processed_inputs[i].size() << ".." << std::endl;
-
 			statement_cache_itr->second.statements[i].bindClear();
 			for (int x = 0; x < all_processed_inputs[i].size(); x++)
 			{
-				std::cout << all_processed_inputs[i][x] << std::endl;
 				statement_cache_itr->second.statements[i], Poco::Data::use(all_processed_inputs[i][x]);
 			}
-			std::cout << "------------------" << std::endl;
 			statement_cache_itr->second.statements[i].bindFixup();
 
-			//statement_cache_itr->second.statements[i], Poco::Data::use(all_processed_inputs[i]);
 			executeSQL(extension, statement_cache_itr->second.statements[i], result, status);
 
 			if (status)
@@ -700,7 +693,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 
 	if (!status)
 	{
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V4: Error Exception: SQL:" + input_str;
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Error Exception: SQL:" + input_str;
 	}
 	else
 	{
