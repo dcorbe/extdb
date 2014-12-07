@@ -34,6 +34,7 @@ SET(SOURCES
 	../../src/sanitize.cpp
 	../../src/protocols/abstract_protocol.cpp
 	../../src/protocols/db_custom_v3.cpp
+	../../src/protocols/db_custom_v5.cpp
 	../../src/protocols/db_raw_v2.cpp
 	../../src/protocols/db_procedure_v2.cpp
 	../../src/protocols/db_raw_no_extra_quotes_v2.cpp
