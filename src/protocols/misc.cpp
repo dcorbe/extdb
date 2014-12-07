@@ -98,7 +98,6 @@ void MISC::getBEGUID(std::string &input_str, std::string &result)
 // From Frank https://gist.github.com/Fank/11127158
 // Modified to use libpoco
 {
-	boost::lock_guard<boost::mutex> lock(mutex_md5);
 	bool status = true;
 
 	if (input_str.empty())
@@ -135,6 +134,7 @@ void MISC::getBEGUID(std::string &input_str, std::string &result)
 			bestring << char(parts[i]);
 		}
 
+		boost::lock_guard<boost::mutex> lock(mutex_md5);
 		md5.update(bestring.str());
 		result = ("\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"");
 	}

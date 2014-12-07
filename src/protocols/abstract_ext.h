@@ -20,6 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <Poco/AutoPtr.h>
 #include <Poco/Data/Session.h>
+#include <Poco/Data/SessionPool.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
 #include <boost/log/core.hpp>
@@ -28,11 +29,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/sources/record_ostream.hpp>
 
+#include <boost/thread/thread.hpp>
+
 
 class AbstractExt
 {
 	public:
 		virtual Poco::Data::Session getDBSession_mutexlock()=0;
+		virtual Poco::Data::Session getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)=0;
+		virtual void putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)=0;
+
 		virtual std::string getAPIKey()=0;
 		
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
@@ -41,6 +47,9 @@ class AbstractExt
 		virtual int getUniqueID_mutexlock()=0;
 		
 		virtual std::string getDBType()=0;
+		virtual std::string getExtensionPath()=0;
 		
 		boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
+
+		boost::mutex mutex_poco_cached_preparedStatements;  // Using Same Lock for Wait / Results / Plugins
 };

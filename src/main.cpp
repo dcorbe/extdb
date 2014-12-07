@@ -1,7 +1,4 @@
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-
+#include <boost/filesystem.hpp>
 
 #include "ext.h"
 
@@ -10,18 +7,15 @@ namespace {
 };
 
 #ifdef __GNUC__
-	//#include <dlfcn.h>
-	//#include <stdio.h>
+	#include <dlfcn.h>
 	// Code for GNU C compiler
 	static void __attribute__((constructor))
 	extension_init(void)
 	{
-/*
 		Dl_info dl_info;
 		dladdr((void*)extension_init, &dl_info);
-		std::cout << "extDB: " << dl_info.dli_fname << std::endl;
-*/
-		extension = (new Ext());
+//		std::string path(dl_info.dli_fname);
+		extension = (new Ext(boost::filesystem::path (dl_info.dli_fname).string()));
 	}
 
 	static void __attribute__((destructor))
@@ -51,9 +45,9 @@ namespace {
 		switch (ul_reason_for_call)
 		{
 		case DLL_PROCESS_ATTACH:
-			//TCHAR path[MAX_PATH+1];
-			//GetModuleFileName(hInstance, path, size(path));
-			extension = (new Ext());
+			WCHAR path[MAX_PATH+1];
+			GetModuleFileNameW (NULL, path, (MAX_PATH + 1));
+			extension = new Ext(boost::filesystem::path (path).string());
 			break;
 		case DLL_THREAD_ATTACH:
 			break;

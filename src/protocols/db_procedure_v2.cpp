@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "db_procedure_v2.h"
 
-#include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/Session.h>

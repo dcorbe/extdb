@@ -59,7 +59,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "uniqueid.h"
 #include "protocols/abstract_protocol.h"
-#include "protocols/db_custom_v3.h"
+#include "protocols/db_custom_v5.h"
 #include "protocols/db_procedure_v2.h"
 #include "protocols/db_raw_v2.h"
 #include "protocols/db_raw_no_extra_quotes_v2.h"
@@ -81,45 +81,34 @@ void DBPool::customizeSession (Poco::Data::Session& session)
 }
 
 
-Ext::Ext(void) {
+Ext::Ext(std::string dll_path) {
 	mgr.reset (new IdManager);
 	extDB_lock = false;
 	extDB_error_db_kill_server = true;
 
-	Poco::DateTime now;
-	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n/%d/%H-%M-%S.log");
-	std::string log_relative_path = boost::filesystem::path("extDB/logs/" + log_filename).make_preferred().string();
-	
-	boost::log::add_common_attributes();
-
-	boost::log::add_file_log
-	(
-		boost::log::keywords::auto_flush = true, 
-		boost::log::keywords::file_name = log_relative_path,
-		boost::log::keywords::format = "[%TimeStamp%]: ThreadID %ThreadID%: %Message%"
-	);
-	boost::log::core::get()->set_filter
-	(
-		boost::log::trivial::severity >= boost::log::trivial::info
-	);
-	
-
 	bool conf_found = false;
 	bool conf_randomized = false;
 	
-	if (boost::filesystem::exists("extdb-conf.ini"))
+	boost::filesystem::path extDB_config_path;
+
+	extDB_config_path = (boost::filesystem::path(dll_path + "extdb-conf.ini").make_preferred());
+	if (boost::filesystem::exists(extDB_config_path))
 	{
 		conf_found = true;
-		pConf = (new Poco::Util::IniFileConfiguration("extdb-conf.ini"));
+	}
+	else if (boost::filesystem::exists("extdb-conf.ini"))
+	{
+		conf_found = true;
+		extDB_config_path = boost::filesystem::path("extdb-conf.ini");
 	}
 	else
 	{
-		#ifdef _WIN32
+		#ifdef _WIN32	// WINDOWS ONLY, Linux Arma2 Doesn't have extension Support
 			// Search for Randomize Config File -- Legacy Security Support For Arma2Servers
-				// TODO: WINDOWS ONLY ifdef endif
 			boost::regex expression("extdb-conf.*ini");
 
-			for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
+			// CHECK DLL PATH FOR CONFIG
+			for (boost::filesystem::directory_iterator it(dll_path); it != boost::filesystem::directory_iterator(); ++it)
 			{
 				if (is_regular_file(it->path()))
 				{
@@ -127,15 +116,66 @@ Ext::Ext(void) {
 					{
 						conf_found = true;
 						conf_randomized = true;
-						pConf = (new Poco::Util::IniFileConfiguration(it->path().string()));  // Load Randomized Conf
+						extDB_config_path = boost::filesystem::path(it->path().string());
+						extDB_path = boost::filesystem::path (dll_path).string();
 						break;
+					}
+				}
+			}
+
+			// CHECK ARMA ROOT DIRECTORY FOR CONFIG
+			if (!conf_found)
+			{
+				for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
+				{
+					if (is_regular_file(it->path()))
+					{
+						if(boost::regex_search(it->path().string(), expression))
+						{
+							conf_found = true;
+							conf_randomized = true;
+							extDB_config_path = boost::filesystem::path(it->path().string());
+							extDB_path = boost::filesystem::current_path().string();
+							break;
+						}
 					}
 				}
 			}
 		#endif
 	}
 
-	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Version: " + version();
+	// Initialize Logger
+	Poco::DateTime now;
+	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n/%d/%H-%M-%S.log");
+
+	boost::filesystem::path log_relative_path;
+	if (extDB_path.empty())
+	{
+		// Arma3_Root/extDB/logs
+		log_relative_path =  boost::filesystem::path("extDB/logs/");
+	}
+	else
+	{
+		// Location_of_extension/extDB/logs
+		log_relative_path = boost::filesystem::path(extDB_path);
+		log_relative_path /= "logs";
+	};
+
+	log_relative_path /= log_filename;
+
+	boost::log::add_common_attributes();
+	boost::log::add_file_log
+	(
+		boost::log::keywords::auto_flush = true, 
+		boost::log::keywords::file_name = log_relative_path.make_preferred().string(),
+		boost::log::keywords::format = "[%TimeStamp%]: ThreadID %ThreadID%: %Message%"
+	);
+	boost::log::core::get()->set_filter
+	(
+		boost::log::trivial::severity >= boost::log::trivial::info
+	);
+
+	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Version: " + getVersion();
 	
 	if (!conf_found) 
 	{
@@ -149,7 +189,7 @@ Ext::Ext(void) {
 	}
 	else
 	{
-		
+		pConf = (new Poco::Util::IniFileConfiguration(extDB_config_path.make_preferred().string()));
 		#ifdef TESTING
 			std::cout << "extDB: Found extdb-conf.ini" << std::endl;
 		#endif
@@ -215,19 +255,23 @@ Ext::Ext(void) {
 					randomized_filename += chars[index_dist(rng)];
 				}
 				randomized_filename += ".ini";
-				boost::filesystem::rename("extdb-conf.ini", randomized_filename);
+
+				boost::filesystem::path randomize_configfile_path = extDB_config_path.parent_path() /= randomized_filename;
+				boost::filesystem::rename(extDB_config_path, randomized_filename);
 			}
 		#endif
 	}
 }
+
 
 Ext::~Ext(void)
 {
 	stop();
 }
 
+
 void Ext::stop()
-{	
+{
 	#ifdef TESTING
 		std::cout << "extDB: Stopping Please Wait ..." << std::endl;
 	#endif
@@ -238,6 +282,7 @@ void Ext::stop()
 
 	boost::log::core::get()->remove_all_sinks();
 }
+
 
 void Ext::connectDatabase(char *output, const int &output_size, const std::string &conf_option)
 {
@@ -328,8 +373,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					db_conn_info.db_type = "SQLite";
 					Poco::Data::SQLite::Connector::registerConnector();
 
-					std::string sqlite_file = boost::filesystem::path("extDB/sqlite/" + db_name).make_preferred().string();
-					db_conn_info.connection_str = sqlite_file;
+					db_conn_info.connection_str = boost::filesystem::path(getExtensionPath() + "/sqlite/" + db_name).make_preferred().string();
 
 					db_pool.reset(new DBPool(db_conn_info.db_type, 
 																db_conn_info.connection_str, 
@@ -403,11 +447,16 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 }
 
 
-std::string Ext::version() const
+std::string Ext::getVersion() const
 {
-	return "21";
+	return "23";
 }
 
+
+std::string Ext::getExtensionPath()
+{
+	return extDB_path;
+}
 
 std::string Ext::getAPIKey()
 {
@@ -428,6 +477,7 @@ void Ext::freeUniqueID_mutexlock(const int &unique_id)
 	mgr.get()->FreeId(unique_id);
 }
 
+
 Poco::Data::Session Ext::getDBSession_mutexlock()
 // Gets available DB Session (mutex lock)
 {
@@ -446,6 +496,23 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 	}
 }
 
+ 
+Poco::Data::Session Ext::getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
+// Gets available DB Session (mutex lock)
+{
+	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
+	Poco::Data::Session free_session =  db_pool->extDB_get(itr);
+	return free_session;
+}
+
+
+void Ext::putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
+// Gets available DB Session (mutex lock)
+{
+	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
+	db_pool->putBack(itr);
+}
+
 
 std::string Ext::getDBType()
 {
@@ -458,8 +525,8 @@ void Ext::getSinglePartResult_mutexlock(const int &unique_id, char *output, cons
 //   If <=, then sends output to arma, and removes entry from unordered map array
 //   If >, sends [5] to indicate MultiPartResult
 {
-	boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results); // TODO Try to make Mutex Lock smaller
-	boost::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
+	boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
+	std::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
 	if (it == unordered_map_results.end()) // NO UNIQUE ID or WAIT
 	{
 		if (unordered_map_wait.count(unique_id) == 0)
@@ -473,13 +540,13 @@ void Ext::getSinglePartResult_mutexlock(const int &unique_id, char *output, cons
 	}
 	else // SEND MSG (Part)
 	{
-		if (it->second.length() > (output_size-1))
+		if (it->second.length() > output_size)
 		{
 			std::strcpy(output, ("[5]"));
 		}
 		else
 		{
-			std::string msg = it->second.substr(0, output_size-1);
+			std::string msg = it->second.substr(0, output_size);
 			std::strcpy(output, msg.c_str());
 			unordered_map_results.erase(unique_id);
 			freeUniqueID_mutexlock(unique_id);
@@ -494,8 +561,8 @@ void Ext::getMultiPartResult_mutexlock(const int &unique_id, char *output, const
 //   If <=, then sends output to arma
 //   If >, then sends 1 part to arma + stores rest.
 {
-	boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results); // TODO Try to make Mutex Lock smaller
-	boost::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
+	boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
+	std::unordered_map<int, std::string>::const_iterator it = unordered_map_results.find(unique_id);
 	if (it == unordered_map_results.end()) // NO UNIQUE ID or WAIT
 	{
 		if (unordered_map_wait.count(unique_id) == 0)
@@ -515,11 +582,11 @@ void Ext::getMultiPartResult_mutexlock(const int &unique_id, char *output, const
 	}
 	else // SEND MSG (Part)
 	{
-		std::string msg = it->second.substr(0, output_size-1);
+		std::string msg = it->second.substr(0, output_size);
 		std::strcpy(output, msg.c_str());
-		if (it->second.length() > (output_size-1))
+		if (it->second.length() > output_size)
 		{
-			unordered_map_results[unique_id] = it->second.substr(output_size-1);
+			unordered_map_results[unique_id] = it->second.substr(output_size);
 		}
 		else
 		{
@@ -542,7 +609,6 @@ void Ext::saveResult_mutexlock(const std::string &result, const int &unique_id)
 void Ext::addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name, const std::string &init_data)
 {
 	{
-		// TODO Implement Poco ClassLoader -- dayz hive ext has it to load database dll
 		boost::lock_guard<boost::mutex> lock(mutex_unordered_map_protocol);
 		if (boost::iequals(protocol, std::string("MISC")) == 1)
 		{
@@ -572,23 +638,9 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 				std::strcpy(output, "[1]");
 			}
 		}
-		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V3")) == 1)
+		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V5")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V3());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V5());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -628,6 +680,20 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 				std::strcpy(output, "[1]");
 			}
 		}
+		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
+		}
 		else
 		{
 			std::strcpy(output, "[0,\"Error Unknown Protocol\"]");
@@ -639,7 +705,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 void Ext::syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data)
 // Sync callPlugin
 {
-	boost::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
+	std::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
 	if (itr == unordered_map_protocol.end())
 	{
 		std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
@@ -670,7 +736,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 void Ext::onewayCallProtocol(const std::string protocol, const std::string data)
 // ASync callProtocol
 {
-	boost::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
+	std::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
 	if (itr != unordered_map_protocol.end())
 	{
 		std::string result;
@@ -713,193 +779,205 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 			const std::string sep_char(":");
 
 			// Async / Sync
-			const int async = Poco::NumberParser::parse(input_str.substr(0,1));
-
-			switch (async)  // TODO Profile using Numberparser versus comparsion of char[0] + if statement checking length of *function
+			int async;
+			
+			if (Poco::NumberParser::tryParse(input_str.substr(0,1), async))
 			{
-				case 2: //ASYNC + SAVE
-				{
-					// Protocol
-					const std::string::size_type found = input_str.find(sep_char,2);
 
-					if (found==std::string::npos)  // Check Invalid Format
-					{
-						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
-					}
-					else
-					{
-						const std::string protocol = input_str.substr(2,(found-2));
-
-						if (found == (input_str_length - 1))
-						{
-							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
-						}
-						else
-						{
-							bool found_procotol = false;
-							// Data
-							std::string data = input_str.substr(found+1);
-							int unique_id = getUniqueID_mutexlock();
-
-							// Check for Protocol Name Exists...
-							// Do this so if someone manages to get server, the error message wont get stored in the result unordered map
-							{
-								boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
-								if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
-								{
-									std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
-									BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Unknown Protocol: " + protocol);
-								}
-								else
-								{
-									unordered_map_wait[unique_id] = true;
-									found_procotol = true;
-								}
-							}
-							// Only Add Job to Work Queue + Return ID if Protocol Name exists.
-							if (found_procotol)
-							{
-								io_service.post(boost::bind(&Ext::asyncCallProtocol, this, protocol, data, unique_id));
-								std::strcpy(output, (("[2,\"" + Poco::NumberFormatter::format(unique_id) + "\"]")).c_str());
-							}
-						}
-					}
-					break;
-				}
-				case 4: // GET -- Single-Part Message Format
+				switch (async)  // TODO Profile using Numberparser versus comparsion of char[0] + if statement checking length of *function
 				{
-					const int unique_id = Poco::NumberParser::parse(input_str.substr(2));
-					getSinglePartResult_mutexlock(unique_id, output, output_size);
-					break;
-				}
-				case 5: // GET -- Multi-Part Message Format
-				{
-					const int unique_id = Poco::NumberParser::parse(input_str.substr(2));
-					getMultiPartResult_mutexlock(unique_id, output, output_size);
-					break;
-				}
-				case 1: //ASYNC
-				{
-					// Protocol
-					const std::string::size_type found = input_str.find(sep_char,2);
-
-					if (found==std::string::npos)  // Check Invalid Format
-					{
-						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
-					}
-					else
-					{
-						if (found == (input_str_length - 1))
-						{
-							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
-						}
-						else
-						{
-							const std::string protocol = input_str.substr(2,(found-2));
-							// Data
-							const std::string data = input_str.substr(found+1);
-							io_service.post(boost::bind(&Ext::onewayCallProtocol, this, protocol, data));
-							std::strcpy(output, "[1]");
-						}
-					}
-					break;
-				}
-				case 0: //SYNC
-				{
-					// Protocol
-					const std::string::size_type found = input_str.find(sep_char,2);
-
-					if (found==std::string::npos)  // Check Invalid Format
-					{
-						std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
-					}
-					else
-					{
-						if (found == (input_str_length - 1))
-						{
-							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
-						}
-						else
-						{
-							const std::string protocol = input_str.substr(2,(found-2));
-							// Data
-							const std::string data = input_str.substr(found+1);
-							syncCallProtocol(output, output_size, protocol, data);
-						};
-					}
-					break;
-				}
-				case 9:
-				{
-					if (!extDB_lock)
+					case 2: //ASYNC + SAVE
 					{
 						// Protocol
+						const std::string::size_type found = input_str.find(sep_char,2);
 
-						Poco::StringTokenizer tokens(input_str, ":");
-						std::size_t token_count = tokens.count();
-						
-						switch (token_count)
+						if (found==std::string::npos)  // Check Invalid Format
 						{
-							case 2:
-								// LOCK / VERSION
-								if (tokens[1] == "VERSION")
-								{
-									std::strcpy(output, version().c_str());
-								}
-								else if (tokens[1] == "LOCK")
-								{
-									extDB_lock = true;
-									std::strcpy(output, ("[1]"));
-								}
-								else if (tokens[1] == "OUTPUTSIZE")
-								{
-									std::string outputsize_str(Poco::NumberFormatter::format(output_size));
-									BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Extension Output Size: " + outputsize_str;
-									std::strcpy(output, outputsize_str.c_str());
-								}
-								else
-								{
-									std::strcpy(output, ("[0,\"Error Invalid Format\"]"));	
-									BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
-								}
-								break;
-							case 3:
-								// DATABASE
-								connectDatabase(output, output_size, tokens[2]);
-								break;
-							case 4:
-								// ADD PROTOCOL
-								addProtocol(output, output_size, tokens[2], tokens[3], "");
-								break;
-							case 5:
-								//ADD PROTOCOL
-								addProtocol(output, output_size, tokens[2], tokens[3], tokens[4]);
-								break;
-							default:
-								// Invalid Format
+							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+						}
+						else
+						{
+							const std::string protocol = input_str.substr(2,(found-2));
+
+							if (found == (input_str_length - 1))
+							{
 								std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
 								BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+							}
+							else
+							{
+								bool found_procotol = false;
+								// Data
+								std::string data = input_str.substr(found+1);
+								int unique_id = getUniqueID_mutexlock();
+
+								// Check for Protocol Name Exists...
+								// Do this so if someone manages to get server, the error message wont get stored in the result unordered map
+								{
+									boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
+									if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
+									{
+										std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
+										BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Unknown Protocol: " + protocol);
+									}
+									else
+									{
+										unordered_map_wait[unique_id] = true;
+										found_procotol = true;
+									}
+								}
+								// Only Add Job to Work Queue + Return ID if Protocol Name exists.
+								if (found_procotol)
+								{
+									io_service.post(boost::bind(&Ext::asyncCallProtocol, this, protocol, data, unique_id));
+									std::strcpy(output, (("[2,\"" + Poco::NumberFormatter::format(unique_id) + "\"]")).c_str());
+								}
+							}
 						}
+						break;
 					}
-					break;
+					case 4: // GET -- Single-Part Message Format
+					{
+						const int unique_id = Poco::NumberParser::parse(input_str.substr(2));
+						getSinglePartResult_mutexlock(unique_id, output, output_size);
+						break;
+					}
+					case 5: // GET -- Multi-Part Message Format
+					{
+						const int unique_id = Poco::NumberParser::parse(input_str.substr(2));
+						getMultiPartResult_mutexlock(unique_id, output, output_size);
+						break;
+					}
+					case 1: //ASYNC
+					{
+						// Protocol
+						const std::string::size_type found = input_str.find(sep_char,2);
+
+						if (found==std::string::npos)  // Check Invalid Format
+						{
+							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+						}
+						else
+						{
+							if (found == (input_str_length - 1))
+							{
+								std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+								BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+							}
+							else
+							{
+								const std::string protocol = input_str.substr(2,(found-2));
+								// Data
+								const std::string data = input_str.substr(found+1);
+								io_service.post(boost::bind(&Ext::onewayCallProtocol, this, protocol, data));
+								std::strcpy(output, "[1]");
+							}
+						}
+						break;
+					}
+					case 0: //SYNC
+					{
+						// Protocol
+						const std::string::size_type found = input_str.find(sep_char,2);
+
+						if (found==std::string::npos)  // Check Invalid Format
+						{
+							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+						}
+						else
+						{
+							if (found == (input_str_length - 1))
+							{
+								std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+								BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+							}
+							else
+							{
+								const std::string protocol = input_str.substr(2,(found-2));
+								// Data
+								const std::string data = input_str.substr(found+1);
+								syncCallProtocol(output, output_size, protocol, data);
+							};
+						}
+						break;
+					}
+					case 9:
+					{
+						if (!extDB_lock)
+						{
+							// Protocol
+
+							Poco::StringTokenizer tokens(input_str, ":");
+							std::size_t token_count = tokens.count();
+							
+							switch (token_count)
+							{
+								case 2:
+									// LOCK / VERSION
+									if (tokens[1] == "VERSION")
+									{
+										std::strcpy(output, getVersion().c_str());
+									}
+									else if (tokens[1] == "LOCK")
+									{
+										extDB_lock = true;
+										std::strcpy(output, ("[1]"));
+									}
+									else if (tokens[1] == "OUTPUTSIZE")
+									{
+										std::string outputsize_str(Poco::NumberFormatter::format(output_size));
+										BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Extension Output Size: " + outputsize_str;
+										std::strcpy(output, outputsize_str.c_str());
+									}
+									else
+									{
+										std::strcpy(output, ("[0,\"Error Invalid Format\"]"));	
+										BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+									}
+									break;
+								case 3:
+									// DATABASE
+									connectDatabase(output, output_size, tokens[2]);
+									break;
+								case 4:
+									// ADD PROTOCOL
+									addProtocol(output, output_size, tokens[2], tokens[3], "");
+									break;
+								case 5:
+									//ADD PROTOCOL
+									addProtocol(output, output_size, tokens[2], tokens[3], tokens[4]);
+									break;
+								default:
+									// Invalid Format
+									std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+									BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+							}
+						}
+						break;
+					}
+					default:
+					{
+						std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
+						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Message: " + input_str);
+					}
 				}
-				default:
-				{
-					std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
-					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Message: " + input_str);
-				}
+			}
+			else
+			{
+				std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
+				#ifdef TESTING
+					std::cout << "extDB: Error: Invalid Message: " << input_str << std::endl;
+				#endif
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Error Invalid Message: " + input_str;
 			}
 		}
 	}
 	catch (Poco::Exception& e)
 	{
-		std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
+		std::strcpy(output, ("[0,\"Error\"]"));
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif
@@ -920,7 +998,8 @@ int main(int nNumberofArgs, char* pszArgs[])
 	std::string input_str;
 
 	Ext *extension;
-	extension = (new Ext());
+	std::string current_path;
+	extension = (new Ext(current_path));
 	for (;;) {
 		std::getline(std::cin, input_str);
 		if (input_str == "quit")

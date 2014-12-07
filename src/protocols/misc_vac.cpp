@@ -167,7 +167,7 @@ From Frank https://gist.github.com/Fank/11127158
 		{
 			// FAILED STEAM QUERY
 			#ifdef TESTING
-			std::cout << "extdb: Steam VAC Query Failed: " + steam_id << std::endl;
+				std::cout << "extdb: Steam VAC Query Failed: " + steam_id << std::endl;
 			#endif
 		}
 	}
@@ -178,8 +178,7 @@ From Frank https://gist.github.com/Fank/11127158
 		try
 		{
 			Poco::URI uri("http://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=" + steam_web_api_key + "&format=json&steamids=" + steam_id);
-			Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
-			
+			Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());	
 
 			// prepare path
 			std::string path(uri.getPathAndQuery());

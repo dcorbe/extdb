@@ -46,7 +46,7 @@ class Rcon: public Poco::Runnable
 		void addCommand(std::string command);
 
 	private:
-		typedef std::pair< int, boost::unordered_map < int, std::string > > RconMultiPartMsg;
+		typedef std::pair< int, std::unordered_map < int, std::string > > RconMultiPartMsg;
 		
 		struct RconPacket {
 			char cmd_char_workaround;
