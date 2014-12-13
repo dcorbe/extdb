@@ -206,42 +206,47 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 							if (!(template_ini->has(call_name + ".SQL" + sql_line_num_str + "_1")))  // No More SQL Statements
 							{
 								// Initialize Default Output Options
-								Value_Options outputs_options;
-								outputs_options.check = default_output_sanitize_value_check;
 
 								// Get Output Options
 								Poco::StringTokenizer tokens_output_options((template_ini->getString(call_name + ".OUTPUT", "")), ",", Poco::StringTokenizer::TOK_TRIM);
 
 								for (int i = 0; i < (tokens_output_options.count()); ++i)
 								{
-									Poco::StringTokenizer output_option(tokens_output_options[i], "-", Poco::StringTokenizer::TOK_TRIM);
-									if (!(Poco::NumberParser::tryParse(output_option, outputs_options.number)))
+									Value_Options outputs_options;
+									outputs_options.check = default_output_sanitize_value_check;
+
+									Poco::StringTokenizer options_tokens(tokens_output_options[i], "-", Poco::StringTokenizer::TOK_TRIM);
+									for (int x = 0; x < (options_tokens.count()); ++i)
 									{
-										if (boost::iequals(output_option, std::string("STRING")) == 1)
+										if (!(Poco::NumberParser::tryParse(options_tokens[x], outputs_options.number)))
 										{
-											custom_protocol[call_name].sql_outputs_options[i].string = true;
-										}
-										else if (boost::iequals(output_option, std::string("BEGUID")) == 1)
-										{
-											custom_protocol[call_name].sql_outputs_options[i].beguid = true;
-										}
-										else if (boost::iequals(output_option, std::string("CHECK")) == 1)
-										{
-											custom_protocol[call_name].sql_outputs_options[i].check = true;
-										}
-										else if (boost::iequals(output_option, std::string("NOCHECK")) == 1)
-										{
-											custom_protocol[call_name].sql_outputs_options[i].check = false;
-										}
-										else
-										{
-											status = false;
-											#ifdef TESTING
-												std::cout << "extDB: DB_CUSTOM_V5: Bad Output Option: " << call_name << ":" << output_option << std::endl;
-											#endif
-											BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Output Option " << call_name << ":" << output_option;
+											if (boost::iequals(options_tokens[x], std::string("STRING")) == 1)
+											{
+												outputs_options.string = true;
+											}
+											else if (boost::iequals(options_tokens[x], std::string("BEGUID")) == 1)
+											{
+												outputs_options.beguid = true;
+											}
+											else if (boost::iequals(options_tokens[x], std::string("CHECK")) == 1)
+											{
+												outputs_options.check = true;
+											}
+											else if (boost::iequals(options_tokens[x], std::string("NOCHECK")) == 1)
+											{
+												outputs_options.check = false;
+											}
+											else
+											{
+												status = false;
+												#ifdef TESTING
+													std::cout << "extDB: DB_CUSTOM_V5: Bad Output Option: " << call_name << ":" << options_tokens[x] << std::endl;
+												#endif
+												BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Output Option " << call_name << ":" << options_tokens[x];
+											}
 										}
 									}
+									custom_protocol[call_name].sql_outputs_options.push_back(std::move(outputs_options));
 								}
 								break;
 							}
