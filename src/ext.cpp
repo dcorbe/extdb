@@ -89,9 +89,12 @@ Ext::Ext(std::string dll_path) {
 	bool conf_found = false;
 	bool conf_randomized = false;
 	
-	boost::filesystem::path extDB_config_path;
+	boost::filesystem::path extDB_config_path(dll_path);
+ 
+ 	dll_path /= "extdb-conf.ini";
 
-	extDB_config_path = (boost::filesystem::path(dll_path + "extdb-conf.ini").make_preferred());
+	extDB_config_path = (boost::filesystem::path(dll_path);
+	
 	if (boost::filesystem::exists(extDB_config_path))
 	{
 		conf_found = true;
@@ -618,6 +621,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -632,6 +636,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -646,6 +651,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -660,6 +666,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -674,6 +681,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -688,6 +696,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -697,6 +706,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else
 		{
 			std::strcpy(output, "[0,\"Error Unknown Protocol\"]");
+			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Error Unknown Protocol";
 		}
 	}
 }
@@ -906,14 +916,26 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					}
 					case 9:
 					{
-						if (!extDB_lock)
+						Poco::StringTokenizer tokens(input_str, ":");
+						if (extDB_lock)
+						{
+							if (tokens.count() == 2)
+							{
+								if (tokens[1] == "VERSION")
+								{
+									std::strcpy(output, getVersion().c_str());
+								}
+								else if (tokens[1] == "LOCK_STATUS")
+								{
+									extDB_lock = true;
+									std::strcpy(output, ("[1]"));
+								}
+							}
+						}
+						else
 						{
 							// Protocol
-
-							Poco::StringTokenizer tokens(input_str, ":");
-							std::size_t token_count = tokens.count();
-							
-							switch (token_count)
+							switch (tokens.count())
 							{
 								case 2:
 									// LOCK / VERSION
@@ -925,6 +947,11 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 									{
 										extDB_lock = true;
 										std::strcpy(output, ("[1]"));
+									}
+									else if (tokens[1] == "LOCK_STATUS")
+									{
+										extDB_lock = true;
+										std::strcpy(output, ("[0]"));
 									}
 									else if (tokens[1] == "OUTPUTSIZE")
 									{
