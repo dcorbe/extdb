@@ -200,7 +200,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 						if (custom_protocol[call_name].bad_chars_action > 0)
 						{
 							// Prepared Statement
-							sql_line_num++;
+							++sql_line_num;
 							sql_line_num_str = Poco::NumberFormatter::format(sql_line_num);
 
 							if (!(template_ini->has(call_name + ".SQL" + sql_line_num_str + "_1")))  // No More SQL Statements
@@ -210,25 +210,26 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 								outputs_options.check = default_output_sanitize_value_check;
 
 								// Get Output Options
-								Poco::StringTokenizer tokens_output_options((template_ini->getString(call_name + ".OUTPUT", "")), ",");
+								Poco::StringTokenizer tokens_output_options((template_ini->getString(call_name + ".OUTPUT", "")), ",", Poco::StringTokenizer::TOK_TRIM);
 
-								for (int i = 0; i < (tokens_output_options.count()); i++)
+								for (int i = 0; i < (tokens_output_options.count()); ++i)
 								{
-									if (!(Poco::NumberParser::tryParse(tokens_output_options[i], outputs_options.number)))
+									Poco::StringTokenizer output_option(tokens_output_options[i], "-", Poco::StringTokenizer::TOK_TRIM);
+									if (!(Poco::NumberParser::tryParse(output_option, outputs_options.number)))
 									{
-										if (boost::iequals(tokens_output_options[i], std::string("STRING")) == 1)
+										if (boost::iequals(output_option, std::string("STRING")) == 1)
 										{
 											custom_protocol[call_name].sql_outputs_options[i].string = true;
 										}
-										else if (boost::iequals(tokens_output_options[i], std::string("BEGUID")) == 1)
+										else if (boost::iequals(output_option, std::string("BEGUID")) == 1)
 										{
 											custom_protocol[call_name].sql_outputs_options[i].beguid = true;
 										}
-										else if (boost::iequals(tokens_output_options[i], std::string("CHECK")) == 1)
+										else if (boost::iequals(output_option, std::string("CHECK")) == 1)
 										{
 											custom_protocol[call_name].sql_outputs_options[i].check = true;
 										}
-										else if (boost::iequals(tokens_output_options[i], std::string("NOCHECK")) == 1)
+										else if (boost::iequals(output_option, std::string("NOCHECK")) == 1)
 										{
 											custom_protocol[call_name].sql_outputs_options[i].check = false;
 										}
@@ -236,9 +237,9 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 										{
 											status = false;
 											#ifdef TESTING
-												std::cout << "extDB: DB_CUSTOM_V5: Bad Output Option: " << call_name << ":" << tokens_output_options[i] << std::endl;
+												std::cout << "extDB: DB_CUSTOM_V5: Bad Output Option: " << call_name << ":" << output_option << std::endl;
 											#endif
-											BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Output Option " << call_name << ":" << tokens_output_options[i];
+											BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Output Option " << call_name << ":" << output_option;
 										}
 									}
 								}
@@ -267,7 +268,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 								sql_str = sql_str.substr(0, sql_str.size()-1);
 							}
 
-							custom_protocol[call_name].sql_prepared_statements.push_back(sql_str);
+							custom_protocol[call_name].sql_prepared_statements.push_back(std::move(sql_str));
 
 							// Get Input Options
 							Poco::StringTokenizer tokens_input(template_ini->getString((call_name + ".SQL" + sql_line_num_str + "_INPUTS"), ""), ",");
@@ -629,7 +630,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 				{
 					getResult(itr, sql_statement, result);
 				}
-				session_itr->second[call_name].push_back(sql_statement);
+				session_itr->second[call_name].push_back(std::move(sql_statement));
 			}
 			else
 			{
@@ -791,10 +792,10 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 								sanitize_value_check_ok = false;
 							}
 						}
-						processed_inputs.push_back(temp_str);
+						processed_inputs.push_back(std::move(temp_str));
 					}
 				}
-				all_processed_inputs.push_back(processed_inputs);
+				all_processed_inputs.push_back(std::move(processed_inputs));
 			}
 
 			if (!(bad_chars_detected))
