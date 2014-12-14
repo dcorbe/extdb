@@ -96,9 +96,6 @@ Ext::Ext(std::string dll_path) {
 
 	std::string extDB_config_str = extDB_config_path.make_preferred().string();
 
-	std::cout << "extDB1: extDB_path" << extDB_config_str << std::endl;
-
-	
 	if (boost::filesystem::exists(extDB_config_str))
 	{
 		conf_found = true;
@@ -180,8 +177,6 @@ Ext::Ext(std::string dll_path) {
 	
 	if (!conf_found) 
 	{
-		std::cout << "extDB: " << extDB_config_path << std::endl;
-		std::cout << "extDB: " << log_relative_path << std::endl;
 		#ifdef TESTING
 			std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;
 		#endif
@@ -221,7 +216,6 @@ Ext::Ext(std::string dll_path) {
 		// Load Logging Filter Options
 		#ifdef TESTING
 			std::cout << "extDB: Loading Log Settings" << std::endl;
-			std::cout << "extDB: " << (extDB_config_path.make_preferred().string()) << std::endl;
 		#endif
 		
 		int log_filter_level = pConf->getInt("Logging.Filter",2);
