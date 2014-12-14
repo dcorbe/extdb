@@ -57,7 +57,7 @@ if ( isNil {uiNamespace getVariable "extDB_ID"}) then
 	diag_log "extDB: Locked";
 
 	// Save Randomized ID
-	uiNamespace setVariable ["extDB_ID", _extDB_ID)];
+	uiNamespace setVariable ["extDB_ID", _extDB_ID];
 
 	_return = true;
 }

@@ -1,3 +1,18 @@
+24
+
+	ADDED: 9:LOCK_STATUS returns [1] if Locked or [0] if Unlocked.  
+	ADDED: MISC:RANDOM_STRING + MISC:RANDOM_UNIQUE_STRING returns array of randomize strings.  
+	
+	FIXED: DB_CUSTOM_V5 Output Option is now working correctly.  
+	FIXED: DB_CUSTOM_V5 Output Option is now working correctly.  
+
+	FIXED: extdb-conf.ini (& /extDB in same directory) file can now be located in custom path i.e @extDB, instead of Arma3 Root Directory.  
+
+22-23
+
+	ADDED: DB_PROTOCOL_V5  uses Cached Prepared Statements.  
+	CHANGED: Updated Poco Library to 1.4.7p1 + custom changes.  
+
 21
 
 	ADDED: STRIP+LOG / STRIP+ERROR Options for Bad Chars in DB_CUSTOM_V3.  

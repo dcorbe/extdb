@@ -1,4 +1,4 @@
-## Arma3 Extension DB  C++ (windows / linux)   v21  
+## Arma3 Extension DB  C++ (windows / linux)   v24  
 
 I got bored waiting on 2017 / Epoch for Arma3.
 So i decided to write up an C++ Extension for Arma3server.
@@ -14,11 +14,13 @@ http://www.altisliferpg.com
  - Multi-Threading Sync / ASync Commands
  - Unique ID for Messages
  - Supports Mysql / SQlite / ODBC
+ - Supports Prepared Statements via DB_CUSTOM_V5
  - Support for Arma2 Randomizing config file
 
 
 #### Protocols
 
+ - DB_CUSTOM_V5 (Ability to define sql prepared statements in a .ini file)
  - DB_CUSTOM_V3 (Ability to define sql statements in a .ini file)
  - DB_PROCEDURE_V2 (limited support, no outputs)
  - DB_RAW_V2 (by raw i mean raw sql commands, no sanitizing input or output checks at all)
