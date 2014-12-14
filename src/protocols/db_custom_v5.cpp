@@ -216,7 +216,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 									outputs_options.check = default_output_sanitize_value_check;
 
 									Poco::StringTokenizer options_tokens(tokens_output_options[i], "-", Poco::StringTokenizer::TOK_TRIM);
-									for (int x = 0; x < (options_tokens.count()); ++i)
+									for (int x = 0; x < (options_tokens.count()); ++x)
 									{
 										if (!(Poco::NumberParser::tryParse(options_tokens[x], outputs_options.number)))
 										{
@@ -461,7 +461,6 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 					if (itr-> second.sql_outputs_options[col].beguid)
 					{
 						getBEGUID(temp_str, temp_str);
-						result += temp_str;
 					}
 
 					// STRING
@@ -469,14 +468,13 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 					{
 						if (temp_str.empty())
 						{
-							result += ("\"\"");
+							temp_str = ("\"\"");
 						}
 						else
 						{
 							boost::erase_all(temp_str, "\"");
-							result += "\"" + temp_str + "\"";
+							temp_str = "\"" + temp_str + "\"";
 						}
-						break;												
 					}
 
 					// STRING DATATYPE CHECK
@@ -484,22 +482,19 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 					{
 						if (temp_str.empty())
 						{
-							result += ("\"\"");
+							temp_str = ("\"\"");
 						}
 						else
 						{
-							result += "\"" + temp_str + "\"";
+							boost::erase_all(temp_str, "\"");
+							temp_str = "\"" + temp_str + "\"";
 						}
 					}
 					else
 					{
 						if (temp_str.empty())
 						{
-							result += ("\"\"");
-						}
-						else
-						{
-							result += temp_str;
+							temp_str = ("\"\"");
 						}
 					}						
 
@@ -511,6 +506,7 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 							sanitize_value_check = false;
 						}
 					}
+					result += temp_str;
 				}
 
 				if (col < (cols - 1))
