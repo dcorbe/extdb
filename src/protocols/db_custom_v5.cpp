@@ -85,10 +85,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 	}
 
 	boost::filesystem::path extension_path(extension->getExtensionPath());
-	if (extension->getExtensionPath().empty())
-	{
-		extension_path /= "extDB";
-	}
+	extension_path /= "extDB";
 	extension_path /= "db_custom";
 
 	boost::filesystem::create_directories(extension_path); // Creating Directory if missing
@@ -200,47 +197,53 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 						if (custom_protocol[call_name].bad_chars_action > 0)
 						{
 							// Prepared Statement
-							sql_line_num++;
+							++sql_line_num;
 							sql_line_num_str = Poco::NumberFormatter::format(sql_line_num);
 
 							if (!(template_ini->has(call_name + ".SQL" + sql_line_num_str + "_1")))  // No More SQL Statements
 							{
 								// Initialize Default Output Options
-								Value_Options outputs_options;
-								outputs_options.check = default_output_sanitize_value_check;
 
 								// Get Output Options
-								Poco::StringTokenizer tokens_output_options((template_ini->getString(call_name + ".OUTPUT", "")), ",");
+								Poco::StringTokenizer tokens_output_options((template_ini->getString(call_name + ".OUTPUT", "")), ",", Poco::StringTokenizer::TOK_TRIM);
 
-								for (int i = 0; i < (tokens_output_options.count()); i++)
+								for (int i = 0; i < (tokens_output_options.count()); ++i)
 								{
-									if (!(Poco::NumberParser::tryParse(tokens_output_options[i], outputs_options.number)))
+									Value_Options outputs_options;
+									outputs_options.check = default_output_sanitize_value_check;
+
+									Poco::StringTokenizer options_tokens(tokens_output_options[i], "-", Poco::StringTokenizer::TOK_TRIM);
+									for (int x = 0; x < (options_tokens.count()); ++x)
 									{
-										if (boost::iequals(tokens_output_options[i], std::string("STRING")) == 1)
+										if (!(Poco::NumberParser::tryParse(options_tokens[x], outputs_options.number)))
 										{
-											custom_protocol[call_name].sql_outputs_options[i].string = true;
-										}
-										else if (boost::iequals(tokens_output_options[i], std::string("BEGUID")) == 1)
-										{
-											custom_protocol[call_name].sql_outputs_options[i].beguid = true;
-										}
-										else if (boost::iequals(tokens_output_options[i], std::string("CHECK")) == 1)
-										{
-											custom_protocol[call_name].sql_outputs_options[i].check = true;
-										}
-										else if (boost::iequals(tokens_output_options[i], std::string("NOCHECK")) == 1)
-										{
-											custom_protocol[call_name].sql_outputs_options[i].check = false;
-										}
-										else
-										{
-											status = false;
-											#ifdef TESTING
-												std::cout << "extDB: DB_CUSTOM_V5: Bad Output Option: " << call_name << ":" << tokens_output_options[i] << std::endl;
-											#endif
-											BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Output Option " << call_name << ":" << tokens_output_options[i];
+											if (boost::iequals(options_tokens[x], std::string("STRING")) == 1)
+											{
+												outputs_options.string = true;
+											}
+											else if (boost::iequals(options_tokens[x], std::string("BEGUID")) == 1)
+											{
+												outputs_options.beguid = true;
+											}
+											else if (boost::iequals(options_tokens[x], std::string("CHECK")) == 1)
+											{
+												outputs_options.check = true;
+											}
+											else if (boost::iequals(options_tokens[x], std::string("NOCHECK")) == 1)
+											{
+												outputs_options.check = false;
+											}
+											else
+											{
+												status = false;
+												#ifdef TESTING
+													std::cout << "extDB: DB_CUSTOM_V5: Bad Output Option: " << call_name << ":" << options_tokens[x] << std::endl;
+												#endif
+												BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Output Option " << call_name << ":" << options_tokens[x];
+											}
 										}
 									}
+									custom_protocol[call_name].sql_outputs_options.push_back(std::move(outputs_options));
 								}
 								break;
 							}
@@ -267,7 +270,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 								sql_str = sql_str.substr(0, sql_str.size()-1);
 							}
 
-							custom_protocol[call_name].sql_prepared_statements.push_back(sql_str);
+							custom_protocol[call_name].sql_prepared_statements.push_back(std::move(sql_str));
 
 							// Get Input Options
 							Poco::StringTokenizer tokens_input(template_ini->getString((call_name + ".SQL" + sql_line_num_str + "_INPUTS"), ""), ",");
@@ -455,7 +458,6 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 					if (itr-> second.sql_outputs_options[col].beguid)
 					{
 						getBEGUID(temp_str, temp_str);
-						result += temp_str;
 					}
 
 					// STRING
@@ -463,14 +465,13 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 					{
 						if (temp_str.empty())
 						{
-							result += ("\"\"");
+							temp_str = ("\"\"");
 						}
 						else
 						{
 							boost::erase_all(temp_str, "\"");
-							result += "\"" + temp_str + "\"";
+							temp_str = "\"" + temp_str + "\"";
 						}
-						break;												
 					}
 
 					// STRING DATATYPE CHECK
@@ -478,22 +479,19 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 					{
 						if (temp_str.empty())
 						{
-							result += ("\"\"");
+							temp_str = ("\"\"");
 						}
 						else
 						{
-							result += "\"" + temp_str + "\"";
+							boost::erase_all(temp_str, "\"");
+							temp_str = "\"" + temp_str + "\"";
 						}
 					}
 					else
 					{
 						if (temp_str.empty())
 						{
-							result += ("\"\"");
-						}
-						else
-						{
-							result += temp_str;
+							temp_str = ("\"\"");
 						}
 					}						
 
@@ -505,6 +503,7 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 							sanitize_value_check = false;
 						}
 					}
+					result += temp_str;
 				}
 
 				if (col < (cols - 1))
@@ -629,7 +628,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 				{
 					getResult(itr, sql_statement, result);
 				}
-				session_itr->second[call_name].push_back(sql_statement);
+				session_itr->second[call_name].push_back(std::move(sql_statement));
 			}
 			else
 			{
@@ -791,10 +790,10 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 								sanitize_value_check_ok = false;
 							}
 						}
-						processed_inputs.push_back(temp_str);
+						processed_inputs.push_back(std::move(temp_str));
 					}
 				}
-				all_processed_inputs.push_back(processed_inputs);
+				all_processed_inputs.push_back(std::move(processed_inputs));
 			}
 
 			if (!(bad_chars_detected))

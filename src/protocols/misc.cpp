@@ -20,7 +20,8 @@ From Frank https://gist.github.com/Fank/11127158
 
 */
 
-
+#include <boost/random/random_device.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
 #include <boost/thread/thread.hpp>
 
 #include <Poco/Checksum.h>
@@ -31,6 +32,7 @@ From Frank https://gist.github.com/Fank/11127158
 #include <Poco/NumberParser.h>
 #include <Poco/MD4Engine.h>
 #include <Poco/MD5Engine.h>
+#include <Poco/StringTokenizer.h>
 #include <Poco/Timespan.h>
 
 #include <cstdlib>
@@ -141,6 +143,103 @@ void MISC::getBEGUID(std::string &input_str, std::string &result)
 }
 
 
+void MISC::getRandomString(std::string &input_str, bool uniqueString, std::string &result)
+{
+	std::cout << "extDB: INPUT STRING:" << input_str << std::endl;
+	Poco::StringTokenizer tokens(input_str, ":");
+	if (tokens.count() != 2)
+	{
+		result = "[]";
+	}
+	else
+	{
+		int numberOfVariables;
+		int stringLength;
+		if (!((Poco::NumberParser::tryParse(tokens[0], numberOfVariables)) && (Poco::NumberParser::tryParse(tokens[1], stringLength))))
+		{
+			result = "[]";
+		}
+		else
+		{
+			if (numberOfVariables <= 0)
+			{
+				result = "[]";
+			}
+			else
+			{
+				boost::lock_guard<boost::mutex> lock(mutex_RandomString);
+				std::string chars(
+					"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+					"1234567890");
+
+				boost::random::random_device rng;
+				boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
+
+				result = "[1,";
+
+				int numOfRetrys;
+
+				for(int i = 0; i < numberOfVariables; ++i)
+				{
+					std::stringstream randomStringStream;
+					for(int x = 0; x < stringLength; ++x)
+					{
+						randomStringStream << chars[index_dist(rng)];
+					}
+
+
+					std::string randomString = randomStringStream.str();
+
+
+					if (uniqueString)
+					{
+						std::cout << "extDB: UNIQUE STRING:" << randomString << std::endl;
+						if (std::find(uniqueRandomVarNames.begin(), uniqueRandomVarNames.end(), randomString)!=uniqueRandomVarNames.end())
+						{
+							std::cout << "extDB: FOUND EXISTING VALUE" << std::endl;
+							numberOfVariables = numberOfVariables - 1;
+							numOfRetrys = numOfRetrys + 1;
+							if (numOfRetrys > 11)
+							{
+								if (numberOfVariables == 0)
+								{
+									result = "[1,";
+								}
+								// Break outof Loop if already tried 10 times
+								--i;
+								break;
+							}
+							std::cout << result << std::endl;
+						}
+						else
+						{
+							std::cout << "extDB: i:" << i << ": " << randomString << std::endl;
+							if (i != 0)
+							{
+								result = result + "," + "\"" + randomString + "\"";
+							}
+							else
+							{
+								result = result + "\"" + randomString + "\"";
+							}
+							uniqueRandomVarNames.push_back(randomString);
+							numOfRetrys = 0;
+							std::cout << result << std::endl;
+						}
+					}
+					else
+					{
+						std::cout << "extDB: NOT A UNIQUE STRING:" << randomString << std::endl;
+					}
+				}
+				std::cout << result << std::endl;
+				result = result + "]";
+			}
+		}
+	}
+}
+
+
 void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
 	// Protocol
@@ -162,13 +261,13 @@ void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::stri
 	}
 	if (command == "TIME")
 	{
-		if (data.length() > 0)
+		if (data.empty())
 		{
-			getDateTime(Poco::NumberParser::parse(data), result); //TODO try catch or insert number checker function
+			getDateTime(result);
 		}
 		else
 		{
-			getDateTime(result);
+			getDateTime(Poco::NumberParser::parse(data), result); //TODO try catch or insert number checker function
 		}
 	}
 	else if (command == "BEGUID")
@@ -187,12 +286,20 @@ void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::stri
 	{
 		getMD5(data, result);
 	}
+	else if (command == "RANDOM_UNIQUE_STRING")
+	{
+		getRandomString(data, true, result);
+	}
+	else if (command == "RANDOM_STRING")
+	{
+		getRandomString(data, false, result);
+	}
 	else if (command == "TEST")
 	{
 		result = data;
 	}
 	else
 	{
-		result = ("[0,\"Error Invalid Command\"]");
+		result.clear();
 	}
 }

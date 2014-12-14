@@ -89,17 +89,23 @@ Ext::Ext(std::string dll_path) {
 	bool conf_found = false;
 	bool conf_randomized = false;
 	
-	boost::filesystem::path extDB_config_path;
+	boost::filesystem::path extDB_config_path(dll_path);
 
-	extDB_config_path = (boost::filesystem::path(dll_path + "extdb-conf.ini").make_preferred());
-	if (boost::filesystem::exists(extDB_config_path))
+	extDB_config_path = extDB_config_path.parent_path();
+  	extDB_config_path /= "extdb-conf.ini";
+
+	std::string extDB_config_str = extDB_config_path.make_preferred().string();
+
+	if (boost::filesystem::exists(extDB_config_str))
 	{
 		conf_found = true;
+		extDB_path = extDB_config_path.parent_path().string();
 	}
 	else if (boost::filesystem::exists("extdb-conf.ini"))
 	{
 		conf_found = true;
 		extDB_config_path = boost::filesystem::path("extdb-conf.ini");
+		extDB_path = boost::filesystem::current_path().string();
 	}
 	else
 	{
@@ -108,7 +114,7 @@ Ext::Ext(std::string dll_path) {
 			boost::regex expression("extdb-conf.*ini");
 
 			// CHECK DLL PATH FOR CONFIG
-			for (boost::filesystem::directory_iterator it(dll_path); it != boost::filesystem::directory_iterator(); ++it)
+			for (boost::filesystem::directory_iterator it(extDB_config_str); it != boost::filesystem::directory_iterator(); ++it)
 			{
 				if (is_regular_file(it->path()))
 				{
@@ -117,7 +123,7 @@ Ext::Ext(std::string dll_path) {
 						conf_found = true;
 						conf_randomized = true;
 						extDB_config_path = boost::filesystem::path(it->path().string());
-						extDB_path = boost::filesystem::path (dll_path).string();
+						extDB_path = boost::filesystem::path (extDB_config_str).string();
 						break;
 					}
 				}
@@ -149,18 +155,10 @@ Ext::Ext(std::string dll_path) {
 	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n/%d/%H-%M-%S.log");
 
 	boost::filesystem::path log_relative_path;
-	if (extDB_path.empty())
-	{
-		// Arma3_Root/extDB/logs
-		log_relative_path =  boost::filesystem::path("extDB/logs/");
-	}
-	else
-	{
-		// Location_of_extension/extDB/logs
-		log_relative_path = boost::filesystem::path(extDB_path);
-		log_relative_path /= "logs";
-	};
 
+	log_relative_path = boost::filesystem::path(extDB_path);
+	log_relative_path /= "extDB";
+	log_relative_path /= "logs";
 	log_relative_path /= log_filename;
 
 	boost::log::add_common_attributes();
@@ -373,7 +371,11 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					db_conn_info.db_type = "SQLite";
 					Poco::Data::SQLite::Connector::registerConnector();
 
-					db_conn_info.connection_str = boost::filesystem::path(getExtensionPath() + "/sqlite/" + db_name).make_preferred().string();
+					boost::filesystem::path sqlite_path(getExtensionPath());
+					sqlite_path /= "extDB";
+					sqlite_path /= "sqlite";
+					sqlite_path /= "db_name";
+					db_conn_info.connection_str = sqlite_path.make_preferred().string();
 
 					db_pool.reset(new DBPool(db_conn_info.db_type, 
 																db_conn_info.connection_str, 
@@ -449,7 +451,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::getVersion() const
 {
-	return "23";
+	return "24";
 }
 
 
@@ -618,6 +620,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -632,6 +635,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -646,6 +650,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -660,6 +665,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -674,6 +680,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -688,6 +695,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
 			}
 			else
 			{
@@ -697,6 +705,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else
 		{
 			std::strcpy(output, "[0,\"Error Unknown Protocol\"]");
+			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Error Unknown Protocol";
 		}
 	}
 }
@@ -906,14 +915,25 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					}
 					case 9:
 					{
-						if (!extDB_lock)
+						Poco::StringTokenizer tokens(input_str, ":");
+						if (extDB_lock)
+						{
+							if (tokens.count() == 2)
+							{
+								if (tokens[1] == "VERSION")
+								{
+									std::strcpy(output, getVersion().c_str());
+								}
+								else if (tokens[1] == "LOCK_STATUS")
+								{
+									std::strcpy(output, ("[1]"));
+								}
+							}
+						}
+						else
 						{
 							// Protocol
-
-							Poco::StringTokenizer tokens(input_str, ":");
-							std::size_t token_count = tokens.count();
-							
-							switch (token_count)
+							switch (tokens.count())
 							{
 								case 2:
 									// LOCK / VERSION
@@ -925,6 +945,10 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 									{
 										extDB_lock = true;
 										std::strcpy(output, ("[1]"));
+									}
+									else if (tokens[1] == "LOCK_STATUS")
+									{
+										std::strcpy(output, ("[0]"));
 									}
 									else if (tokens[1] == "OUTPUTSIZE")
 									{

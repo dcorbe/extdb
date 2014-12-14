@@ -130,7 +130,7 @@ void Rcon::mainLoop()
 	// 2 Min Cache for UDP Multi-Part Messages
 	Poco::ExpireCache<int, RconMultiPartMsg > rcon_msg_cache(120000);
 	
-	dgs.setReceiveTimeout(Poco::Timespan(1, 0));
+	dgs.setReceiveTimeout(Poco::Timespan(5, 0));
 	while (true)
 	{
 		try 
@@ -349,7 +349,7 @@ void Rcon::mainLoop()
 void Rcon::addCommand(std::string command)
 {
 	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
-	rcon_commands.push_back(command);
+	rcon_commands.push_back(std::move(command));
 }
 
 

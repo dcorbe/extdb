@@ -38,7 +38,6 @@ class MISC: public AbstractProtocol
 		//boost::mutex mutex_checksum_adler32;
 
 		Poco::Checksum checksum_crc32;
-		boost::mutex mutex_checksum_crc32;
 
 	private:
 		Poco::MD5Engine md5;
@@ -47,6 +46,11 @@ class MISC: public AbstractProtocol
 		Poco::MD4Engine md4;
 		boost::mutex mutex_md4;
 
+		boost::mutex mutex_checksum_crc32;
+
+		boost::mutex mutex_RandomString;
+		std::vector < std::string > uniqueRandomVarNames;
+
 		void getDateTime(std::string &result);
 		void getDateTime(int hours, std::string &result);
 		//std::string getAdler32(std::string &input_str);
@@ -54,4 +58,6 @@ class MISC: public AbstractProtocol
 		void getMD4(std::string &input_str, std::string &result);
 		void getMD5(std::string &input_str, std::string &result);
 		void getBEGUID(std::string &input_str, std::string &result);
+
+		void getRandomString(std::string &input_str, bool uniqueString, std::string &result);
 };
