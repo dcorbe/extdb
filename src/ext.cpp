@@ -452,7 +452,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::getVersion() const
 {
-	return "23";
+	return "24";
 }
 
 
@@ -927,7 +927,6 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 								}
 								else if (tokens[1] == "LOCK_STATUS")
 								{
-									extDB_lock = true;
 									std::strcpy(output, ("[1]"));
 								}
 							}
@@ -950,7 +949,6 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 									}
 									else if (tokens[1] == "LOCK_STATUS")
 									{
-										extDB_lock = true;
 										std::strcpy(output, ("[0]"));
 									}
 									else if (tokens[1] == "OUTPUTSIZE")
