@@ -85,10 +85,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 	}
 
 	boost::filesystem::path extension_path(extension->getExtensionPath());
-	if (extension->getExtensionPath().empty())
-	{
-		extension_path /= "extDB";
-	}
+	extension_path /= "extDB";
 	extension_path /= "db_custom";
 
 	boost::filesystem::create_directories(extension_path); // Creating Directory if missing

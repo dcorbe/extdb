@@ -90,18 +90,25 @@ Ext::Ext(std::string dll_path) {
 	bool conf_randomized = false;
 	
 	boost::filesystem::path extDB_config_path(dll_path);
+
+	extDB_config_path = extDB_config_path.parent_path();
   	extDB_config_path /= "extdb-conf.ini";
-	extDB_config_path = boost::filesystem::path(extDB_config_path);
-	dll_path = extDB_config_path.make_preferred().string();
+
+	std::string extDB_config_str = extDB_config_path.make_preferred().string();
+
+	std::cout << "extDB1: extDB_path" << extDB_config_str << std::endl;
+
 	
-	if (boost::filesystem::exists(extDB_config_path))
+	if (boost::filesystem::exists(extDB_config_str))
 	{
 		conf_found = true;
+		extDB_path = extDB_config_path.parent_path().string();
 	}
 	else if (boost::filesystem::exists("extdb-conf.ini"))
 	{
 		conf_found = true;
 		extDB_config_path = boost::filesystem::path("extdb-conf.ini");
+		extDB_path = boost::filesystem::current_path().string();
 	}
 	else
 	{
@@ -110,7 +117,7 @@ Ext::Ext(std::string dll_path) {
 			boost::regex expression("extdb-conf.*ini");
 
 			// CHECK DLL PATH FOR CONFIG
-			for (boost::filesystem::directory_iterator it(dll_path); it != boost::filesystem::directory_iterator(); ++it)
+			for (boost::filesystem::directory_iterator it(extDB_config_str); it != boost::filesystem::directory_iterator(); ++it)
 			{
 				if (is_regular_file(it->path()))
 				{
@@ -119,7 +126,7 @@ Ext::Ext(std::string dll_path) {
 						conf_found = true;
 						conf_randomized = true;
 						extDB_config_path = boost::filesystem::path(it->path().string());
-						extDB_path = boost::filesystem::path (dll_path).string();
+						extDB_path = boost::filesystem::path (extDB_config_str).string();
 						break;
 					}
 				}
@@ -151,18 +158,10 @@ Ext::Ext(std::string dll_path) {
 	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n/%d/%H-%M-%S.log");
 
 	boost::filesystem::path log_relative_path;
-	if (extDB_path.empty())
-	{
-		// Arma3_Root/extDB/logs
-		log_relative_path =  boost::filesystem::path("extDB/logs/");
-	}
-	else
-	{
-		// Location_of_extension/extDB/logs
-		log_relative_path = boost::filesystem::path(extDB_path);
-		log_relative_path /= "logs";
-	};
 
+	log_relative_path = boost::filesystem::path(extDB_path);
+	log_relative_path /= "extDB";
+	log_relative_path /= "logs";
 	log_relative_path /= log_filename;
 
 	boost::log::add_common_attributes();
@@ -181,6 +180,8 @@ Ext::Ext(std::string dll_path) {
 	
 	if (!conf_found) 
 	{
+		std::cout << "extDB: " << extDB_config_path << std::endl;
+		std::cout << "extDB: " << log_relative_path << std::endl;
 		#ifdef TESTING
 			std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;
 		#endif
@@ -376,7 +377,11 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					db_conn_info.db_type = "SQLite";
 					Poco::Data::SQLite::Connector::registerConnector();
 
-					db_conn_info.connection_str = boost::filesystem::path(getExtensionPath() + "/sqlite/" + db_name).make_preferred().string();
+					boost::filesystem::path sqlite_path(getExtensionPath());
+					sqlite_path /= "extDB";
+					sqlite_path /= "sqlite";
+					sqlite_path /= "db_name";
+					db_conn_info.connection_str = sqlite_path.make_preferred().string();
 
 					db_pool.reset(new DBPool(db_conn_info.db_type, 
 																db_conn_info.connection_str, 
