@@ -779,6 +779,7 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 							{
 								temp_str = "\"" + temp_str + "\"";
 							}
+							break;												
 						}
 
 							// SANITIZE CHECK
