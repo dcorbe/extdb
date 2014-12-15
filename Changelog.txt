@@ -1,3 +1,7 @@
+25
+	READDED: DB_CUSTOM_V3 was removed by mistake
+	FIXED: DB_CUSTOM_V5 INPUT STRING Option
+
 24
 
 	ADDED: 9:LOCK_STATUS returns [1] if Locked or [0] if Unlocked.  
