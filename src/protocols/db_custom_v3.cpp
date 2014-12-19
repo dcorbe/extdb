@@ -321,6 +321,8 @@ void DB_CUSTOM_V3::getBEGUID(std::string &input_str, std::string &result)
 
 void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result)
 {
+	result.clear();
+	
 	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 	Poco::Data::Statement sql_current(db_session);
 
@@ -385,61 +387,6 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				sql << sql_str;
 				sql.execute();
 				sql_current.swap(sql);
-
-				Poco::Data::RecordSet rs(sql_current);
-
-				result = "[1,[";
-				std::size_t cols = rs.columnCount();
-				if (cols >= 1)
-				{
-					bool more = rs.moveFirst();
-					while (more)
-					{
-						result += "[";
-						for (std::size_t col = 0; col < cols; ++col)
-						{
-							std::string temp_str = rs[col].convert<std::string>();
-
-							if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
-							{
-								if (temp_str.empty())
-								{
-									result += ("\"\"");
-								}
-								else
-								{
-									result += "\"" + temp_str + "\"";
-								}
-							}
-							else
-							{
-								if (temp_str.empty())
-								{
-									result += ("\"\"");
-								}
-								else
-								{
-									result += temp_str;
-								}
-							}
-
-							if (col < (cols - 1))
-							{
-								result += ",";
-							}
-						}
-						more = rs.moveNext();
-						if (more)
-						{
-							result += "],";
-						}
-						else
-						{
-							result += "]";
-						}
-					}
-				}
-				result += "]]";
 			}
 			catch (Poco::Data::SQLite::DBLockedException& e)
 			{
@@ -496,6 +443,64 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		{
 			break;
 		}
+	}
+
+	if (result.empty())
+	{
+		Poco::Data::RecordSet rs(sql_current);
+
+		result = "[1,[";
+		std::size_t cols = rs.columnCount();
+		if (cols >= 1)
+		{
+			bool more = rs.moveFirst();
+			while (more)
+			{
+				result += "[";
+				for (std::size_t col = 0; col < cols; ++col)
+				{
+					std::string temp_str = rs[col].convert<std::string>();
+
+					if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
+					{
+						if (temp_str.empty())
+						{
+							result += ("\"\"");
+						}
+						else
+						{
+							result += "\"" + temp_str + "\"";
+						}
+					}
+					else
+					{
+						if (temp_str.empty())
+						{
+							result += ("\"\"");
+						}
+						else
+						{
+							result += temp_str;
+						}
+					}
+
+					if (col < (cols - 1))
+					{
+						result += ",";
+					}
+				}
+				more = rs.moveNext();
+				if (more)
+				{
+					result += "],";
+				}
+				else
+				{
+					result += "]";
+				}
+			}
+		}
+		result += "]]";
 	}
 
 	#ifdef TESTING
