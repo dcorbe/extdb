@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "db_custom_v3.h"
 
-#include <Poco/Data/Common.h>
 #include <Poco/Data/MetaColumn.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/Session.h>
@@ -386,6 +385,61 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				sql << sql_str;
 				sql.execute();
 				sql_current.swap(sql);
+
+				Poco::Data::RecordSet rs(sql_current);
+
+				result = "[1,[";
+				std::size_t cols = rs.columnCount();
+				if (cols >= 1)
+				{
+					bool more = rs.moveFirst();
+					while (more)
+					{
+						result += "[";
+						for (std::size_t col = 0; col < cols; ++col)
+						{
+							std::string temp_str = rs[col].convert<std::string>();
+
+							if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
+							{
+								if (temp_str.empty())
+								{
+									result += ("\"\"");
+								}
+								else
+								{
+									result += "\"" + temp_str + "\"";
+								}
+							}
+							else
+							{
+								if (temp_str.empty())
+								{
+									result += ("\"\"");
+								}
+								else
+								{
+									result += temp_str;
+								}
+							}
+
+							if (col < (cols - 1))
+							{
+								result += ",";
+							}
+						}
+						more = rs.moveNext();
+						if (more)
+						{
+							result += "],";
+						}
+						else
+						{
+							result += "]";
+						}
+					}
+				}
+				result += "]]";
 			}
 			catch (Poco::Data::SQLite::DBLockedException& e)
 			{
@@ -395,6 +449,7 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DBLockedException: " + e.displayText();
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DBLockedException: SQL:" + sql_str;
 				result = "[0,\"Error DBLocked Exception\"]";
+				break;
 			}
 			catch (Poco::Data::MySQL::ConnectionException& e)
 			{
@@ -403,6 +458,8 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				#endif
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error ConnectionException: " + e.displayText();
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error ConnectionException: SQL:" + sql_str;
+				result = "[0,\"Error Connection Exception\"]";
+				break;
 			}
 			catch(Poco::Data::MySQL::StatementException& e)
 			{
@@ -412,6 +469,7 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error StatementException: " + e.displayText();
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error StatementException: SQL:" + sql_str;
 				result = "[0,\"Error Statement Exception\"]";
+				break;
 			}
 			catch (Poco::Data::DataException& e)
 			{
@@ -421,6 +479,7 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DataException: " + e.displayText();
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DataException: SQL:" + sql_str;
 				result = "[0,\"Error Data Exception\"]";
+				break;
 			}
 			catch (Poco::Exception& e)
 			{
@@ -430,6 +489,7 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Exception: " + e.displayText();
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Exception: SQL:" + sql_str;
 				result = "[0,\"Error Exception\"]";
+				break;
 			}
 		}
 		else
@@ -438,69 +498,12 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		}
 	}
 
-	if (sanitize_value_check_ok)
-	{
-		Poco::Data::RecordSet rs(sql_current);
-
-		result = "[1,[";
-		std::size_t cols = rs.columnCount();
-		if (cols >= 1)
-		{
-			bool more = rs.moveFirst();
-			while (more)
-			{
-				result += "[";
-				for (std::size_t col = 0; col < cols; ++col)
-				{
-					std::string temp_str = rs[col].convert<std::string>();
-
-					if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
-					{
-						if (temp_str.empty())
-						{
-							result += ("\"\"");
-						}
-						else
-						{
-							result += "\"" + temp_str + "\"";
-						}
-					}
-					else
-					{
-						if (temp_str.empty())
-						{
-							result += ("\"\"");
-						}
-						else
-						{
-							result += temp_str;
-						}
-					}
-
-					if (col < (cols - 1))
-					{
-						result += ",";
-					}
-				}
-				more = rs.moveNext();
-				if (more)
-				{
-					result += "],";
-				}
-				else
-				{
-					result += "]";
-				}
-			}
-		}
-		result += "]]";
-		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V3: Trace: Result: " + result << std::endl;
-		#endif
-		#ifdef DEBUG_LOGGING
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_CUSTOM_V3: Trace: Result: " + result;
-		#endif
-	}
+	#ifdef TESTING
+		std::cout << "extDB: DB_CUSTOM_V3: Trace: Result: " + result << std::endl;
+	#endif
+	#ifdef DEBUG_LOGGING
+		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_CUSTOM_V3: Trace: Result: " + result;
+	#endif
 }
 
 
