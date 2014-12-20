@@ -112,20 +112,26 @@ Ext::Ext(std::string dll_path) {
 	{
 		#ifdef _WIN32	// WINDOWS ONLY, Linux Arma2 Doesn't have extension Support
 			// Search for Randomize Config File -- Legacy Security Support For Arma2Servers
+			extDB_config_path = extDB_config_path.parent_path();
+			extDB_config_str = extDB_config_path.make_preferred().string();
+
 			boost::regex expression("extdb-conf.*ini");
 
-			// CHECK DLL PATH FOR CONFIG
-			for (boost::filesystem::directory_iterator it(extDB_config_str); it != boost::filesystem::directory_iterator(); ++it)
+			if (!extDB_config_str.empty())
 			{
-				if (is_regular_file(it->path()))
+				// CHECK DLL PATH FOR CONFIG
+				for (boost::filesystem::directory_iterator it(extDB_config_str); it != boost::filesystem::directory_iterator(); ++it)
 				{
-					if(boost::regex_search(it->path().string(), expression))
+					if (is_regular_file(it->path()))
 					{
-						conf_found = true;
-						conf_randomized = true;
-						extDB_config_path = boost::filesystem::path(it->path().string());
-						extDB_path = boost::filesystem::path (extDB_config_str).string();
-						break;
+						if(boost::regex_search(it->path().string(), expression))
+						{
+							conf_found = true;
+							conf_randomized = true;
+							extDB_config_path = boost::filesystem::path(it->path().string());
+							extDB_path = boost::filesystem::path (extDB_config_str).string();
+							break;
+						}
 					}
 				}
 			}
@@ -233,11 +239,7 @@ Ext::Ext(std::string dll_path) {
 			};
 		#endif
 
-		#ifdef TESTING
-//			std::cout << "extDB: Loading Rcon Settings" << std::endl;
-//			rcon.init(pConf->getInt("Main.RconPort", 2302), pConf->getString("Main.RconPassword", "password"));
-		#endif
-		//BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Loading Rcon Settings";
+		//rcon.init(pConf->getInt("Main.RconPort", 2302), pConf->getString("Main.RconPassword", "password"));
 		
 		#ifdef _WIN32
 			if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
@@ -256,7 +258,7 @@ Ext::Ext(std::string dll_path) {
 				randomized_filename += ".ini";
 
 				boost::filesystem::path randomize_configfile_path = extDB_config_path.parent_path() /= randomized_filename;
-				boost::filesystem::rename(extDB_config_path, randomized_filename);
+				boost::filesystem::rename(extDB_config_path, randomize_configfile_path);
 			}
 		#endif
 	}
