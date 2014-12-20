@@ -27,7 +27,7 @@ if(_mode == 1) exitWith {true};
 _key = call compile format["%1",_key];
 _key = _key select 1;
 
-sleep (random .03);
+uisleep (random .03);
 
 // Get Result via 4:x (single message return)  v19 and later
 _queryResult = "";
@@ -47,8 +47,8 @@ while{_loop} do
 	{
 		if (_queryResult == "[3]") then
 		{
-			diag_log format ["extDB: Sleep [4]: %1", diag_tickTime];
-			sleep 0.1;
+			diag_log format ["extDB: uisleep [4]: %1", diag_tickTime];
+			uisleep 0.1;
 		} else {
 			_loop = false;
 		};
