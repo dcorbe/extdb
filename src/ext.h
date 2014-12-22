@@ -83,7 +83,7 @@ class Ext: public AbstractExt
 		int max_threads;
 
 		std::string extDB_path;
-		std::string steam_api_key;
+		std::string steam_web_api_key;
 		
 		struct DBConnectionInfo {
 			std::string db_type;
