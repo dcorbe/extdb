@@ -31,12 +31,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 	#include "../rcon.h"
 
 
-	class DB_VAC: public AbstractProtocol
+	class MISC_VAC: public AbstractProtocol
 	{
 		public:
-			void init(AbstractExt *extension, const std::string init_str);
-			std::string callProtocol(AbstractExt *extension, std::string input_str);
-			
+			bool init(AbstractExt *extension, std::string init_str);
+			void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 			
 		private:
 			struct SteamVacInfo {
@@ -56,11 +55,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 			};
 			
 			VacBanCheck vac_ban_check;
+			Poco::SharedPtr<Poco::ExpireCache<std::string, SteamVacInfo> > VAC_Cache; // 1 Hour (3600000)
 
-			bool isNumber(std::string &input_str);
-			bool querySteam(std::string &steam_web_api_key, std::string &steam_id, SteamVacInfo &vac_info);
-			void updateVAC(Rcon &rcon, std::string steam_web_api_key, Poco::Data::Session &db_session, std::string &steam_id);
-			std::string convertSteamIDtoBEGUID(std::string &steamid);
+			bool isNumber(const std::string &input_str);
+			bool updateVAC(std::string steam_web_api_key, std::string &steam_id);
+			std::string convertSteamIDtoBEGUID(const std::string &steamid);
 			
 			Poco::MD5Engine md5;
 	};
