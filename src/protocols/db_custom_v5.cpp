@@ -112,33 +112,35 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 			bool default_input_sanitize_value_check = template_ini->getBool("Default.Sanitize Input Value Check", true);
 			bool default_output_sanitize_value_check = template_ini->getBool("Default.Sanitize Output Value Check", true);
 			bool default_string_datatype_check = template_ini->getBool("Default.String Datatype Check", true);
+			bool default_preparedStatement_cache = template_ini->getBool("Default.Prepared Statement Cache", true);
 
-			std::string default_bad_chars = template_ini->getString("Default.Bad Chars");
-			int default_bad_chars_action = 0;
+			bool default_strip = template_ini->getBool("Default.Strip");
+			std::string default_strip_chars = template_ini->getString("Default.Strip Chars");
+			int default_strip_chars_action = 0;
 
-			std::string bad_chars_action_str = template_ini->getString("Default.Bad Chars Action", "STRIP");
-			if	(boost::iequals(bad_chars_action_str, std::string("STRIP")) == 1)
+			std::string strip_chars_action_str = template_ini->getString("Default.Strip Chars Action", "Strip");
+			if	(boost::iequals(strip_chars_action_str, std::string("Strip")) == 1)
 			{
-				default_bad_chars_action = 1;
+				default_strip_chars_action = 1;
 			}
-			else if	(boost::iequals(bad_chars_action_str, std::string("STRIP+LOG")) == 1)
+			else if	(boost::iequals(strip_chars_action_str, std::string("Strip+Log")) == 1)
 			{
-				default_bad_chars_action = 2;
+				default_strip_chars_action = 2;
 			}
-			else if	(boost::iequals(bad_chars_action_str, std::string("STRIP+ERROR")) == 1)
+			else if	(boost::iequals(strip_chars_action_str, std::string("Strip+Error")) == 1)
 			{
-				default_bad_chars_action = 3;
+				default_strip_chars_action = 3;
 			}
-			else if (boost::iequals(bad_chars_action_str, std::string("NONE")) == 1)
+			else if (boost::iequals(strip_chars_action_str, std::string("None")) == 1)
 			{
-				default_bad_chars_action = 0;
+				default_strip_chars_action = 0;
 			}
 			else
 			{
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V5: Invalid Default Bad Chars Action: " << bad_chars_action_str << std::endl;
+					std::cout << "extDB: DB_CUSTOM_V5: Invalid Default Strip Chars Action: " << strip_chars_action_str << std::endl;
 				#endif
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Invalid Default Bad Chars Action: " << bad_chars_action_str;
+				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Invalid Default Strip Chars Action: " << strip_chars_action_str;
 			}
 
 			if ((template_ini->getInt("Default.Version", 1)) == 6)
@@ -154,47 +156,49 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 
 					custom_protocol[call_name].number_of_inputs = template_ini->getInt(call_name + ".Number of Inputs", default_number_of_inputs);
 					custom_protocol[call_name].string_datatype_check = template_ini->getBool(call_name + ".String Datatype Check", default_string_datatype_check);
+					custom_protocol[call_name].preparedStatement_cache = template_ini->getBool("Default.Prepared Statement Cache", default_preparedStatement_cache);
 
-					if (template_ini->has(call_name + ".Bad Chars Action"))
+					if (template_ini->has(call_name + ".Strip Chars Action"))
 					{
-						bad_chars_action_str = template_ini->getString(call_name + ".Bad Chars Action", "");
-						if	(boost::iequals(bad_chars_action_str, std::string("STRIP")) == 1)
+						strip_chars_action_str = template_ini->getString(call_name + ".Strip Chars Action", "");
+						if	(boost::iequals(strip_chars_action_str, std::string("Strip")) == 1)
 						{
-							custom_protocol[call_name].bad_chars_action = 1;
+							custom_protocol[call_name].strip_chars_action = 1;
 						}
-						else if	(boost::iequals(bad_chars_action_str, std::string("STRIP+LOG")) == 1)
+						else if	(boost::iequals(strip_chars_action_str, std::string("Strip+Log")) == 1)
 						{
-							custom_protocol[call_name].bad_chars_action = 2;
+							custom_protocol[call_name].strip_chars_action = 2;
 						}
-						else if	(boost::iequals(bad_chars_action_str, std::string("STRIP+ERROR")) == 1)
+						else if	(boost::iequals(strip_chars_action_str, std::string("Strip+Error")) == 1)
 						{
-							custom_protocol[call_name].bad_chars_action = 3;
+							custom_protocol[call_name].strip_chars_action = 3;
 						}
-						else if (boost::iequals(bad_chars_action_str, std::string("NONE")) == 1)
+						else if (boost::iequals(strip_chars_action_str, std::string("None")) == 1)
 						{
-							custom_protocol[call_name].bad_chars_action = 0;
+							custom_protocol[call_name].strip_chars_action = 0;
 						}
 						else
 						{
 							#ifdef TESTING
-								std::cout << "extDB: DB_CUSTOM_V5: " << call_name << ": Invalid Bad Chars Action: " << bad_chars_action_str << std::endl;
+								std::cout << "extDB: DB_CUSTOM_V5: " << call_name << ": Invalid Strip Chars Action: " << strip_chars_action_str << std::endl;
 							#endif
-							BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: " << call_name << ": Invalid Bad Chars Action: " << bad_chars_action_str;
+							BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: " << call_name << ": Invalid Strip Chars Action: " << strip_chars_action_str;
 						}
 					}
 					else
 					{
-						custom_protocol[call_name].bad_chars_action = default_bad_chars_action;
+						custom_protocol[call_name].strip_chars_action = default_strip_chars_action;
 					}
 					
-					custom_protocol[call_name].bad_chars = template_ini->getString(call_name + ".Bad Chars", default_bad_chars);
+					custom_protocol[call_name].strip = template_ini->getBool(call_name + ".Strip", default_strip);
+					custom_protocol[call_name].strip_chars = template_ini->getString(call_name + ".Strip Chars", default_strip_chars);
 
 					custom_protocol[call_name].input_sanitize_value_check = template_ini->getBool(call_name + ".Sanitize Value Check", default_input_sanitize_value_check);
 					custom_protocol[call_name].output_sanitize_value_check = template_ini->getBool(call_name + ".Sanitize Value Check", default_output_sanitize_value_check);
 
 					while (true)
 					{
-						if (custom_protocol[call_name].bad_chars_action > 0)
+						if (custom_protocol[call_name].strip_chars_action > 0)
 						{
 							// Prepared Statement
 							++sql_line_num;
@@ -217,29 +221,41 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 									{
 										if (!(Poco::NumberParser::tryParse(options_tokens[x], outputs_options.number)))
 										{
-											if (boost::iequals(options_tokens[x], std::string("STRING")) == 1)
+											if (boost::iequals(options_tokens[x], std::string("String")) == 1)
 											{
 												outputs_options.string = true;
 											}
-											else if (boost::iequals(options_tokens[x], std::string("BEGUID")) == 1)
+											else if (boost::iequals(options_tokens[x], std::string("BeGUID")) == 1)
 											{
 												outputs_options.beguid = true;
 											}
-											else if (boost::iequals(options_tokens[x], std::string("CHECK")) == 1)
+											else if (boost::iequals(options_tokens[x], std::string("Check")) == 1)
 											{
 												outputs_options.check = true;
 											}
-											else if (boost::iequals(options_tokens[x], std::string("NOCHECK")) == 1)
+											else if (boost::iequals(options_tokens[x], std::string("NoCheck")) == 1)
 											{
 												outputs_options.check = false;
+											}
+											else if (boost::iequals(options_tokens[x], std::string("Strip")) == 1)
+											{
+												outputs_options.strip = true;
+											}
+											else if (boost::iequals(options_tokens[x], std::string("NoStrip")) == 1)
+											{
+												outputs_options.strip = false;
+											}
+											else if (boost::iequals(options_tokens[x], std::string("AltisLifeRPG_Array")) == 1)
+											{
+												outputs_options.toArray_AltisLifeRpg = true;
 											}
 											else
 											{
 												status = false;
 												#ifdef TESTING
-													std::cout << "extDB: DB_CUSTOM_V5: Bad Output Option: " << call_name << ":" << options_tokens[x] << std::endl;
+													std::cout << "extDB: DB_CUSTOM_V5: Strip Output Option: " << call_name << ":" << options_tokens[x] << std::endl;
 												#endif
-												BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Output Option " << call_name << ":" << options_tokens[x];
+												BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Strip Output Option " << call_name << ":" << options_tokens[x];
 											}
 										}
 									}
@@ -289,29 +305,41 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 								{
 									if (!(Poco::NumberParser::tryParse(*tokens_input_options_it, inputs_options.number)))
 									{
-										if (boost::iequals(*tokens_input_options_it, std::string("STRING")) == 1)
+										if (boost::iequals(*tokens_input_options_it, std::string("String")) == 1)
 										{
 											inputs_options.string = true;
 										}
-										else if (boost::iequals(*tokens_input_options_it, std::string("BEGUID")) == 1)
+										else if (boost::iequals(*tokens_input_options_it, std::string("BeGUID")) == 1)
 										{
 											inputs_options.beguid = true;
 										}
-										else if (boost::iequals(*tokens_input_options_it, std::string("CHECK")) == 1)
+										else if (boost::iequals(*tokens_input_options_it, std::string("Check")) == 1)
 										{
 											inputs_options.check = true;
 										}
-										else if (boost::iequals(*tokens_input_options_it, std::string("NOCHECK")) == 1)
+										else if (boost::iequals(*tokens_input_options_it, std::string("NoCheck")) == 1)
 										{
 											inputs_options.check = false;
+										}
+										else if (boost::iequals(*tokens_input_options_it, std::string("Strip")) == 1)
+										{
+											inputs_options.strip = true;
+										}
+										else if (boost::iequals(*tokens_input_options_it, std::string("NoStrip")) == 1)
+										{
+											inputs_options.strip = false;
+										}
+										else if (boost::iequals(*tokens_input_options_it, std::string("AltisLifeRPG_Array")) == 1)
+										{
+											inputs_options.toArray_AltisLifeRpg = true;
 										}
 										else
 										{
 											status = false;
 											#ifdef TESTING
-												std::cout << "extDB: DB_CUSTOM_V5: Bad Input Option: " << call_name << ":" << *tokens_input_options_it << std::endl;
+												std::cout << "extDB: DB_CUSTOM_V5: Strip Input Option: " << call_name << ":" << *tokens_input_options_it << std::endl;
 											#endif
-											BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Bad Input Option " << call_name << ":" << *tokens_input_options_it;
+											BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Strip Input Option " << call_name << ":" << *tokens_input_options_it;
 										}
 									}
 								}
@@ -322,9 +350,9 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 						{
 							status = false;
 							#ifdef TESTING
-								std::cout << "extDB: DB_CUSTOM_V5: Unknown Bad Strings Action for " << call_name << ":" << custom_protocol[call_name].bad_chars_action << std::endl;
+								std::cout << "extDB: DB_CUSTOM_V5: Unknown Strip Strings Action for " << call_name << ":" << custom_protocol[call_name].strip_chars_action << std::endl;
 							#endif
-							BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Unknown Bad Strings Action for " << call_name << ":" << custom_protocol[call_name].bad_chars_action;
+							BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Unknown Strip Strings Action for " << call_name << ":" << custom_protocol[call_name].strip_chars_action;
 						}
 					}
 				}
@@ -347,7 +375,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 			BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V5: Template File Missing Default Options: " << db_template_file;
 		}
 	}
-	else 
+	else
 	{
 		status = false;
 		#ifdef TESTING
@@ -406,8 +434,21 @@ void DB_CUSTOM_V5::getBEGUID(std::string &input_str, std::string &result)
 	}
 }
 
+void DB_CUSTOM_V5::toArrayAltisLifeRpg(std::string &input_str, std::string &result, bool toArray)
+// Function to act as Altis-Life fn_mresArray / fn_mresToArray
+{
+	if (toArray)
+	{
+		result = Poco::replace(input_str, "`", "\"");
+	}
+	else
+	{
+		result = Poco::replace(input_str, "\"", "`");
+	}
+}
 
-void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::const_iterator itr, Poco::Data::Statement &sql_statement, std::string &result)
+
+void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, PS_Template_Call>::const_iterator itr, Poco::Data::Statement &sql_statement, std::string &result)
 {
 	bool sanitize_value_check = true;
 	Poco::Data::RecordSet rs(sql_statement);
@@ -454,14 +495,19 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 				{
 				// OUTPUT OPTIONS
 
+					if (itr->second.sql_outputs_options[col].toArray_AltisLifeRpg)
+					{
+						toArrayAltisLifeRpg(temp_str, temp_str, true);
+					}
+
 					// BEGUID
-					if (itr-> second.sql_outputs_options[col].beguid)
+					if (itr->second.sql_outputs_options[col].beguid)
 					{
 						getBEGUID(temp_str, temp_str);
 					}
 
 					// STRING
-					if (itr-> second.sql_outputs_options[col].string)
+					if (itr->second.sql_outputs_options[col].string)
 					{
 						if (temp_str.empty())
 						{
@@ -475,7 +521,7 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 					}
 
 					// STRING DATATYPE CHECK
-					else if ((itr-> second.sql_outputs_options[col].string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
+					else if ((itr->second.sql_outputs_options[col].string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
 					{
 						if (temp_str.empty())
 						{
@@ -496,7 +542,7 @@ void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, Template_Call>::con
 					}						
 
 					// SANITIZE CHECK
-					if (itr-> second.sql_outputs_options[col].check)
+					if (itr->second.sql_outputs_options[col].check)
 					{
 						if (!Sqf::check(temp_str))
 						{
@@ -555,6 +601,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 			std::cout << "extDB: DB_CUSTOM_V5: Error ConnectionException: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Error ConnectionException: " + e.displayText();
+		result = "[0,\"Error Connection Exception\"]";
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
 	{
@@ -586,7 +633,7 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 }
 
 
-void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, Template_Call>::const_iterator itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result)
+void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, PS_Template_Call>::const_iterator itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(extension->mutex_poco_cached_preparedStatements);
 
@@ -628,7 +675,10 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 				{
 					getResult(itr, sql_statement, result);
 				}
-				session_itr->second[call_name].push_back(std::move(sql_statement));
+				if (itr->second.preparedStatement_cache)
+				{
+					session_itr->second[call_name].push_back(std::move(sql_statement));
+				}
 			}
 			else
 			{
@@ -660,8 +710,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 			}
 			else
 			{
-				// Exception Encountered, BREAK + Remove Cache
-				
+				// Exception Encountered, Break + Remove Cache
 				session_itr->second.erase(call_name);
 				break;
 			}
@@ -697,7 +746,7 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 	#endif
 
 	Poco::StringTokenizer tokens(input_str, ":");
-	std::unordered_map<std::string, Template_Call>::const_iterator itr = custom_protocol.find(tokens[0]);
+	std::unordered_map<std::string, PS_Template_Call>::const_iterator itr = custom_protocol.find(tokens[0]);
 
 	if (itr == custom_protocol.end())
 	{
@@ -717,40 +766,16 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 		else
 		{
 			// GOOD Number of Inputs
-			bool bad_chars_detected = false;
-			bool sanitize_value_check_ok = true;
+			bool abort_status = false;
+			bool strip_chars_detected = false;
 
-			std::vector< std::string > inputs;
-
-			if (itr->second.bad_chars_action > 0)
-			{
-				// Strip Chars
-				std::string temp_str;
-				for (std::vector<std::string>::const_iterator token_itr = tokens.begin(); token_itr != tokens.end(); ++token_itr)
-				{
-					temp_str = *token_itr;
-					for (int i = 0; (i < (itr->second.bad_chars.size() - 1)); ++i)
-					{
-						boost::erase_all(temp_str, std::string(1, itr->second.bad_chars[i]));
-					}
-					inputs.push_back(temp_str);
-					if (temp_str != *token_itr)
-					{
-						bad_chars_detected = true;
-					}
-				}
-			}
-			else
-			{
-				// DONT Strip Chars
-				inputs.insert(inputs.end(), tokens.begin(), tokens.end());
-			}
+			std::vector< std::string > inputs (tokens.begin(), tokens.end());
 
 			// Multiple INPUT Lines
 			std::vector<std::string>::size_type num_inputs = inputs.size();	
 			std::vector<std::string>::size_type num_sql_inputs_options = itr->second.sql_inputs_options.size();
 
-			std::vector< std::vector< std::string > > all_processed_inputs;
+			std::vector< std::vector<std::string> > all_processed_inputs;
 
 			for(int i = 0; i < num_sql_inputs_options; ++i)
 			{
@@ -763,6 +788,34 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 					{
 						std::string temp_str = inputs[itr->second.sql_inputs_options[i][x].number];
 						// INPUT Options
+							// Strip
+						if (itr->second.sql_inputs_options[i][x].strip)
+						{
+							for (int y = 0; (y < (itr->second.strip_chars.size() - 1)); ++y)
+							{
+								boost::erase_all(temp_str, std::string(1,itr->second.strip_chars[y]));
+							}
+							if (temp_str != inputs[itr->second.sql_inputs_options[i][x].number])
+							{
+								strip_chars_detected = true;
+								switch (itr->second.strip_chars_action)
+								{
+									case 3: // Strip + Log + Error
+										abort_status = true;	
+									case 2: // Strip + Log
+										BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Error Bad Char Detected: Input:" + input_str;
+										BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Error Bad Char Detected: Token:" + inputs[itr->second.sql_inputs_options[i][x].number];
+									case 1: // Strip
+										result = "[0,\"Error Strip Char Found\"]";
+										break;
+								}
+							}
+						}
+							// ToArray AltisLifeRPG
+						if (itr->second.sql_inputs_options[i][x].beguid)
+						{
+							toArrayAltisLifeRpg(temp_str, temp_str, false);	
+						}
 							// BEGUID					
 						if (itr->second.sql_inputs_options[i][x].beguid)
 						{
@@ -784,32 +837,23 @@ void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, s
 							// SANITIZE CHECK
 						if (itr->second.sql_inputs_options[i][x].check)
 						{
-							if (!Sqf::check(temp_str))
-							{
-								sanitize_value_check_ok = false;
-							}
+							abort_status = Sqf::check(temp_str);
+							BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Sanitize Check error: Input:" + input_str;
+							result = "[0,\"Error Values Input is not sanitized\"]";
 						}
 						processed_inputs.push_back(std::move(temp_str));
 					}
 				}
+				if (abort_status)
+				{
+					break;
+				}
 				all_processed_inputs.push_back(std::move(processed_inputs));
 			}
 
-			if (!(bad_chars_detected))
+			if (!abort_status)
 			{
-				if (sanitize_value_check_ok)
-				{
-					callCustomProtocol(extension, tokens[0], itr, all_processed_inputs, input_str, result);
-				}
-				else
-				{
-					result = "[0,\"Error Values Input is not sanitized\"]";
-					BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V5: Sanitize Check error: Input:" + input_str;
-				}
-			}
-			else
-			{
-				result = "[0,\"Error Bad Char Found\"]";
+				callCustomProtocol(extension, tokens[0], itr, all_processed_inputs, input_str, result);
 			}
 		}
 	}

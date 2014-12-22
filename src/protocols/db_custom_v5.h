@@ -50,28 +50,34 @@ class DB_CUSTOM_V5: public AbstractProtocol
 			bool beguid = false;
 			bool string = false;
 			bool string_datatype_check = false;
+			bool toArray_AltisLifeRpg = false;
+			bool strip = false;
 		};
 		
-		struct Template_Call {
-			int number_of_inputs;
-			bool string_datatype_check;
-			std::string bad_chars;
-			int bad_chars_action = -1;
-
+		struct PS_Template_Call {
 			bool input_sanitize_value_check;
 			bool output_sanitize_value_check;
 
-			std::vector< std::string > sql_prepared_statements;
+			bool string_datatype_check;
 
+			bool preparedStatement_cache;
+			bool strip;
+			std::string strip_chars;
+			int strip_chars_action;
+
+			int number_of_inputs;
+
+			std::vector< std::string > sql_prepared_statements;
 			std::vector< std::vector< Value_Options > > sql_inputs_options;
 			std::vector< Value_Options > sql_outputs_options;
 		};
 
-		std::unordered_map<std::string, Template_Call> custom_protocol;
+		std::unordered_map<std::string, PS_Template_Call> custom_protocol;
 
-		void callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, Template_Call>::const_iterator itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result);
+		void callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, PS_Template_Call>::const_iterator itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result);
 		void executeSQL(AbstractExt *extension, Poco::Data::Statement &sql_statement, std::string &result, bool &status);
 
 		void getBEGUID(std::string &input_str, std::string &result);
-		void getResult(std::unordered_map<std::string, Template_Call>::const_iterator itr, Poco::Data::Statement &sql_statement, std::string &result);
+		void toArrayAltisLifeRpg(std::string &input_str, std::string &result, bool ToArray);
+		void getResult(std::unordered_map<std::string, PS_Template_Call>::const_iterator itr, Poco::Data::Statement &sql_statement, std::string &result);
 };
