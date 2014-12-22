@@ -146,8 +146,19 @@ bool MISC_VAC::updateVAC(std::string steam_web_api_key, std::string &steam_id)
 		{
 			return false;
 		}
+		else
+		{
+			boost::lock_guard<boost::mutex> lock(VAC_Cache_mutex);
+			VAC_Cache.add(steam_id, std::move(vac_info)); // Update Cache
+		}
 	}
 	return true;
+}
+
+
+bool DB_VAC::getCache(std::string &steam_id)
+{
+
 }
 
 

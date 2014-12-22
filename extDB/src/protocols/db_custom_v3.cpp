@@ -320,9 +320,9 @@ void DB_CUSTOM_V3::getBEGUID(std::string &input_str, std::string &result)
 
 void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result)
 {
-	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-
 	result.clear();
+	
+	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
 	Poco::Data::Statement sql_current(db_session);
 
 	for(std::vector< std::list<Poco::DynamicAny> >::const_iterator it_sql_statements_vector = itr->second.sql_statements.begin(); it_sql_statements_vector != itr->second.sql_statements.end(); ++it_sql_statements_vector)

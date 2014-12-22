@@ -38,7 +38,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 			void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 			
 		private:
-			struct SteamVacInfo {
+			struct SteamVacInfo
+			{
 				std::string SteamID;
 				std::string VACBanned;
 				std::string NumberOfVACBans;
@@ -47,7 +48,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 				std::string LastChecked;
 			};
 			
-			struct VacBanCheck {
+			struct VacBanCheck
+			{
 				int NumberOfVACBans;
 				int DaysSinceLastBan;
 				std::string BanDuration;

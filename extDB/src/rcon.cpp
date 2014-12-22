@@ -124,8 +124,7 @@ void Rcon::extractData(int pos, std::string &result)
 void Rcon::mainLoop()
 {
 	int elapsed_seconds;
-	
-	bool logged_in = false;
+	logged_in = false;
 	
 	// 2 Min Cache for UDP Multi-Part Messages
 	Poco::ExpireCache<int, RconMultiPartMsg > rcon_msg_cache(120000);
@@ -335,12 +334,12 @@ void Rcon::mainLoop()
 		catch (Poco::Net::ConnectionRefusedException& e)
 		{
 			disconnect();
-			std::cout << "extDB: error rcon connect: " << e.displayText() << std::endl;
+			std::cout << "extDB: Error Rcon Connect: " << e.displayText() << std::endl;
 		}
 		catch (Poco::Exception& e)
 		{
 			disconnect();
-			std::cout << "extDB: error rcon: " << e.displayText() << std::endl;
+			std::cout << "extDB: Error Rcon: " << e.displayText() << std::endl;
 		}
 	}
 }
@@ -381,7 +380,7 @@ void Rcon::connect()
 
 void Rcon::disconnect()
 {
-	if (rcon_login.auto_reconnect)
+	if (rcon_login.auto_reconnect && logged_in)
 	{
 		connect();
 	}

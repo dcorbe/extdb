@@ -77,6 +77,7 @@ class Rcon: public Poco::Runnable
 		// Mutex Locks
 		boost::recursive_mutex mutex_rcon_run_flag;
 		bool rcon_run_flag;
+		bool logged_in;
 		
 		boost::recursive_mutex mutex_rcon_commands;
 		std::vector< std::string > rcon_commands;

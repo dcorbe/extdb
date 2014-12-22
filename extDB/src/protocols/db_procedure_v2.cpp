@@ -246,10 +246,38 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 			result = "[0,\"Invalid Format\"]";
 		}
 	}
+	catch (Poco::Data::MySQL::ConnectionException& e)
+	{
+		status = false;
+		#ifdef TESTING
+			std::cout << "extDB: DB_PROCEDURE_V2: Error ConnectionException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_Log_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_PROCEDURE_V2: Error ConnectionException: " + e.displayText();
+		result = "[0,\"Error Connection Exception\"]";
+	}
+	catch(Poco::Data::MySQL::StatementException& e)
+	{
+		status = false;
+		#ifdef TESTING
+			std::cout << "extDB: DB_PROCEDURE_V2: Error StatementException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_Log_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_PROCEDURE_V2: Error StatementException: " + e.displayText();
+		result = "[0,\"Error Statement Exception\"]";
+	}
+	catch (Poco::Data::DataException& e)
+	{
+		status = false;
+		#ifdef TESTING
+			std::cout << "extDB: DB_PROCEDURE_V2: Error DataException: " + e.displayText() << std::endl;
+		#endif
+		BOOST_Log_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_PROCEDURE_V2: Error DataException: " + e.displayText();
+		result = "[0,\"Error Data Exception\"]";
+	}
 	catch (Poco::Exception& e)
 	{
+		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_PROCEDURE: Error Exception: " + e.displayText() << std::endl;
+			std::cout << "extDB: DB_PROCEDURE_V2: Error Exception: " + e.displayText() << std::endl;
 		#endif
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_PROCEDURE_V2: Error Exception: " + e.displayText();
 		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_PROCEDURE_V2: Error Exception: Input:" + input_str;

@@ -58,6 +58,7 @@ class Ext: public AbstractExt
 		std::string getExtensionPath();
 
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
+		Poco::AutoPtr<Rcon> serverRcon;
 
 		Poco::Data::Session getDBSession_mutexlock();
 		Poco::Data::Session getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
