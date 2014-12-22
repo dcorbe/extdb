@@ -85,7 +85,6 @@ void DBPool::customizeSession (Poco::Data::Session& session)
 Ext::Ext(std::string dll_path) {
 	mgr.reset (new IdManager);
 	extDB_lock = false;
-	extDB_error_db_kill_server = true;
 
 	bool conf_found = false;
 	bool conf_randomized = false;
@@ -184,10 +183,7 @@ Ext::Ext(std::string dll_path) {
 	
 	if (!conf_found) 
 	{
-		#ifdef TESTING
-			std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;
-		#endif
-		
+		std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;	
 		BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Unable to find extdb-conf.ini";
 		// Kill Server no config file found -- Evil
 		std::exit(EXIT_FAILURE);
@@ -200,9 +196,7 @@ Ext::Ext(std::string dll_path) {
 		#endif
 		BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Found extdb-conf.ini";
 
-		extDB_error_db_kill_server = pConf->getBool("Main.Error Database Kill Server", true);
-
-		steam_api_key = pConf->getString("Main.Steam_WEB_API_KEY", "");
+		steam_web_api_key = pConf->getString("Main.Steam_WEB_API_KEY", "");
 
 		// Start Threads + ASIO
 		max_threads = pConf->getInt("Main.Threads", 0);
@@ -317,7 +311,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					db_conn_info.max_sessions = max_threads;
 				}
 
-				db_conn_info.idle_time = pConf->getInt(conf_option + ".idleTime");
+				db_conn_info.idle_time = pConf->getInt(conf_option + ".idleTime", 600);
 
 				#ifdef TESTING
 					std::cout << "extDB: Database Type: " << db_conn_info.db_type << std::endl;
@@ -360,13 +354,9 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 						#ifdef TESTING
 							std::cout << "extDB: Database Session Pool Failed" << std::endl;
 						#endif
+						db_conn_info = DBConnectionInfo();
 						BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Session Pool Failed";
 						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
-						db_conn_info = DBConnectionInfo();
-						if (extDB_error_db_kill_server)
-						{
-							std::exit(EXIT_FAILURE);
-						}
 					}
 				}
 				else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
@@ -398,27 +388,19 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 						#ifdef TESTING
 							std::cout << "extDB: Database Session Pool Failed" << std::endl;
 						#endif
+						db_conn_info = DBConnectionInfo();
 						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Database Session Pool Failed";
 						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
-						db_conn_info = DBConnectionInfo();
-						if (extDB_error_db_kill_server)
-						{
-							std::exit(EXIT_FAILURE);
-						}
 					}
 				}
 				else
 				{
 					#ifdef TESTING
 						std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
-					#endif 
+					#endif
+					db_conn_info = DBConnectionInfo();
 					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Database Engine Found for " << db_name << ".";
 					std::strcpy(output, "[0,\"Unknown Database Type\"]");
-					db_conn_info = DBConnectionInfo();
-					if (extDB_error_db_kill_server)
-					{
-						std::exit(EXIT_FAILURE);
-					}
 				}
 			}
 			else
@@ -426,13 +408,9 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 				#ifdef TESTING
 					std::cout << "extDB: WARNING No Config Option Found: " << conf_option << "." << std::endl;
 				#endif
+				db_conn_info = DBConnectionInfo();
 				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Config Option Found: " << conf_option << ".";
 				std::strcpy(output, "[0,\"No Config Option Found\"]");
-				db_conn_info = DBConnectionInfo();
-				if (extDB_error_db_kill_server)
-				{
-					std::exit(EXIT_FAILURE);
-				}
 			}
 		}
 	}
@@ -441,20 +419,16 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 		#ifdef TESTING
 			std::cout << "extDB: Database Setup Failed: " << e.displayText() << std::endl;
 		#endif
+		db_conn_info = DBConnectionInfo();
 		BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Setup Failed: " << e.displayText();
 		std::strcpy(output, "[0,\"Database Exception Error\"]");
-		db_conn_info = DBConnectionInfo();
-		if (extDB_error_db_kill_server)
-		{
-			std::exit(EXIT_FAILURE);
-		}
 	}
 }
 
 
 std::string Ext::getVersion() const
 {
-	return "25";
+	return "26";
 }
 
 
@@ -465,7 +439,7 @@ std::string Ext::getExtensionPath()
 
 std::string Ext::getAPIKey()
 {
-	return steam_api_key;
+	return steam_web_api_key;
 }
 
 
@@ -486,19 +460,9 @@ void Ext::freeUniqueID_mutexlock(const int &unique_id)
 Poco::Data::Session Ext::getDBSession_mutexlock()
 // Gets available DB Session (mutex lock)
 {
-	try
-	{
-		boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-		Poco::Data::Session free_session =  db_pool->get();
-		return free_session;
-	}
-	catch (Poco::Data::SessionPoolExhaustedException&)
-	//	Exceptiontal Handling in event of scenario if all asio worker threads are busy using all db connections
-	//		And there is SYNC call using db & db_pool = exhausted
-	{
-		Poco::Data::Session new_session(db_conn_info.db_type, db_conn_info.connection_str);
-		return new_session;
-	}
+	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
+	Poco::Data::Session free_session =  db_pool->get();
+	return free_session;
 }
 
  
