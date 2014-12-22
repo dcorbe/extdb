@@ -229,7 +229,6 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 									}
 								}
 							}
-							//custom_protocol[call_name].sql = sql_list;
 							custom_protocol[call_name].sql_statements.push_back(sql_list);
 						}
 						else
@@ -247,7 +246,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 			{
 				status = false;
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version" << db_template_file << std::endl;
+					std::cout << "extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version" << std::endl;
 				#endif
 				BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version: " << db_template_file;
 			}
@@ -321,9 +320,9 @@ void DB_CUSTOM_V3::getBEGUID(std::string &input_str, std::string &result)
 
 void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result)
 {
-	result.clear();
-	
 	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
+
+	result.clear();
 	Poco::Data::Statement sql_current(db_session);
 
 	for(std::vector< std::list<Poco::DynamicAny> >::const_iterator it_sql_statements_vector = itr->second.sql_statements.begin(); it_sql_statements_vector != itr->second.sql_statements.end(); ++it_sql_statements_vector)
