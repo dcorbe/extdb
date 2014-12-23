@@ -62,8 +62,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/db_custom_v3.h"
 #include "protocols/db_custom_v5.h"
 #include "protocols/db_procedure_v2.h"
-#include "protocols/db_raw_v2.h"
-#include "protocols/db_raw_no_extra_quotes_v2.h"
+#include "protocols/db_raw_v3.h"
 #include "protocols/log.h"
 #include "protocols/misc.h"
 
@@ -196,7 +195,7 @@ Ext::Ext(std::string dll_path) {
 		#endif
 		BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Found extdb-conf.ini";
 
-		steam_web_api_key = pConf->getString("Main.Steam_WEB_API_KEY", "");
+		steam_web_api_key = pConf->getString("Main.Steam Web API Key", "");
 
 		// Start Threads + ASIO
 		max_threads = pConf->getInt("Main.Threads", 0);
@@ -233,7 +232,11 @@ Ext::Ext(std::string dll_path) {
 			};
 		#endif
 
-		//rcon.init(pConf->getInt("Main.RconPort", 2302), pConf->getString("Main.RconPassword", "password"));
+		serverRcon = new Rcon(pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password"));
+		if (pConf->getBool->getBool("Rcon.Enable", false))
+		{
+			serverRcon->start();
+		}
 		
 		#ifdef _WIN32
 			if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
@@ -273,6 +276,7 @@ void Ext::stop()
 
 	io_service.stop();
 	threads.join_all();
+	serverRcon->disconnect();
 	unordered_map_protocol.clear();
 
 	boost::log::core::get()->remove_all_sinks();
@@ -639,10 +643,25 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 				std::strcpy(output, "[1]");
 			}
 		}
+		else if (boost::iequals(protocol, std::string("DB_RAW_V3")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
+		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, std::string("ADD_QUOTES"))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
@@ -656,8 +675,8 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_NO_EXTRA_QUOTES_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, std::string()))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
