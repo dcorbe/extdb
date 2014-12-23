@@ -48,13 +48,6 @@ From Frank https://gist.github.com/Fank/11127158
 
 
 
-/*
-MISC::MISC(void)
-{
-	checksum_adler32 = Poco::Checksum(Poco::Checksum::TYPE_ADLER32);
-}*/
-
-
 void MISC::getDateTime(std::string &result)
 {
 	Poco::DateTime now;

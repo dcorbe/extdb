@@ -134,7 +134,8 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					{
 						// Generate Output Values
 						unique_id = extension->getUniqueID_mutexlock(); // Using this to make sure no clashing of Output Values
-						for(int i = 0; i != num_of_outputs; ++i) {
+						for(int i = 0; i != num_of_outputs; ++i)
+						{
 							const std::string temp_str = "@Output" + Poco::NumberFormatter::format(i) + "_" + Poco::NumberFormatter::format(unique_id) +  + "_" + t_arg[0] + ",";
 							sql_str_procedure += temp_str;
 							sql_str_select += temp_str;
@@ -248,7 +249,6 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
 	{
-		status = false;
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE_V2: Error ConnectionException: " + e.displayText() << std::endl;
 		#endif
@@ -257,7 +257,6 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
 	{
-		status = false;
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE_V2: Error StatementException: " + e.displayText() << std::endl;
 		#endif
@@ -266,7 +265,6 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 	}
 	catch (Poco::Data::DataException& e)
 	{
-		status = false;
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE_V2: Error DataException: " + e.displayText() << std::endl;
 		#endif
@@ -275,7 +273,6 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 	}
 	catch (Poco::Exception& e)
 	{
-		status = false;
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE_V2: Error Exception: " + e.displayText() << std::endl;
 		#endif

@@ -33,10 +33,6 @@ class MISC: public AbstractProtocol
 {
 	public:
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
-
-		//Poco::Checksum checksum_adler32;
-		//boost::mutex mutex_checksum_adler32;
-
 		Poco::Checksum checksum_crc32;
 
 	private:
