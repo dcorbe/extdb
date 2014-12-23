@@ -292,7 +292,7 @@ void Rcon::mainLoop()
 				if (elapsed_seconds >= 45)
 				{
 					std::cout << "TIMED OUT...." << std::endl;
-					disconnect();
+					connect();
 				}
 				else if (elapsed_seconds >= 30)
 				{
@@ -380,23 +380,15 @@ void Rcon::connect()
 
 void Rcon::disconnect()
 {
-	if (rcon_login.auto_reconnect && logged_in)
-	{
-		connect();
-	}
-	else
-	{
-		boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
-		rcon_run_flag = false;
-	}
+	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
+	rcon_run_flag = false;	
 }
 
 
-Rcon::Rcon(std::string address, int port, std::string password, bool auto_reconnect)
+Rcon::Rcon(std::string address, int port, std::string password)
 {
 	rcon_login.address = address;
 	rcon_login.port = port;
-	rcon_login.auto_reconnect;
 	
 	char *passwd = new char[password.size()+1] ;
 	std::strcpy(passwd, password.c_str());

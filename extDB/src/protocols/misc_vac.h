@@ -40,12 +40,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 		private:
 			struct SteamVacInfo
 			{
-				std::string SteamID;
+				std::string steamID;
 				std::string VACBanned;
 				std::string NumberOfVACBans;
 				std::string DaysSinceLastBan;
-				std::string EconomyBan;
-				std::string LastChecked;
 			};
 			
 			struct VacBanCheck

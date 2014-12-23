@@ -106,13 +106,13 @@ std::string MISC_VAC::convertSteamIDtoBEGUID(const std::string &input_str)
 }
 
 
-bool MISC_VAC::updateVAC(std::string steam_web_api_key, std::string &steam_id)
+bool MISC_VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
 {
-	if (!(VAC_Cache->has(steam_id)))
+	if (!(VAC_Cache->has(steamID)))
 	{
 		SteamVacInfo vac_info;
 
-		Poco::URI uri("http://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=" + steam_web_api_key + "&format=json&steamids=" + steam_id);
+		Poco::URI uri("http://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=" + steam_web_api_key + "&format=json&steamids=" + steamID);
 		Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
 
 		// prepare path
@@ -136,29 +136,22 @@ bool MISC_VAC::updateVAC(std::string steam_web_api_key, std::string &steam_id)
 		boost::property_tree::ptree pt;
 		boost::property_tree::read_json(is, pt);
 
-		vac_info.SteamID = pt.get<std::string>("players..SteamId", "FAILED");
-		vac_info.NumberOfVACBans = pt.get<std::string>("players..NumberOfVACBans", "FAILED");
-		vac_info.VACBanned = pt.get<std::string>("players..VACBanned", "FAILED");
-		vac_info.DaysSinceLastBan = pt.get<std::string>("players..DaysSinceLastBan", "FAILED");
-		vac_info.EconomyBan = pt.get<std::string>("players..EconomyBan", "FAILED");
+		vac_info.steamID = pt.get<std::string>("players..SteamId", "");
+		vac_info.NumberOfVACBans = pt.get<int>("players..NumberOfVACBans", 0);
+		vac_info.VACBanned = pt.get<bool>("players..VACBanned", false);
+		vac_info.DaysSinceLastBan = pt.get<int>("players..DaysSinceLastBan", 0);
 
-		if ((vac_info.SteamID == "FAILED") || (vac_info.NumberOfVACBans == "FAILED")|| (vac_info.VACBanned == "FAILED") || (vac_info.DaysSinceLastBan == "FAILED") || (vac_info.EconomyBan == "FAILED"))
+		if (vac_info.steamID.empty())
 		{
 			return false;
 		}
-		else
+		else if (vac_info.steamID == steamID)
 		{
 			boost::lock_guard<boost::mutex> lock(VAC_Cache_mutex);
-			VAC_Cache.add(steam_id, std::move(vac_info)); // Update Cache
+			VAC_Cache.add(steamID, std::move(vac_info)); // Update Cache
 		}
 	}
 	return true;
-}
-
-
-bool DB_VAC::getCache(std::string &steam_id)
-{
-
 }
 
 
@@ -185,16 +178,19 @@ void MISC_VAC::callProtocol(AbstractExt *extension, std::string input_str, std::
 			else if (boost::iequals(t_arg[0], std::string("VACBanned")) == 1)
 			{
 				//TODO
+				//	VAC_Cache.get(steamID).VACBanned
 				result  = "[0, \"MISC_VAC: NOT WORKING YET\"]";
 			}
 			else if (boost::iequals(t_arg[0], std::string("NumberOfVACBans")) == 1)
 			{
 				//TODO
+				//	VAC_Cache.get(steamID).DaysSinceLastBan
 				result  = "[0, \"MISC_VAC: NOT WORKING YET\"]";
 			}
 			else if (boost::iequals(t_arg[0], std::string("DaysSinceLastBan")) == 1)
 			{
 				//TODO
+				//	VAC_Cache.get(steamID).EconomyBan
 				result  = "[0, \"MISC_VAC: NOT WORKING YET\"]";
 			}
 			else if (boost::iequals(t_arg[0], std::string("EconomyBan")) == 1)
