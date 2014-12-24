@@ -23,13 +23,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Data/SessionPool.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sources/record_ostream.hpp>
-
 #include <boost/thread/thread.hpp>
+
+#include "spdlog/spdlog.h"
 
 
 class AbstractExt
@@ -49,7 +45,5 @@ class AbstractExt
 		virtual std::string getDBType()=0;
 		virtual std::string getExtensionPath()=0;
 		
-		boost::log::sources::severity_logger_mt< boost::log::trivial::severity_level > logger;
-
 		boost::mutex mutex_poco_cached_preparedStatements;  // Using Same Lock for Wait / Results / Plugins
 };

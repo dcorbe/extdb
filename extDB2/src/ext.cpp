@@ -44,13 +44,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/regex.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sources/record_ostream.hpp>
-
 #include <cstring>
 
 #ifdef TEST_APP
@@ -166,24 +159,17 @@ Ext::Ext(std::string dll_path) {
 	log_relative_path /= "logs";
 	log_relative_path /= log_filename;
 
-	boost::log::add_common_attributes();
-	boost::log::add_file_log
-	(
-		boost::log::keywords::auto_flush = true, 
-		boost::log::keywords::file_name = log_relative_path.make_preferred().string(),
-		boost::log::keywords::format = "[%TimeStamp%]: ThreadID %ThreadID%: %Message%"
-	);
-	boost::log::core::get()->set_filter
-	(
-		boost::log::trivial::severity >= boost::log::trivial::info
-	);
+	std::auto logger = spd::simple_file_sink(log_relative_path, true);
+	spd::set_level(spd::level::info);
+	spd::set_pattern("*** [%H:%M:%S %z] [thread %t] %v ***");
 
-	BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Version: " + getVersion();
+	
+	logger->info("extDB: Version: {0}", getVersion());
 	
 	if (!conf_found) 
 	{
-		std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;	
-		BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Unable to find extdb-conf.ini";
+		std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;
+		logger->critical("extDB: Unable to find extdb-conf.ini");
 		// Kill Server no config file found -- Evil
 		std::exit(EXIT_FAILURE);
 	}
@@ -193,7 +179,7 @@ Ext::Ext(std::string dll_path) {
 		#ifdef TESTING
 			std::cout << "extDB: Found extdb-conf.ini" << std::endl;
 		#endif
-		BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Found extdb-conf.ini";
+		logger->info("extDB: Found extdb-conf.ini");
 
 		steam_web_api_key = pConf->getString("Main.Steam Web API Key", "");
 
@@ -210,7 +196,7 @@ Ext::Ext(std::string dll_path) {
 			#ifdef TESTING
 				std::cout << "extDB: Creating Worker Thread +1" << std::endl ;
 			#endif
-			BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Creating Worker Thread +1";
+			logger->info("extDB: Creating Worker Thread +1");
 		}
 
 		// Load Logging Filter Options
@@ -228,7 +214,7 @@ Ext::Ext(std::string dll_path) {
 		#ifndef DEBUG_LOGGING
 			if (log_filter_level == 0)
 			{
-				BOOST_LOG_SEV(logger, boost::log::trivial::trace) << "extDB: Warning Log Filter Option Trace only works with debug extDB";
+				logger->error("extDB: Warning Log Filter Option Trace only works with debug extDB");
 			};
 		#endif
 
@@ -291,9 +277,9 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 		if (!db_conn_info.db_type.empty())
 		{
 			#ifdef TESTING
-				std::cout << "extDB: Already Connected to Database: " << db_conn_info.db_type << "." << std::endl;
+				std::cout << "extDB: Already Connected to Database" << std::endl;
 			#endif
-			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Already Connected to a Database: " << db_conn_info.db_type << ".";
+			logger->warn("extDB: extDB: Already Connected to a Database");
 			std::strcpy(output, "[0,\"Already Connected to Database\"]");
 		}
 		else
@@ -320,7 +306,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 				#ifdef TESTING
 					std::cout << "extDB: Database Type: " << db_conn_info.db_type << std::endl;
 				#endif
-				BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Type: " << db_conn_info.db_type;
+				logger->info("extDB: Database Type: {0}", db_conn_info.db_type);
 
 				if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
 				{
@@ -350,7 +336,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 						#ifdef TESTING
 							std::cout << "extDB: Database Session Pool Started" << std::endl;
 						#endif
-						BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
+						logger->info("extDB: Database Session Pool Started");
 						std::strcpy(output, "[1]");
 					}
 					else
@@ -359,7 +345,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 							std::cout << "extDB: Database Session Pool Failed" << std::endl;
 						#endif
 						db_conn_info = DBConnectionInfo();
-						BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Session Pool Failed";
+						logger->info("extDB: Database Session Pool Failed");
 						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
 					}
 				}
@@ -384,7 +370,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 						#ifdef TESTING
 							std::cout << "extDB: Database Session Pool Started" << std::endl;
 						#endif
-						BOOST_LOG_SEV(logger, boost::log::trivial::info) << "extDB: Database Session Pool Started";
+						logger->info("extDB: Database Session Pool Started");
 						std::strcpy(output, "[1]");
 					}
 					else
@@ -393,7 +379,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 							std::cout << "extDB: Database Session Pool Failed" << std::endl;
 						#endif
 						db_conn_info = DBConnectionInfo();
-						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Database Session Pool Failed";
+						logger->info("extDB: Database Session Pool Failed");
 						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
 					}
 				}
@@ -403,7 +389,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 						std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
 					#endif
 					db_conn_info = DBConnectionInfo();
-					BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Database Engine Found for " << db_name << ".";
+					logger->info("extDB: No Database Engine Found for {0}", db_name);
 					std::strcpy(output, "[0,\"Unknown Database Type\"]");
 				}
 			}
@@ -413,7 +399,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					std::cout << "extDB: WARNING No Config Option Found: " << conf_option << "." << std::endl;
 				#endif
 				db_conn_info = DBConnectionInfo();
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: No Config Option Found: " << conf_option << ".";
+				logger->info("extDB: No Config Option Found: {0}", conf_option);
 				std::strcpy(output, "[0,\"No Config Option Found\"]");
 			}
 		}
@@ -424,7 +410,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			std::cout << "extDB: Database Setup Failed: " << e.displayText() << std::endl;
 		#endif
 		db_conn_info = DBConnectionInfo();
-		BOOST_LOG_SEV(logger, boost::log::trivial::fatal) << "extDB: Database Setup Failed: " << e.displayText();
+		logger->error("extDB: Database Setup Failed: {0}", e.displayText());
 		std::strcpy(output, "[0,\"Database Exception Error\"]");
 	}
 }
@@ -591,7 +577,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
+				logger->warn("extDB: Failed to Load Protocol");
 			}
 			else
 			{
@@ -606,7 +592,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
+				logger->warn("extDB: Failed to Load Protocol");
 			}
 			else
 			{
@@ -621,7 +607,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
+				logger->warn("extDB: Failed to Load Protocol");
 			}
 			else
 			{
@@ -636,7 +622,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
+				logger->warn("extDB: Failed to Load Protocol");
 			}
 			else
 			{
@@ -651,7 +637,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
+				logger->warn("extDB: Failed to Load Protocol");
 			}
 			else
 			{
@@ -666,7 +652,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
+				logger->warn("extDB: Failed to Load Protocol");
 			}
 			else
 			{
@@ -681,7 +667,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
+				logger->warn("extDB: Failed to Load Protocol");
 			}
 			else
 			{
@@ -696,7 +682,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 			{
 				unordered_map_protocol.erase(protocol_name);
 				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Failed to Load Protocol";
+				logger->warn("extDB: Failed to Load Protocol");
 			}
 			else
 			{
@@ -706,7 +692,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else
 		{
 			std::strcpy(output, "[0,\"Error Unknown Protocol\"]");
-			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Error Unknown Protocol";
+			logger->warn("extDB: Failed to Load Unknown Protocol: {0}", protocol);
 		}
 	}
 }
@@ -772,7 +758,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 	try
 	{
 		#ifdef DEBUG_LOGGING
-			BOOST_LOG_SEV(logger, boost::log::trivial::trace) << "Extension Input from Server: " +  std::string(function);
+			logger->info("extDB: Extension Input from Server: {0}", std::string(function));
 		#endif
 
 		const std::string input_str(function);
@@ -782,7 +768,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		if (input_str_length <= 2)
 		{
 			std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
-			BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Message: " + input_str);
+			
+				logger->info("extDB: Invalid Message: {0}", input_str);
 		}
 		else
 		{
@@ -804,7 +791,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						if (found==std::string::npos)  // Check Invalid Format
 						{
 							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+							logger->error("extDB: Invalid Format: {0}", input_str);
 						}
 						else
 						{
@@ -813,7 +800,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 							if (found == (input_str_length - 1))
 							{
 								std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-								BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+								logger->error("extDB: Invalid Format: {0}", input_str);
 							}
 							else
 							{
@@ -829,7 +816,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 									if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
 									{
 										std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
-										BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Unknown Protocol: " + protocol);
+										logger->error("extDB: Unknown Protocol: {0}", protocol);
 									}
 									else
 									{
@@ -867,14 +854,14 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						if (found==std::string::npos)  // Check Invalid Format
 						{
 							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+							logger->error("extDB: Invalid Format: {0}", input_str);
 						}
 						else
 						{
 							if (found == (input_str_length - 1))
 							{
 								std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-								BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+								logger->error("extDB: Invalid Format: {0}", input_str);
 							}
 							else
 							{
@@ -895,14 +882,14 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						if (found==std::string::npos)  // Check Invalid Format
 						{
 							std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-							BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+							logger->error("extDB: Invalid Format: {0}", input_str);
 						}
 						else
 						{
 							if (found == (input_str_length - 1))
 							{
 								std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-								BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+								logger->error("extDB: Invalid Format: {0}", input_str);
 							}
 							else
 							{
@@ -954,13 +941,13 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 									else if (tokens[1] == "OUTPUTSIZE")
 									{
 										std::string outputsize_str(Poco::NumberFormatter::format(output_size));
-										BOOST_LOG_SEV(logger, boost::log::trivial::info) << "Extension Output Size: " + outputsize_str;
+										logger->info("Extension Output Size: {0}", outputsize_str);
 										std::strcpy(output, outputsize_str.c_str());
 									}
 									else
 									{
-										std::strcpy(output, ("[0,\"Error Invalid Format\"]"));	
-										BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+										std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
+										logger->error("extDB: Invalid Format: {0}", input_str);
 									}
 									break;
 								case 3:
@@ -978,7 +965,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 								default:
 									// Invalid Format
 									std::strcpy(output, ("[0,\"Error Invalid Format\"]"));
-									BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Format: " + input_str);
+									logger->error("extDB: Invalid Format: {0}", input_str);
 							}
 						}
 						break;
@@ -986,7 +973,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					default:
 					{
 						std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
-						BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Invalid Message: " + input_str);
+						logger->error("extDB: Invalid Message: {0}", input_str);
 					}
 				}
 			}
@@ -996,7 +983,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 				#ifdef TESTING
 					std::cout << "extDB: Error: Invalid Message: " << input_str << std::endl;
 				#endif
-				BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Error Invalid Message: " + input_str;
+				logger->error("extDB: Invalid Message: {0}", input_str);
 			}
 		}
 	}
@@ -1006,7 +993,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		#ifdef TESTING
 			std::cout << "extDB: Error: " << e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << "extDB: Error: " + e.displayText();
+		logger->critical("extDB: Error: {0}", e.displayText());
 	}
 }
 
