@@ -696,7 +696,6 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 	if (itr == unordered_map_protocol.end())
 	{
 		std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
-		//BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Unknown Protocol: " + protocol);
 	}
 	else
 	{

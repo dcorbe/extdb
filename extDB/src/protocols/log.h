@@ -21,6 +21,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
 
+#include <boost/filesystem.hpp>
+
 
 class LOG: public AbstractProtocol
 {
@@ -29,5 +31,5 @@ class LOG: public AbstractProtocol
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 		
 	private:
-		std::string log_msg_header;
+		std::shared_ptr<spdlog::logger> logger;
 };

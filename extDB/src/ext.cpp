@@ -16,6 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "ext.h"
+#include "protocols/spdlog/spdlog.h"
 
 #include <Poco/Data/Session.h>
 #include <Poco/Data/SessionPool.h>
@@ -42,7 +43,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/random/random_device.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/regex.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <cstring>
 
@@ -80,7 +80,7 @@ Ext::Ext(std::string dll_path) {
 
 	bool conf_found = false;
 	bool conf_randomized = false;
-	
+
 	boost::filesystem::path extDB_config_path(dll_path);
 
 	extDB_config_path = extDB_config_path.parent_path();
@@ -150,28 +150,34 @@ Ext::Ext(std::string dll_path) {
 
 	// Initialize Logger
 	Poco::DateTime now;
-	std::string log_filename = Poco::DateTimeFormatter::format(now, "%Y/%n/%d/%H-%M-%S.log");
+	std::string log_filename = Poco::DateTimeFormatter::format(now, "%H-%M-%S.log");
 
 	boost::filesystem::path log_relative_path;
 
 	log_relative_path = boost::filesystem::path(extDB_path);
 	log_relative_path /= "extDB";
 	log_relative_path /= "logs";
+	log_relative_path /= Poco::DateTimeFormatter::format(now, "%Y");
+	log_relative_path /= Poco::DateTimeFormatter::format(now, "%n");
+	log_relative_path /= Poco::DateTimeFormatter::format(now, "%d");
+	extDB_log_path = log_relative_path.make_preferred().string();
+	boost::filesystem::create_directories(log_relative_path);
 	log_relative_path /= log_filename;
 
-	std::auto logger = spd::simple_file_sink(log_relative_path, true);
-	spd::set_level(spd::level::info);
-	spd::set_pattern("*** [%H:%M:%S %z] [thread %t] %v ***");
+	auto logger_temp = spdlog::daily_logger_mt("extDB logger", log_relative_path.make_preferred().string(), true);
+	logger.swap(logger_temp);
+	spdlog::set_level(spdlog::level::info);
+	spdlog::set_pattern("[%H:%M:%S %z] [Thread %t] %v");
 
-	
+
 	logger->info("extDB: Version: {0}", getVersion());
-	
-	if (!conf_found) 
+
+	if (!conf_found)
 	{
 		std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;
 		logger->critical("extDB: Unable to find extdb-conf.ini");
 		// Kill Server no config file found -- Evil
-		std::exit(EXIT_FAILURE);
+		std::exit(EXIT_SUCCESS);
 	}
 	else
 	{
@@ -199,31 +205,12 @@ Ext::Ext(std::string dll_path) {
 			logger->info("extDB: Creating Worker Thread +1");
 		}
 
-		// Load Logging Filter Options
-		#ifdef TESTING
-			std::cout << "extDB: Loading Log Settings" << std::endl;
-		#endif
-		
-		int log_filter_level = pConf->getInt("Logging.Filter",2);
-
-		boost::log::core::get()->set_filter
-		(
-			boost::log::trivial::severity >= log_filter_level
-		);
-
-		#ifndef DEBUG_LOGGING
-			if (log_filter_level == 0)
-			{
-				logger->error("extDB: Warning Log Filter Option Trace only works with debug extDB");
-			};
-		#endif
-
-		serverRcon = new Rcon(pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password"));
-		if (pConf->getBool->getBool("Rcon.Enable", false))
+		serverRcon.reset(new Rcon(std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password")));
+		if (pConf->getBool("Rcon.Enable", false))
 		{
-			serverRcon->start();
+			serverRcon->run();
 		}
-		
+
 		#ifdef _WIN32
 			if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
 			// Only Gonna Randomize Once, Keeps things Simple
@@ -233,7 +220,7 @@ Ext::Ext(std::string dll_path) {
 				// Skipping Lowercase, this function only for arma2 + extensions only available on windows.
 				boost::random::random_device rng;
 				boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
-				
+
 				std::string randomized_filename = "extdb-conf-";
 				for(int i = 0; i < 8; ++i) {
 					randomized_filename += chars[index_dist(rng)];
@@ -264,8 +251,6 @@ void Ext::stop()
 	threads.join_all();
 	serverRcon->disconnect();
 	unordered_map_protocol.clear();
-
-	boost::log::core::get()->remove_all_sinks();
 }
 
 
@@ -427,6 +412,12 @@ std::string Ext::getExtensionPath()
 	return extDB_path;
 }
 
+
+std::string Ext::getLogPath()
+{
+	return extDB_log_path;
+}
+
 std::string Ext::getAPIKey()
 {
 	return steam_web_api_key;
@@ -460,7 +451,7 @@ Poco::Data::Session Ext::getDBSessionCustom_mutexlock(Poco::Data::SessionPool::S
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	Poco::Data::Session free_session =  db_pool->extDB_get(itr);
+	Poco::Data::Session free_session =  db_pool->get(itr);
 	return free_session;
 }
 
@@ -571,7 +562,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		boost::lock_guard<boost::mutex> lock(mutex_unordered_map_protocol);
 		if (boost::iequals(protocol, std::string("MISC")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new MISC());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -586,7 +577,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("LOG")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new LOG());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new LOG());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -601,7 +592,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V3")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V3());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V3());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -616,7 +607,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V5")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V5());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V5());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -631,7 +622,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_V3")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -646,8 +637,8 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, std::string("ADD_QUOTES"))
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, std::string("ADD_QUOTES")))
 			// Remove Class Instance if Failed to Load
 			{
 				unordered_map_protocol.erase(protocol_name);
@@ -661,7 +652,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, std::string()))
 			// Remove Class Instance if Failed to Load
 			{
@@ -676,7 +667,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -701,11 +692,10 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 void Ext::syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data)
 // Sync callPlugin
 {
-	std::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
+	std::unordered_map< std::string, std::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
 	if (itr == unordered_map_protocol.end())
 	{
 		std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
-		BOOST_LOG_SEV(logger, boost::log::trivial::warning) << ("extDB: Unknown Protocol: " + protocol);
 	}
 	else
 	{
@@ -732,7 +722,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 void Ext::onewayCallProtocol(const std::string protocol, const std::string data)
 // ASync callProtocol
 {
-	std::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
+	std::unordered_map< std::string, std::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
 	if (itr != unordered_map_protocol.end())
 	{
 		std::string result;
@@ -1012,16 +1002,26 @@ int main(int nNumberofArgs, char* pszArgs[])
 	Ext *extension;
 	std::string current_path;
 	extension = (new Ext(current_path));
+	bool test = false;
 	for (;;) {
 		std::getline(std::cin, input_str);
 		if (input_str == "quit")
 		{
 		    break;
 		}
+		else if (input_str == "test")
+		{
+			test = true;
+		}
 		else
 		{
 			extension->callExtenion(result, 80, input_str.c_str());
 			std::cout << "extDB: " << result << std::endl;
+		}
+		while (test)
+		{
+			extension->callExtenion(result, 80, std::string("1:SQL:SELECT * FROM PlayerData").c_str());
+			std::cout << "extDB: " << result << std::endl;			
 		}
 	}
 	std::cout << "extDB Test: Quitting Please Wait" << std::endl;

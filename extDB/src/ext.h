@@ -18,7 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <boost/asio.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/thread/thread.hpp>
 
 #include <Poco/Data/SessionPool.h>
@@ -56,9 +55,9 @@ class Ext: public AbstractExt
 		void callExtenion(char *output, const int &output_size, const char *function);
 		std::string getVersion() const;
 		std::string getExtensionPath();
+		std::string getLogPath();
 
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
-		Poco::AutoPtr<Rcon> serverRcon;
 
 		Poco::Data::Session getDBSession_mutexlock();
 		Poco::Data::Session getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
@@ -79,13 +78,13 @@ class Ext: public AbstractExt
 
 	private:
 		bool extDB_lock;
-		bool extDB_error_db_kill_server;
-		
+
 		int max_threads;
 
 		std::string extDB_path;
+		std::string extDB_log_path;
 		std::string steam_web_api_key;
-		
+
 		struct DBConnectionInfo {
 			std::string db_type;
 			std::string connection_str;
@@ -93,18 +92,18 @@ class Ext: public AbstractExt
 			int max_sessions;
 			int idle_time;
 		};
-		
+
 		DBConnectionInfo db_conn_info;
 
 		// ASIO Thread Queue
-		boost::shared_ptr<boost::asio::io_service::work> io_work_ptr;
+		std::shared_ptr<boost::asio::io_service::work> io_work_ptr;
 		boost::asio::io_service io_service;
 		boost::mutex mutex_io_service;
 
 		boost::thread_group threads;
 
 		// Database Session Pool
-		boost::shared_ptr<DBPool> db_pool;
+		std::shared_ptr<DBPool> db_pool;
 		boost::mutex mutex_db_pool;
 
 		void connectDatabase(char *output, const int &output_size, const std::string &conf_option);
@@ -114,7 +113,7 @@ class Ext: public AbstractExt
 		void sendResult_mutexlock(const std::string &result, char *output, const int &output_size);
 
 		// std::unordered_map + mutex -- for Plugin Loaded
-		std::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> > unordered_map_protocol;
+		std::unordered_map< std::string, std::shared_ptr<AbstractProtocol> > unordered_map_protocol;
 		boost::mutex mutex_unordered_map_protocol;
 
 		// std::unordered_map + mutex -- for Stored Results to long for outputsize
@@ -123,9 +122,8 @@ class Ext: public AbstractExt
 		boost::mutex mutex_unordered_map_results;  // Using Same Lock for Wait / Results / Plugins
 
 
-
 		// Unique ID for key for ^^
-		boost::shared_ptr<IdManager> mgr;
+		std::shared_ptr<IdManager> mgr;
 		boost::mutex mutex_unique_id;
 
 		// Protocols

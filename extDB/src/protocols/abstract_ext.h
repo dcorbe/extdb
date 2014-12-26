@@ -25,7 +25,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/thread/thread.hpp>
 
-#include "spdlog/spdlog.h"
+#include "../rcon.h"
+#include "../spdlog/spdlog.h"
 
 
 class AbstractExt
@@ -38,12 +39,15 @@ class AbstractExt
 		virtual std::string getAPIKey()=0;
 		
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
+		std::shared_ptr<Rcon> serverRcon;
+		std::shared_ptr<spdlog::logger> logger;
 		
 		virtual void freeUniqueID_mutexlock(const int &unique_id)=0;
 		virtual int getUniqueID_mutexlock()=0;
 		
 		virtual std::string getDBType()=0;
 		virtual std::string getExtensionPath()=0;
+		virtual std::string getLogPath()=0;
 		
 		boost::mutex mutex_poco_cached_preparedStatements;  // Using Same Lock for Wait / Results / Plugins
 };
