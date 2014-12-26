@@ -50,6 +50,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <cstring>
 #include <stdlib.h>
+#include <unordered_map>
 
 #include "rcon.h"
 

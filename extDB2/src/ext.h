@@ -58,7 +58,6 @@ class Ext: public AbstractExt
 		std::string getExtensionPath();
 
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
-		Poco::AutoPtr<Rcon> serverRcon;
 
 		Poco::Data::Session getDBSession_mutexlock();
 		Poco::Data::Session getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
@@ -80,12 +79,12 @@ class Ext: public AbstractExt
 	private:
 		bool extDB_lock;
 		bool extDB_error_db_kill_server;
-		
+
 		int max_threads;
 
 		std::string extDB_path;
 		std::string steam_web_api_key;
-		
+
 		struct DBConnectionInfo {
 			std::string db_type;
 			std::string connection_str;
@@ -93,7 +92,7 @@ class Ext: public AbstractExt
 			int max_sessions;
 			int idle_time;
 		};
-		
+
 		DBConnectionInfo db_conn_info;
 
 		// ASIO Thread Queue

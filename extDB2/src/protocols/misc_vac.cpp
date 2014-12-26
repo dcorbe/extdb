@@ -148,7 +148,7 @@ bool MISC_VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
 		else if (vac_info.steamID == steamID)
 		{
 			boost::lock_guard<boost::mutex> lock(VAC_Cache_mutex);
-			VAC_Cache.add(steamID, std::move(vac_info)); // Update Cache
+			VAC_Cache->add(steamID, std::move(vac_info)); // Update Cache
 		}
 	}
 	return true;

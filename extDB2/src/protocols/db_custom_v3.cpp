@@ -69,7 +69,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 		#ifdef TESTING
 			std::cout << "extDB: DB_CUSTOM_V3: No Database Connection" << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: No Database Connection";
+		extension->logger->warn("extDB: DB_CUSTOM_V3: No Database Connection");
 		return false;
 	}
 
@@ -77,9 +77,9 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 	if (init_str.empty()) 
 	{
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V3: Missing Parameter or No Template Filename given" << std::endl;
+			std::cout << "extDB: DB_CUSTOM_V3: Missing Init Parameter" << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "Missing Parameter or No Template Filename given";
+		extension->logger->warn("extDB: DB_CUSTOM_V3: Missing Init Parameter");
 		return false;
 	}
 	
@@ -235,9 +235,9 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 						{
 							status = false;
 							#ifdef TESTING
-								std::cout << "extDB: DB_CUSTOM_V3: Unknown Bad Strings Action for " << call_name << ":" << custom_protocol[call_name].bad_chars_action << std::endl;
+								std::cout << "extDB: DB_CUSTOM_V3: Invalid Bad Strings Action for " << call_name << ":" << custom_protocol[call_name].bad_chars_action << std::endl;
 							#endif
-							BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V3: Unknown Bad Strings Action for " << call_name << ":" << custom_protocol[call_name].bad_chars_action;
+							extension->logger->warn("extDB: DB_CUSTOM_V3: Invalid Bad Strings Action for {0} : {1}", call_name, custom_protocol[call_name].bad_chars_action);
 						}
 					}
 				}
@@ -248,7 +248,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 				#ifdef TESTING
 					std::cout << "extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version" << std::endl;
 				#endif
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version: " << db_template_file;
+				extension->logger->warn("extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version: {0}", db_template_file);
 			}
 		}
 		else
@@ -257,7 +257,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 			#ifdef TESTING
 				std::cout << "extDB: DB_CUSTOM_V3: Template File Missing Default Options" << db_template_file << std::endl;
 			#endif
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V3: Template File Missing Default Options: " << db_template_file;
+			extension->logger->warn("extDB: DB_CUSTOM_V3: Template File Missing Default Options: {0}", db_template_file);
 		}
 	}
 	else 
@@ -266,7 +266,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 		#ifdef TESTING
 			std::cout << "extDB: DB_CUSTOM_V3: Template File Not Found" << db_template_file << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_CUSTOM_V3: No Template File Found: " << db_template_file;
+		extension->logger->warn("extDB: DB_CUSTOM_V3: No Template File Found: {0}", db_template_file);
 	}
 	return status;
 }
@@ -392,8 +392,8 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				#ifdef TESTING
 					std::cout << "extDB: DB_CUSTOM_V3: Error DBLockedException: " + e.displayText() << std::endl;
 				#endif
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DBLockedException: " + e.displayText();
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DBLockedException: SQL:" + sql_str;
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error DBLockedException: {0}", e.displayText());
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error DBLockedException: SQL: {0}", sql_str);
 				result = "[0,\"Error DBLocked Exception\"]";
 				break;
 			}
@@ -402,8 +402,8 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				#ifdef TESTING
 					std::cout << "extDB: DB_CUSTOM_V3: Error ConnectionException: " + e.displayText() << std::endl;
 				#endif
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error ConnectionException: " + e.displayText();
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error ConnectionException: SQL:" + sql_str;
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error ConnectionException: {0}", e.displayText());
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error ConnectionException: SQL: {0}", sql_str);
 				result = "[0,\"Error Connection Exception\"]";
 				break;
 			}
@@ -412,8 +412,8 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				#ifdef TESTING
 					std::cout << "extDB: DB_CUSTOM_V3: Error StatementException: " + e.displayText() << std::endl;
 				#endif
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error StatementException: " + e.displayText();
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error StatementException: SQL:" + sql_str;
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error StatementException: {0}", e.displayText());
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error StatementException: SQL: {0}", sql_str);
 				result = "[0,\"Error Statement Exception\"]";
 				break;
 			}
@@ -422,8 +422,8 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				#ifdef TESTING
 					std::cout << "extDB: DB_CUSTOM_V3: Error DataException: " + e.displayText() << std::endl;
 				#endif
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DataException: " + e.displayText();
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error DataException: SQL:" + sql_str;
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error DataException: {0}", e.displayText());
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error DataException: SQL: {0}", sql_str);
 				result = "[0,\"Error Data Exception\"]";
 				break;
 			}
@@ -432,8 +432,8 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 				#ifdef TESTING
 					std::cout << "extDB: DB_CUSTOM_V3: Error Exception: " + e.displayText() << std::endl;
 				#endif
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Exception: " + e.displayText();
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Exception: SQL:" + sql_str;
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
 				result = "[0,\"Error Exception\"]";
 				break;
 			}
@@ -506,7 +506,7 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		std::cout << "extDB: DB_CUSTOM_V3: Trace: Result: " + result << std::endl;
 	#endif
 	#ifdef DEBUG_LOGGING
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_CUSTOM_V3: Trace: Result: " + result;
+		extension->logger->info("extDB: DB_CUSTOM_V3: Trace: Result: {0}", result);
 	#endif
 }
 
@@ -517,7 +517,7 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 		std::cout << "extDB: DB_CUSTOM_V3: Trace: " + input_str << std::endl;
 	#endif
 	#ifdef DEBUG_LOGGING
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_CUSTOM_V3: Trace: Input:" + input_str;
+		extension->logger->info("extDB: DB_CUSTOM_V3: Trace: Input: {0}", input_str);
 	#endif
 
 	Poco::StringTokenizer tokens(input_str, ":");
@@ -527,14 +527,14 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 	if (itr == custom_protocol.end())
 	{
 		result = "[0,\"Error No Custom Call Not Found\"]";
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error No Custom Call Not Found: " + input_str;
+		extension->logger->warn("extDB: DB_CUSTOM_V3: Error No Custom Call Not Found: {0}", input_str);
 	}
 	else
 	{
 		if (itr->second.number_of_inputs != (token_count - 1))
 		{
 			result = "[0,\"Error Incorrect Number of Inputs\"]";
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Incorrect Number of Inputs: " + input_str;
+			extension->logger->warn("extDB: DB_CUSTOM_V3: Incorrect Number of Inputs: {0}", input_str);
 		}
 		else
 		{
@@ -573,8 +573,8 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 
 					if (input_value_str != tokens[i])
 					{
-						BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Bad Char Detected: Input:" + input_str;
-						BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Bad Char Detected: Token:" + tokens[i];
+						extension->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Input: {0}", input_str);
+						extension->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Token: {0}", tokens[i]);
 					}
 
 					// Add String to List
@@ -595,8 +595,8 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 
 					if (input_value_str != tokens[i])
 					{
-						BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Bad Char Detected: Input:" + input_str;
-						BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Error Bad Char Detected: Token:" + tokens[i];
+						extension->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Input: {0}", input_str);
+						extension->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Token: {0}", tokens[i]);
 						bad_chars_error = true;
 					}
 
@@ -619,7 +619,7 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 				if (!sanitize_value_check_ok)
 				{
 					result = "[0,\"Error Values Input is not sanitized\"]";
-					BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_CUSTOM_V3: Sanitize Check error: Input:" + input_str;
+					extension->logger->warn("extDB: DB_CUSTOM_V3: Sanitize Check error: Input: {0}", input_str);
 				}
 			}
 			else

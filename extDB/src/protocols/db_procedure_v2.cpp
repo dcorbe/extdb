@@ -47,7 +47,8 @@ bool DB_PROCEDURE_V2::init(AbstractExt *extension, const std::string init_str)
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE_V2: SQLite doesnt support Procedures"<< std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_PROCEDURE_V2: SQLite doesnt support Procedures";
+
+		extension->logger->warn("extDB: DB_PROCEDURE_V2: SQLite doesnt support Procedures");
 		return false;
 	}
 	else
@@ -56,7 +57,7 @@ bool DB_PROCEDURE_V2::init(AbstractExt *extension, const std::string init_str)
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE_V2: No Database Connection"<< std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::fatal) << "extDB: DB_PROCEDURE_V2: No Database Connection";
+		extension->logger->warn("extDB: DB_PROCEDURE_V2: No Database Connection");
 		return false;
 	}
 }
@@ -90,7 +91,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		std::cout << "extDB: DB_PROCEDURE_V2: Trace: " + input_str << std::endl;
 	#endif
 	#ifdef DEBUG_LOGGING
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE_V2: Trace" + input_str;
+		extension->logger->info("extDB: DB_PROCEDURE_V2: Trace: {0}", input_str);
 	#endif
 
 	try
@@ -221,9 +222,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					#ifdef TESTING
 						std::cout << "extDB: DB_PROCEDURE_V2: Trace: Result: " + result << std::endl;
 					#endif
-					#ifdef DEBUG_LOGGING
-						BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE_V2: Trace: Result: " + result;
-					#endif
+					extension->logger->info("extDB: DB_PROCEDURE_V2: Trace: Result: {0}", result);
 				}
 				else
 				{
@@ -241,9 +240,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 			#ifdef TESTING
 				std::cout << "extDB: DB_PROCEDURE_V2: Error: Invalid Format: " + input_str << std::endl;
 			#endif
-			#ifdef DEBUG_LOGGING
-				BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_PROCEDURE: Error: Invalid Format: " + input_str;
-			#endif
+			extension->logger->warn("extDB: DB_PROCEDURE: Error: Invalid Format: {0}", input_str);
 			result = "[0,\"Invalid Format\"]";
 		}
 	}
@@ -252,7 +249,8 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE_V2: Error ConnectionException: " + e.displayText() << std::endl;
 		#endif
-		BOOST_Log_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_PROCEDURE_V2: Error ConnectionException: " + e.displayText();
+		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error ConnectionException: {0}", e.displayText());
+		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error Exception: Input: {0}", input_str);
 		result = "[0,\"Error Connection Exception\"]";
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
@@ -260,7 +258,8 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE_V2: Error StatementException: " + e.displayText() << std::endl;
 		#endif
-		BOOST_Log_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_PROCEDURE_V2: Error StatementException: " + e.displayText();
+		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error StatementException: {0}", e.displayText());
+		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error Exception: Input: {0}", input_str);
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
@@ -268,7 +267,8 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE_V2: Error DataException: " + e.displayText() << std::endl;
 		#endif
-		BOOST_Log_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_PROCEDURE_V2: Error DataException: " + e.displayText();
+		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error DataException: {0}", e.displayText());
+		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error Exception: Input: {0}", input_str);
 		result = "[0,\"Error Data Exception\"]";
 	}
 	catch (Poco::Exception& e)
@@ -276,8 +276,8 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		#ifdef TESTING
 			std::cout << "extDB: DB_PROCEDURE_V2: Error Exception: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_PROCEDURE_V2: Error Exception: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_PROCEDURE_V2: Error Exception: Input:" + input_str;
+		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error Exception: {0}", e.displayText());
+		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error Exception: Input: {0}", input_str);
 		result = "[0,\"Error Exception\"]";
 	}
 }

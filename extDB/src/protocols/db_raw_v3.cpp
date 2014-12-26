@@ -53,7 +53,7 @@ bool DB_RAW_V3::init(AbstractExt *extension, const std::string init_str)
 		#ifdef TESTING
 			std::cout << "extDB: DB_RAW_V3: No Database Connection" << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: No Database Connection";
+		extension->logger->warn("extDB: DB_RAW_V3: No Database Connection");
 		status = false;
 	}
 
@@ -65,7 +65,7 @@ bool DB_RAW_V3::init(AbstractExt *extension, const std::string init_str)
 			#ifdef TESTING
 				std::cout << "extDB: DB_RAW_V3: Initialized: ADD_QUOTES False" << std::endl;
 			#endif
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Initialized: ADD_QUOTES False";
+			extension->logger->info("extDB: DB_RAW_V3: Initialized: ADD_QUOTES False");
 		}
 		else if (boost::iequals(init_str, std::string("ADD_QUOTES")))
 		{
@@ -73,7 +73,7 @@ bool DB_RAW_V3::init(AbstractExt *extension, const std::string init_str)
 			#ifdef TESTING
 				std::cout << "extDB: DB_RAW_V3: Initialized: ADD_QUOTES True" << std::endl;
 			#endif
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Initialized: ADD_QUOTES True";
+			extension->logger->info("extDB: DB_RAW_V3: Initialized: ADD_QUOTES True");
 		}
 		else 
 		{
@@ -91,7 +91,7 @@ void DB_RAW_V3::callProtocol(AbstractExt *extension, std::string input_str, std:
 			std::cout << "extDB: DB_RAW_V3: DEBUG INFO: " + input_str << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW_V3: Trace: Input:" + input_str;
+			extension->logger->info("extDB: DB_RAW_V3: Trace: Input: {0}", input_str);
 		#endif
 
 		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
@@ -160,7 +160,7 @@ void DB_RAW_V3::callProtocol(AbstractExt *extension, std::string input_str, std:
 			std::cout << "extDB: DB_RAW_V3: Trace: Result:" + result << std::endl;
 		#endif
 		#ifdef DEBUG_LOGGING
-			BOOST_LOG_SEV(extension->logger, boost::log::trivial::trace) << "extDB: DB_RAW_V3: Trace: Result: " + result;
+			extension->logger->info("extDB: DB_RAW_V3: Trace: Result: {0}", result);
 		#endif
 	}
 	catch (Poco::Data::SQLite::DBLockedException& e)
@@ -168,8 +168,8 @@ void DB_RAW_V3::callProtocol(AbstractExt *extension, std::string input_str, std:
 		#ifdef TESTING
 			std::cout << "extDB: DB_RAW_V3: Error Database Locked Exception: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Error DBLockedException: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Error DBLockedException: Input:" + input_str;
+		extension->logger->error("extDB: DB_RAW_V3: Error DBLockedException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_RAW_V3: Error DBLockedException: Input: {0}", input_str);
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
@@ -177,8 +177,8 @@ void DB_RAW_V3::callProtocol(AbstractExt *extension, std::string input_str, std:
 		#ifdef TESTING
 			std::cout << "extDB: DB_RAW_V3: Error ConnectionException: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Error ConnectionException: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Error ConnectionException: Input:" + input_str;
+		extension->logger->error("extDB: DB_RAW_V3: Error ConnectionException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_RAW_V3: Error ConnectionException: Input: {0}", input_str);
 		result = "[0,\"Error Connection Exception\"]";
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
@@ -186,8 +186,8 @@ void DB_RAW_V3::callProtocol(AbstractExt *extension, std::string input_str, std:
 		#ifdef TESTING
 			std::cout << "extDB: DB_RAW_V3: Error StatementException: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Error StatementException: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Error StatementException: Input:" + input_str;
+		extension->logger->error("extDB: DB_RAW_V3: Error StatementException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_RAW_V3: Error StatementException: Input: {0}", input_str);
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
@@ -195,8 +195,8 @@ void DB_RAW_V3::callProtocol(AbstractExt *extension, std::string input_str, std:
 		#ifdef TESTING
 			std::cout << "extDB: DB_RAW_V3: Error DataException: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Error DataException: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Error DataException: Input:" + input_str;
+		extension->logger->error("extDB: DB_RAW_V3: Error DataException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_RAW_V3: Error DataException: Input: {0}", input_str);
         result = "[0,\"Error Data Exception\"]";
     }
     catch (Poco::Exception& e)
@@ -204,8 +204,8 @@ void DB_RAW_V3::callProtocol(AbstractExt *extension, std::string input_str, std:
 		#ifdef TESTING
 			std::cout << "extDB: DB_RAW_V3: Error Exception: " + e.displayText() << std::endl;
 		#endif
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Error Exception: " + e.displayText();
-		BOOST_LOG_SEV(extension->logger, boost::log::trivial::warning) << "extDB: DB_RAW_V3: Error Exception: Input:" + input_str;
+		extension->logger->error("extDB: DB_RAW_V3: Error Exception: {0}", e.displayText());
+		extension->logger->error("extDB: DB_RAW_V3: Error Exception: Input: {0}", input_str);
 		result = "[0,\"Error Exception\"]";
 	}
 }
