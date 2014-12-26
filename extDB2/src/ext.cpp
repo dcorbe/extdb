@@ -16,7 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "ext.h"
-#include "protocols/spdlog/spdlog.h"
 
 #include <Poco/Data/Session.h>
 #include <Poco/Data/SessionPool.h>

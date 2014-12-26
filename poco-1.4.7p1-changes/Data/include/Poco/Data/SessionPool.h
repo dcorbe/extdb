@@ -120,8 +120,8 @@ public:
 		/// already been created, a SessionPoolExhaustedException
 		/// is thrown.
 
-// Custom extDB Member		
-	Session extDB_get(SessionList::iterator &itr);
+	// Custom extDB Member		
+	Session get(SessionList::iterator &itr);
 	void extDB_updateStatementCacheMap(StatementCacheMap &statement_cachemap, SessionList::iterator &itr);
 		
 	int capacity() const;

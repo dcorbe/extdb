@@ -34,7 +34,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class MISC_VAC: public AbstractProtocol
 {
 	public:
-		bool init(AbstractExt *extension, std::string init_str);
+		bool init(AbstractExt *extension, const std::string init_str);
 		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
 		
 	private:
