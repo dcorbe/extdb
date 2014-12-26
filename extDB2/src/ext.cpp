@@ -43,7 +43,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/random/random_device.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/regex.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <cstring>
 
@@ -161,13 +160,14 @@ Ext::Ext(std::string dll_path) {
 	log_relative_path /= Poco::DateTimeFormatter::format(now, "%Y");
 	log_relative_path /= Poco::DateTimeFormatter::format(now, "%n");
 	log_relative_path /= Poco::DateTimeFormatter::format(now, "%d");
+	extDB_log_path = log_relative_path.make_preferred().string();
 	boost::filesystem::create_directories(log_relative_path);
 	log_relative_path /= log_filename;
 
 	auto logger_temp = spdlog::daily_logger_mt("extDB logger", log_relative_path.make_preferred().string(), true);
 	logger.swap(logger_temp);
 	spdlog::set_level(spdlog::level::info);
-	spdlog::set_pattern("*** [%H:%M:%S %z] [thread %t] %v ***");
+	spdlog::set_pattern("[%H:%M:%S %z] [Thread %t] %v");
 
 
 	logger->info("extDB: Version: {0}", getVersion());
@@ -412,6 +412,12 @@ std::string Ext::getExtensionPath()
 	return extDB_path;
 }
 
+
+std::string Ext::getLogPath()
+{
+	return extDB_log_path;
+}
+
 std::string Ext::getAPIKey()
 {
 	return steam_web_api_key;
@@ -556,7 +562,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		boost::lock_guard<boost::mutex> lock(mutex_unordered_map_protocol);
 		if (boost::iequals(protocol, std::string("MISC")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new MISC());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new MISC());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -571,7 +577,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("LOG")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new LOG());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new LOG());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -586,7 +592,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V3")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V3());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V3());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -601,7 +607,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V5")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V5());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V5());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -616,7 +622,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_V3")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -631,7 +637,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, std::string("ADD_QUOTES")))
 			// Remove Class Instance if Failed to Load
 			{
@@ -646,7 +652,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, std::string()))
 			// Remove Class Instance if Failed to Load
 			{
@@ -661,7 +667,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		}
 		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
 		{
-			unordered_map_protocol[protocol_name] = boost::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{
@@ -686,7 +692,7 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 void Ext::syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data)
 // Sync callPlugin
 {
-	std::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
+	std::unordered_map< std::string, std::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
 	if (itr == unordered_map_protocol.end())
 	{
 		std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
@@ -717,7 +723,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 void Ext::onewayCallProtocol(const std::string protocol, const std::string data)
 // ASync callProtocol
 {
-	std::unordered_map< std::string, boost::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
+	std::unordered_map< std::string, std::shared_ptr<AbstractProtocol> >::const_iterator itr = unordered_map_protocol.find(protocol);
 	if (itr != unordered_map_protocol.end())
 	{
 		std::string result;
@@ -997,16 +1003,26 @@ int main(int nNumberofArgs, char* pszArgs[])
 	Ext *extension;
 	std::string current_path;
 	extension = (new Ext(current_path));
+	bool test = false;
 	for (;;) {
 		std::getline(std::cin, input_str);
 		if (input_str == "quit")
 		{
 		    break;
 		}
+		else if (input_str == "test")
+		{
+			test = true;
+		}
 		else
 		{
 			extension->callExtenion(result, 80, input_str.c_str());
 			std::cout << "extDB: " << result << std::endl;
+		}
+		while (test)
+		{
+			extension->callExtenion(result, 80, std::string("1:SQL:SELECT * FROM PlayerData").c_str());
+			std::cout << "extDB: " << result << std::endl;			
 		}
 	}
 	std::cout << "extDB Test: Quitting Please Wait" << std::endl;

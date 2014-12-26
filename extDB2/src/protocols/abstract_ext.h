@@ -47,6 +47,7 @@ class AbstractExt
 		
 		virtual std::string getDBType()=0;
 		virtual std::string getExtensionPath()=0;
+		virtual std::string getLogPath()=0;
 		
 		boost::mutex mutex_poco_cached_preparedStatements;  // Using Same Lock for Wait / Results / Plugins
 };
