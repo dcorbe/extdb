@@ -44,25 +44,25 @@ SET(SOURCES
 )
 
 if (COMPILE_TEST_APPLICATION)
-	set(EXECUTABLE_NAME "extDB-test")
+	set(EXECUTABLE_NAME "extDB2-test")
 	add_executable(${EXECUTABLE_NAME} ${SOURCES})
 	add_definitions(-DTEST_APP)
-	message(STATUS "The extDB test application will be compiled.")
+	message(STATUS "The extDB2 test application will be compiled.")
 elseif (COMPILE_TEST_SANITIZE_APPLICATION)
 	SET(SOURCES ../../src/sanitize.cpp) # Override Sources
-	set(EXECUTABLE_NAME "extDB-sanitize")
+	set(EXECUTABLE_NAME "extDB2-sanitize")
 	add_executable(${EXECUTABLE_NAME} ${SOURCES})
 	add_definitions(-DTEST_SANITIZE_APP)
 	message(STATUS "Sanitization testing is enabled.")	
 elseif (COMPILE_RCON_APPLICATION)
 	SET(SOURCES ../../src/rcon.cpp) # Override Sources
-	set(EXECUTABLE_NAME "extDB-rcon")
+	set(EXECUTABLE_NAME "extDB2-rcon")
 	add_executable(${EXECUTABLE_NAME} ${SOURCES})
 	add_definitions(-DRCON_APP)
 	message(STATUS "RCON testing is enabled.")
 else()
 	LIST(APPEND SOURCES ../../src/main.cpp)  # Add main.cpp for library build
-	set(EXECUTABLE_NAME "extDB")
+	set(EXECUTABLE_NAME "extDB2")
 	add_library (${EXECUTABLE_NAME} SHARED ${SOURCES})
 endif()
 
@@ -148,7 +148,7 @@ else()
 		ADD_CUSTOM_COMMAND(
 			TARGET ${EXECUTABLE_NAME}
 			POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E rename libextDB.so extDB.so
+			COMMAND ${CMAKE_COMMAND} -E rename libextDB2.so extDB2.so
 		)
 	endif()
 endif()
