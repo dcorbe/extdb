@@ -31,13 +31,14 @@ SET(SOURCES
 	../../src/memory_allocator.cpp
 	../../src/ext.cpp
 	../../src/uniqueid.cpp
+	../../src/rcon.cpp
 	../../src/sanitize.cpp
 	../../src/protocols/abstract_protocol.cpp
 	../../src/protocols/db_custom_v3.cpp
 	../../src/protocols/db_custom_v5.cpp
-	../../src/protocols/db_raw_v2.cpp
+	../../src/protocols/db_raw_v3.cpp
 	../../src/protocols/db_procedure_v2.cpp
-	../../src/protocols/db_raw_no_extra_quotes_v2.cpp
+	../../src/protocols/misc_vac.cpp
 	../../src/protocols/misc.cpp
 	../../src/protocols/log.cpp
 )
@@ -83,11 +84,9 @@ if(${WIN32})
 	set(Boost_USE_STATIC_LIBS ON)
 	set(Boost_USE_MULTITHREADED ON)
 	set(Boost_USE_STATIC_RUNTIME ON)
-	add_definitions(-D _WIN32_WINNT=0x0501)
-else()
-	add_definitions(-DBOOST_LOG_DYN_LINK)
+	add_definitions(-D _WIN32_WINNT=0x0600)
 endif()
-find_package(Boost REQUIRED COMPONENTS chrono date_time filesystem log log_setup program_options random regex system thread)
+find_package(Boost REQUIRED COMPONENTS chrono date_time filesystem program_options random regex system thread)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
 	target_link_libraries(${EXECUTABLE_NAME} ${Boost_LIBRARIES})

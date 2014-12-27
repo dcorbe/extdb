@@ -9,8 +9,8 @@ FIND_PATH(MYSQL_INCLUDE_DIR NAMES mysql.h
   PATHS
   /usr/local/include/mysql
   /usr/include/mysql
-  C:/local/mysql-5.6.21/include
-#  C:/MySQL/include
+  "C:/Program Files (x86)/MySQL/include"
+  C:/MySQL/include
 )
 
 FIND_PATH(MYSQL_LIB_DIR NAMES mysqlclient.lib  mysqlclient.so libmysqlclient.so
@@ -18,14 +18,14 @@ FIND_PATH(MYSQL_LIB_DIR NAMES mysqlclient.lib  mysqlclient.so libmysqlclient.so
   /usr/lib
   /usr/lib/i386-linux-gnu
   /usr/local/lib
-  C:/local/mysql-5.6.21/bld/libmysql/RelWithDebInfo
-#  C:/MySQL/lib
+  "C:/Program Files (x86)/MySQL/lib"
+  C:/MySQL/lib
 )
 
 SET(MYSQL_NAMES mysqlclient mysqlclient_r)
 FIND_LIBRARY(MYSQL_LIBRARY
   NAMES ${MYSQL_NAMES}
-  PATHS /usr/lib /usr/local/lib C:/local/mysql-5.6.21/bld/libmysql/RelWithDebInfo #C:/MySQL/lib
+  PATHS /usr/lib /usr/local/lib "C:/Program Files (x86)/MySQL/lib" C:/MySQL/lib
   PATH_SUFFIXES mysql
 )
 
