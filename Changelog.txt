@@ -4,6 +4,7 @@
 	FIXED: DB_CUSTOM_V3 db_custom directory location is now based off extension location i.e @extDB/db_custom
 	FIXED: DB_CUSTOM_V3 Exception Handling now behaves as intended.
 	CHANGED: Log Format changed slightly + removed some log options from extdb-conf.ini
+	CHANGED: 9 :DATABASE:<foo> will Return [1] or [0, <ERROR MSG>] if Database Connection Fails, instead of killing Server.
 	
 	ADDED: extDB2 Builds using Poco Library 1.6
 
