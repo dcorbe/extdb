@@ -55,7 +55,7 @@ From Frank https://gist.github.com/Fank/11127158
 #include "../sanitize.h"
 
 
-bool MISC_VAC::init(AbstractExt *extension, std::string init_str) 
+bool MISC_VAC::init(AbstractExt *extension, const std::string init_str) 
 {
 	vac_ban_check.NumberOfVACBans = extension->pConf->getInt("VAC.NumberOfVACBans", 1);
 	vac_ban_check.DaysSinceLastBan = extension->pConf->getInt("VAC.DaysSinceLastBan", 0);
