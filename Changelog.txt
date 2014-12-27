@@ -1,3 +1,12 @@
+26
+	UPDATED: LOG PROTOCOL, 9:ADD:LOG:LOG:<filename>, 1:LOG:BANLOG:ban.log individual log files.
+	UPDATED: DB_CUSTOM_V5: added Option AltisLifeRPG_Array
+	FIXED: DB_CUSTOM_V3 db_custom directory location is now based off extension location i.e @extDB/db_custom
+	FIXED: DB_CUSTOM_V3 Exception Handling now behaves as intended.
+	CHANGED: Log Format changed slightly + removed some log options from extdb-conf.ini
+	
+	ADDED: extDB2 Builds using Poco Library 1.6
+
 25
 	READDED: DB_CUSTOM_V3 was removed by mistake
 	FIXED: DB_CUSTOM_V5 INPUT STRING Option
