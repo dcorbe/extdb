@@ -34,12 +34,11 @@ http://a3wasteland.com/
 https://github.com/Torndeco/extDB/wiki
 
 #### Install Windows
-Look in windows_release/ pick a version i.e latest one.  
 Install vcredist_x86.exe @ http://www.microsoft.com/en-ie/download/details.aspx?id=40784  
 
 #### Crash C000005 ACCESS_VIOLATION
 extDB doesn't work well with large datatypes in Database...  
-   Check for Longtext (4GB) change it to MediumText / Text
+   Check for Longtext (4GB) change it to MediumText / Text  
 This only effects extDB and not extDB2
  
 #### Using Fred's Malloc
