@@ -21,18 +21,31 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bool LOG::init(AbstractExt *extension, const std::string init_str)
 {
-	boost::filesystem::path customlog(extension->getLogPath());
-	customlog /= init_str;
+	if (!(init_str.empty()))
+	{
+		boost::filesystem::path customlog(extension->getLogPath());
+		customlog /= init_str;
 
-	auto logger_temp = spdlog::daily_logger_mt(init_str, customlog.make_preferred().string(), true);
-	logger.swap(logger_temp);
-
-	return true;
+		if (customlog.parent_path().make_preferred().string() == extension->getLogPath())
+		{
+			auto logger_temp = spdlog::daily_logger_mt(init_str, customlog.make_preferred().string(), true);
+			logger.swap(logger_temp);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
 }
 
 
 void LOG::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
-	extension->logger->info(input_str.c_str());
+	logger->info(input_str.c_str());
 	result = "[1]";
 }
