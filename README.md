@@ -1,11 +1,12 @@
-## Arma3 Extension DB  C++ (windows / linux)   v25  
+## Arma3 Extension DB  C++ (windows / linux)   v26  
 
 I got bored waiting on 2017 / Epoch for Arma3.
 So i decided to write up an C++ Extension for Arma3server.
 
 
-#### Missions / Mods using extDB
+#### Known Missions / Mods using extDB
 http://www.altisliferpg.com  
+http://a3wasteland.com/
 
 
 ### Features
@@ -26,7 +27,7 @@ http://www.altisliferpg.com
  - DB_RAW_V2 (by raw i mean raw sql commands, no sanitizing input or output checks at all)
  - DB_RAW_NO_EXTRA_QUOTES_V2
  - MISC (has beguid crc32 md4 md5 time + time offset)
- - MISC_LOG (ability to add info to extDB logfile)
+ - LOG (Ability to log info into custom log files)
 
 
 #### Documentation @  
@@ -34,10 +35,12 @@ https://github.com/Torndeco/extDB/wiki
 
 #### Install Windows
 Look in windows_release/ pick a version i.e latest one.  
+Install vcredist_x86.exe @ http://www.microsoft.com/en-ie/download/details.aspx?id=40784  
 
 #### Crash C000005 ACCESS_VIOLATION
 extDB doesn't work well with large datatypes in Database...  
    Check for Longtext (4GB) change it to MediumText / Text
+This only effects extDB and not extDB2
  
 #### Using Fred's Malloc
 ExtDB is incompatible with https://github.com/fred41/tbbmalloc_arma.  
