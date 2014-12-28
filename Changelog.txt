@@ -1,10 +1,17 @@
 26
 	UPDATED: LOG PROTOCOL, 9:ADD:LOG:LOG:<filename>, 1:LOG:BANLOG:ban.log individual log files.
+	UPDATED: DB_CUSTOM_V5: added Setting Strip = true/false
 	UPDATED: DB_CUSTOM_V5: added Option AltisLifeRPG_Array
+	UPDATED: DB_CUSTOM_V5: added Option STRIP
+	UPDATED: DB_CUSTOM_V5: added Option NOSTRIP
+	
 	FIXED: DB_CUSTOM_V3 db_custom directory location is now based off extension location i.e @extDB/db_custom
 	FIXED: DB_CUSTOM_V3 Exception Handling now behaves as intended.
+	
 	CHANGED: Log Format changed slightly + removed some log options from extdb-conf.ini
 	CHANGED: 9 :DATABASE:<foo> will Return [1] or [0, <ERROR MSG>] if Database Connection Fails, instead of killing Server.
+	
+	IMPORTANT: DB_CUSTOM_V5 Bad Chars Settings got renamed to Strip Chars, forgot to bump the version for config file aswell.. sry slipped through
 	
 	ADDED: extDB2 Builds using Poco Library 1.6
 
