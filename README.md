@@ -21,11 +21,10 @@ http://a3wasteland.com/
 
 #### Protocols
 
- - DB_CUSTOM_V5 (Ability to define sql prepared statements in a .ini file)
  - DB_CUSTOM_V3 (Ability to define sql statements in a .ini file)
+ - DB_CUSTOM_V5 (Ability to define sql prepared statements in a .ini file)
  - DB_PROCEDURE_V2 (limited support, no outputs)
- - DB_RAW_V2 (by raw i mean raw sql commands, no sanitizing input or output checks at all)
- - DB_RAW_NO_EXTRA_QUOTES_V2
+ - DB_RAW_V3 (by raw i mean raw sql commands, no sql escaping etc)
  - MISC (has beguid crc32 md4 md5 time + time offset)
  - LOG (Ability to log info into custom log files)
 
@@ -42,7 +41,7 @@ extDB doesn't work well with large datatypes in Database...
 This only effects extDB and not extDB2
  
 #### Using Fred's Malloc
-ExtDB is incompatible with https://github.com/fred41/tbbmalloc_arma.  
+extDB is incompatible with https://github.com/fred41/tbbmalloc_arma.  
    Workaround rename Fred's malloc & change arma startup to the new filename.  
 
 #### Thanks to
