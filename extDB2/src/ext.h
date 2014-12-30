@@ -59,11 +59,8 @@ class Ext: public AbstractExt
 
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
 
-		Poco::Data::Session getDBSession_mutexlock();
-		Poco::Data::Session getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
+		Poco::Data::Session getDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
 		void putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
-
-
 
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
 		void stop();

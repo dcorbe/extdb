@@ -90,6 +90,9 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		extension->logger->info("extDB: DB_PROCEDURE_V2: Trace: {0}", input_str);
 	#endif
 
+	Poco::Data::SessionPool::SessionList::iterator session_itr;
+	Poco::Data::Session session = extension->getDBSession_mutexlock(session_itr);
+
 	try
 	{
 		Poco::StringTokenizer t_arg(input_str, "|");
@@ -144,9 +147,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					}
 
 					// SQL Call Statement
-					Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-					Poco::Data::Statement sql(db_session);
-
+					Poco::Data::Statement sql(session);
 					sql << sql_str_procedure, Poco::Data::now;
 
 					result = "[1,[";
@@ -155,7 +156,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					{
 						// If Outputs.. SQL SELECT Statement to get Results
 						
-						Poco::Data::Statement sql2(db_session);
+						Poco::Data::Statement sql2(session);
 						sql2 << sql_str_select, Poco::Data::now;
 							
 						extension->freeUniqueID_mutexlock(unique_id); // Free Unique ID
@@ -271,16 +272,6 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		extension->logger->error("extDB: DB_PROCEDURE_V2: Error NotImplementedException: SQL: {0}", input_str);
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
-	catch (Poco::Data::SQLite::DBLockedException& e)
-	{
-		#ifdef TESTING
-			extension->console->error("extDB: DB_PROCEDURE_V2: Error DBLockedException: {0}", e.displayText());
-			extension->logger->error("extDB: DB_PROCEDURE_V2: Error DBLockedException: SQL: {0}", input_str);
-		#endif
-		extension->logger->error("extDB: DB_PROCEDURE_V2: Error DBLockedException: {0}", e.displayText());
-		extension->logger->error("extDB: DB_PROCEDURE_V2: Error DBLockedException: SQL: {0}", input_str);
-		result = "[0,\"Error DBLocked Exception\"]";
-	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
 	{
 		#ifdef TESTING
@@ -321,4 +312,6 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		extension->logger->error("extDB: DB_PROCEDURE_V2: Error Exception: SQL: {0}", input_str);
 		result = "[0,\"Error Exception\"]";
 	}
+
+	extension->putbackDBSession_mutexlock(session_itr);
 }

@@ -91,8 +91,10 @@ void DB_RAW_V3::callProtocol(AbstractExt *extension, std::string input_str, std:
 			extension->logger->info("extDB: DB_RAW_V3: Trace: Input: {0}", input_str);
 		#endif
 
-		Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-		Poco::Data::Statement sql(db_session);
+		Poco::Data::SessionPool::SessionList::iterator session_itr;
+		Poco::Data::Session session = extension->getDBSession_mutexlock(session_itr);
+
+		Poco::Data::Statement sql(session);
 		sql << input_str;
 		sql.execute();
 		Poco::Data::RecordSet rs(sql);
@@ -153,12 +155,14 @@ void DB_RAW_V3::callProtocol(AbstractExt *extension, std::string input_str, std:
 			}
 		}
 		result += "]]";
+		extension->putbackDBSession_mutexlock(session_itr);
 		#ifdef TESTING
 			extension->console->info("extDB: DB_RAW_V3: Trace: Result: {0}", result);
 		#endif
 		#ifdef DEBUG_LOGGING
 			extension->logger->info("extDB: DB_RAW_V3: Trace: Result: {0}", result);
 		#endif
+		extension->putbackDBSession_mutexlock(session_itr);
 	}
 	catch (Poco::InvalidAccessException& e)
 	{

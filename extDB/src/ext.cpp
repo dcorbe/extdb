@@ -244,15 +244,13 @@ Ext::~Ext(void)
 
 void Ext::stop()
 {
-	#ifdef TESTING
-		console->info("extDB: Stopping ...");
-	#endif
+	console->info("extDB: Stopping ...");
 	logger->info("extDB: Stopping ...");
-
 	io_service.stop();
 	threads.join_all();
 	serverRcon->disconnect();
 	unordered_map_protocol.clear();
+	unordered_map_wait.clear();
 }
 
 
@@ -440,21 +438,12 @@ void Ext::freeUniqueID_mutexlock(const int &unique_id)
 }
 
 
-Poco::Data::Session Ext::getDBSession_mutexlock()
+Poco::Data::Session Ext::getDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	Poco::Data::Session free_session =  db_pool->get();
-	return free_session;
-}
-
- 
-Poco::Data::Session Ext::getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
-// Gets available DB Session (mutex lock)
-{
-	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	Poco::Data::Session free_session =  db_pool->get(itr);
-	return free_session;
+	Poco::Data::Session session =  db_pool->get(itr);
+	return session;
 }
 
 
@@ -1027,7 +1016,8 @@ int main(int nNumberofArgs, char* pszArgs[])
 	Ext *extension;
 	std::string current_path;
 	extension = (new Ext(current_path));
-	//bool test = false;
+	bool test = false;
+	int test_counter = 0;
 	for (;;) {
 		std::getline(std::cin, input_str);
 		if (input_str == "quit")
@@ -1043,11 +1033,18 @@ int main(int nNumberofArgs, char* pszArgs[])
 			extension->callExtenion(result, 80, input_str.c_str());
 			extension->console->info("extDB: {0}", result);
 		}
-		//while (test)
-		//{
-			//extension->callExtenion(result, 80, std::string("1:SQL:SELECT * FROM PlayerData").c_str());
-			//extension->console->info("extDB: {0}", result);			
-		//}
+		while (test)
+		{
+			if (test_counter >= 10000)
+			{
+				test_counter = 0;
+				test = false;
+				break;
+			}
+			test_counter = test_counter + 1;
+			extension->callExtenion(result, 80, std::string("1:SQL:SELECT * FROM PlayerData").c_str());
+			extension->console->info("extDB: {0}", result);			
+		}
 	}
 	extension->console->info("extDB: Quiting Please Wait", result);
 	extension->stop();

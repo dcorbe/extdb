@@ -661,7 +661,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 	bool status = true;
 
 	Poco::Data::SessionPool::SessionList::iterator session_itr;
-	Poco::Data::Session session = extension->getDBSessionCustom_mutexlock(session_itr);
+	Poco::Data::Session session = extension->getDBSession_mutexlock(session_itr);
 
 	std::unordered_map <std::string, Poco::Data::SessionPool::StatementCache>::iterator statement_cache_itr = session_itr->second.find(call_name);
 	if (statement_cache_itr == session_itr->second.end())
@@ -738,7 +738,6 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 			
 		}
 	}
-
 	extension->putbackDBSession_mutexlock(session_itr);
 
 	if (!status)
