@@ -22,6 +22,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #ifdef RCON_APP
 	#include <boost/program_options.hpp>
 	#include <fstream>
+#else
+	#include "protocols/abstract_ext.h"
 #endif
 
 #include <boost/thread/thread.hpp>
@@ -148,8 +150,7 @@ void Rcon::mainLoop()
 				else
 				{
 					// Login Failed
-					std::cout << "Failed Login" << std::endl;
-					std::cout << "Disconnecting..." << std::endl;
+					//logger->warn("Rcon: Failed Login... Disconnecting");
 					logged_in = false;
 					disconnect();
 					break;
@@ -292,7 +293,7 @@ void Rcon::mainLoop()
 				elapsed_seconds = rcon_timer.elapsedSeconds();
 				if (elapsed_seconds >= 45)
 				{
-					std::cout << "TIMED OUT...." << std::endl;
+					//logger->warn("Rcon: TIMED OUT...");
 					connect();
 				}
 				else if (elapsed_seconds >= 30)
@@ -335,12 +336,12 @@ void Rcon::mainLoop()
 		catch (Poco::Net::ConnectionRefusedException& e)
 		{
 			disconnect();
-			std::cout << "extDB: Error Rcon Connect: " << e.displayText() << std::endl;
+			//logger->error("Rcon: Error Connect: {0}", e.displayText());
 		}
 		catch (Poco::Exception& e)
 		{
 			disconnect();
-			std::cout << "extDB: Error Rcon: " << e.displayText() << std::endl;
+			//logger->error("Rcon: Error Rcon: {0}", e.displayText());
 		}
 	}
 }
@@ -372,7 +373,7 @@ void Rcon::connect()
 	rcon_packet.packet.clear();
 	makePacket(rcon_packet);
 	dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
-	std::cout << "Sent login info" << std::endl;
+	//logger->info("Rcon: Sent Login Info");
 	
 	// Reset Timer
 	rcon_timer.start();
@@ -385,9 +386,11 @@ void Rcon::disconnect()
 	rcon_run_flag = false;	
 }
 
-
-Rcon::Rcon(std::string address, int port, std::string password)
+/*
+Rcon::Rcon(AbstractExt *extension, std::string address, int port, std::string password)
 {
+	logger.reset(extension->logger);
+
 	rcon_login.address = address;
 	rcon_login.port = port;
 	
@@ -399,117 +402,132 @@ Rcon::Rcon(std::string address, int port, std::string password)
 	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
 	rcon_run_flag = true;
 }
+*/
 
+Rcon::Rcon(std::string address, int port, std::string password)
+{
+	rcon_login.address = address;
+	rcon_login.port = port;
+		
+	char *passwd = new char[password.size()+1] ;
+	std::strcpy(passwd, password.c_str());
+	delete []rcon_login.password;
+	rcon_login.password = passwd;
+		
+	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
+	rcon_run_flag = true;
+}
 
 #ifdef RCON_APP
-int main(int nNumberofArgs, char* pszArgs[])
-{
-	boost::program_options::options_description desc("Options");
-	desc.add_options()
-		("help", "Print help messages")
-		("ip", boost::program_options::value<std::string>()->required(), "IP Address for Server")
-		("port", boost::program_options::value<int>()->required(), "Port for Server")
-		("password", boost::program_options::value<std::string>()->required(), "Rcon Password for Server")
-		("file", boost::program_options::value<std::string>(), "File to run i.e rcon restart warnings");
 
-	boost::program_options::variables_map options;
-	
-	try 
+	int main(int nNumberofArgs, char* pszArgs[])
 	{
-		boost::program_options::store(boost::program_options::parse_command_line(nNumberofArgs, pszArgs, desc), options);
+		boost::program_options::options_description desc("Options");
+		desc.add_options()
+			("help", "Print help messages")
+			("ip", boost::program_options::value<std::string>()->required(), "IP Address for Server")
+			("port", boost::program_options::value<int>()->required(), "Port for Server")
+			("password", boost::program_options::value<std::string>()->required(), "Rcon Password for Server")
+			("file", boost::program_options::value<std::string>(), "File to run i.e rcon restart warnings");
+
+		boost::program_options::variables_map options;
 		
-		if (options.count("help") )
+		try 
 		{
-			std::cout << "Rcon Command Line, based off bercon by Prithu \"bladez\" Parker" << std::endl;
-			std::cout << "\t\t @ https://github.com/bladez-/bercon" << std::endl;
-			std::cout << std::endl;
-			std::cout << "Rewritten for extDB + crossplatform by Torndeco" << std::endl;
-			std::cout << "\t\t @ https://github.com/Torndeco/extDB" << std::endl;
-			std::cout << std::endl;
-			std::cout << "File Option is just for parsing rcon commands to be ran, i.e server restart warnings" << std::endl;
-			std::cout << "\t\t For actually restarts use a cron program to run a script" << std::endl;
-			std::cout << std::endl;
-			return 0;
+			boost::program_options::store(boost::program_options::parse_command_line(nNumberofArgs, pszArgs, desc), options);
+			
+			if (options.count("help") )
+			{
+				std::cout << "Rcon Command Line, based off bercon by Prithu \"bladez\" Parker" << std::endl;
+				std::cout << "\t\t @ https://github.com/bladez-/bercon" << std::endl;
+				std::cout << std::endl;
+				std::cout << "Rewritten for extDB + crossplatform by Torndeco" << std::endl;
+				std::cout << "\t\t @ https://github.com/Torndeco/extDB" << std::endl;
+				std::cout << std::endl;
+				std::cout << "File Option is just for parsing rcon commands to be ran, i.e server restart warnings" << std::endl;
+				std::cout << "\t\t For actually restarts use a cron program to run a script" << std::endl;
+				std::cout << std::endl;
+				return 0;
+			}
+			
+			boost::program_options::notify(options);
 		}
-		
-		boost::program_options::notify(options);
-	}
-	catch(boost::program_options::error& e)
-	{
-		std::cout << "ERROR: " << e.what() << std::endl;
-		std::cout << desc << std::endl;
-		return 1;
-	}
-
-	Rcon rcon_runnable(options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>(), false);
-	
-	Poco::Thread thread;
-	thread.start(rcon_runnable);
-	
-	if (options.count("file"))
-	{
-		std::ifstream fin(options["file"].as<std::string>());
-		//std::ifstream fin("test");
-		if (fin.is_open() == false)
+		catch(boost::program_options::error& e)
 		{
-			std::cout << "ERROR: file is open" << std::endl;
+			std::cout << "ERROR: " << e.what() << std::endl;
+			std::cout << desc << std::endl;
 			return 1;
+		}
+
+		Rcon rcon_runnable(options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>(), false);
+		
+		Poco::Thread thread;
+		thread.start(rcon_runnable);
+		
+		if (options.count("file"))
+		{
+			std::ifstream fin(options["file"].as<std::string>());
+			//std::ifstream fin("test");
+			if (fin.is_open() == false)
+			{
+				std::cout << "ERROR: file is open" << std::endl;
+				return 1;
+			}
+			else
+			{
+				std::cout << "File OK" << std::endl;
+			}
+			
+			std::string line;
+			while (std::getline(fin, line))
+			{
+				std::cout << line << std::endl;
+				if (line.empty())
+				{
+					boost::this_thread::sleep( boost::posix_time::milliseconds(1000) );
+					std::cout << "sleep" << std::endl;
+				}
+				else
+				{
+					//std::cout << rcon1 << std::endl;
+					rcon_runnable.addCommand(line);
+					//std::cout << rcon2 << std::endl;
+				}
+			}
+			std::cout << "OK" << std::endl;
+			rcon_runnable.disconnect();
+			thread.join();
+			return 0;
 		}
 		else
 		{
-			std::cout << "File OK" << std::endl;
-		}
-		
-		std::string line;
-		while (std::getline(fin, line))
-		{
-			std::cout << line << std::endl;
-			if (line.empty())
-			{
-				boost::this_thread::sleep( boost::posix_time::milliseconds(1000) );
-				std::cout << "sleep" << std::endl;
+			std::cout << "**********************************" << std::endl;
+			std::cout << "**********************************" << std::endl;
+			std::cout << "To talk type " << std::endl;
+			std::cout << "SAY -1 Server Restart in 10 mins" << std::endl;
+			std::cout << std::endl;
+			std::cout << "To see all players type" << std::endl;
+			std::cout << "players" << std::endl;
+			std::cout << "**********************************" << std::endl;
+			std::cout << "**********************************" << std::endl;
+			std::cout << std::endl;
+			for (;;) {
+				char input_str[4096];
+				std::cin.getline(input_str, sizeof(input_str));
+				if (std::string(input_str) == "quit")
+				{
+					std::cout << "Quitting Please Wait" << std::endl;
+					rcon_runnable.disconnect();
+					thread.join();
+					break;
+				}
+				else
+				{
+					rcon_runnable.addCommand(input_str);
+				}
 			}
-			else
-			{
-				//std::cout << rcon1 << std::endl;
-				rcon_runnable.addCommand(line);
-				//std::cout << rcon2 << std::endl;
-			}
+			std::cout << "Quitting" << std::endl;
+			return 0;
 		}
-		std::cout << "OK" << std::endl;
-		rcon_runnable.disconnect();
-		thread.join();
-		return 0;
 	}
-	else
-	{
-		std::cout << "**********************************" << std::endl;
-		std::cout << "**********************************" << std::endl;
-		std::cout << "To talk type " << std::endl;
-		std::cout << "SAY -1 Server Restart in 10 mins" << std::endl;
-		std::cout << std::endl;
-		std::cout << "To see all players type" << std::endl;
-		std::cout << "players" << std::endl;
-		std::cout << "**********************************" << std::endl;
-		std::cout << "**********************************" << std::endl;
-		std::cout << std::endl;
-		for (;;) {
-			char input_str[4096];
-			std::cin.getline(input_str, sizeof(input_str));
-			if (std::string(input_str) == "quit")
-			{
-				std::cout << "Quitting Please Wait" << std::endl;
-				rcon_runnable.disconnect();
-				thread.join();
-				break;
-			}
-			else
-			{
-				rcon_runnable.addCommand(input_str);
-			}
-		}
-		std::cout << "Quitting" << std::endl;
-		return 0;
-	}
-}
 #endif

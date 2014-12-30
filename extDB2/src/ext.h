@@ -126,6 +126,9 @@ class Ext: public AbstractExt
 		std::shared_ptr<IdManager> mgr;
 		boost::mutex mutex_unique_id;
 
+		// RCon
+		std::shared_ptr<Rcon> serverRcon;
+
 		// Protocols
 		void addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name, const std::string &init_data);
 

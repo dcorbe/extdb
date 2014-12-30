@@ -39,7 +39,8 @@ class AbstractExt
 		virtual std::string getAPIKey()=0;
 		
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
-		std::shared_ptr<Rcon> serverRcon;
+
+		std::shared_ptr<spdlog::logger> console;
 		std::shared_ptr<spdlog::logger> logger;
 		
 		virtual void freeUniqueID_mutexlock(const int &unique_id)=0;

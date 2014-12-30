@@ -34,11 +34,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <Poco/ExpireCache.h>
 
+#include "spdlog/spdlog.h"
+#include "protocols/abstract_ext.h"
 
 class Rcon: public Poco::Runnable
 {
 	public:
-		Rcon(std::string address, int port, std::string password);
+//		#ifdef RCON_APP
+			Rcon(std::string address, int port, std::string password);
+//		#else
+//			Rcon(AbstractExt *extension, std::string address, int port, std::string password);
+//		#endif
 
 		void run();
 		void disconnect();
@@ -70,8 +76,10 @@ class Rcon: public Poco::Runnable
 		Poco::Net::DatagramSocket dgs;
 
 		Poco::Stopwatch rcon_timer;
+
+		std::shared_ptr<spdlog::logger> logger;
 		
-		char buffer[4096];  //TODO Change so not hardcoded limit
+		char buffer[4096];
 		int buffer_size;
 		
 		// Mutex Locks

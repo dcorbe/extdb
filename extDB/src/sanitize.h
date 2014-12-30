@@ -21,9 +21,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#if !defined(NOMINMAX)
-#define NOMINMAX 1
-#endif // !defined(NOMINMAX)
+//#if !defined(NOMINMAX)
+//#define NOMINMAX 1
+//#endif // !defined(NOMINMAX)
 
 #include <Poco/Types.h>
 

@@ -43,11 +43,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <algorithm>
 
-
-#ifdef TESTING
-	#include <iostream>
-#endif
-
 #include "../sanitize.h"
 
 bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
@@ -68,7 +63,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 	{
 		// DATABASE NOT SETUP YET
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V5: No Database Connection" << std::endl;
+			extension->console->warn("extDB: DB_CUSTOM_V5: No Database Connection");
 		#endif
 		extension->logger->warn("extDB: DB_CUSTOM_V5: No Database Connection");
 		return false;
@@ -78,7 +73,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 	if (init_str.empty()) 
 	{
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V5: Missing Init Parameter" << std::endl;
+			extension->console->warn("extDB: DB_CUSTOM_V5: Missing Init Parameter");
 		#endif
 		extension->logger->warn("extDB: DB_CUSTOM_V5: Missing Init Parameter");
 		return false;
@@ -93,7 +88,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 	std::string db_template_file = extension_path.make_preferred().string();
 
 	#ifdef TESTING
-		std::cout << "extDB: DB_CUSTOM_V5: Loading Template Filename: " << db_template_file << std::endl;
+		extension->console->info("extDB: DB_CUSTOM_V5: Loading Template Filename: {0}", db_template_file);
 	#endif
 	extension->logger->info("extDB: DB_CUSTOM_V5: Loading Template Filename: {0}", db_template_file);
 	
@@ -114,8 +109,8 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 			bool default_string_datatype_check = template_ini->getBool("Default.String Datatype Check", true);
 			bool default_preparedStatement_cache = template_ini->getBool("Default.Prepared Statement Cache", true);
 
-			bool default_strip = template_ini->getBool("Default.Strip");
-			std::string default_strip_chars = template_ini->getString("Default.Strip Chars");
+			bool default_strip = template_ini->getBool("Default.Strip", true);
+			std::string default_strip_chars = template_ini->getString("Default.Strip Chars", "");
 			int default_strip_chars_action = 0;
 
 			std::string strip_chars_action_str = template_ini->getString("Default.Strip Chars Action", "Strip");
@@ -138,12 +133,12 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 			else
 			{
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V5: Invalid Default Strip Chars Action: " << strip_chars_action_str << std::endl;
+					extension->console->warn("extDB: DB_CUSTOM_V5: Invalid Default Strip Chars Action: {0}", strip_chars_action_str);
 				#endif
 				extension->logger->warn("extDB: DB_CUSTOM_V5: Invalid Default Strip Chars Action: {0}", strip_chars_action_str);
 			}
 
-			if ((template_ini->getInt("Default.Version", 1)) == 6)
+			if ((template_ini->getInt("Default.Version", 1)) == 7)
 			{
 				for(std::vector<std::string>::iterator it = custom_calls.begin(); it != custom_calls.end(); ++it) 
 				{
@@ -180,7 +175,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 						else
 						{
 							#ifdef TESTING
-								std::cout << "extDB: DB_CUSTOM_V5: " << call_name << ": Invalid Strip Chars Action: " << strip_chars_action_str << std::endl;
+								extension->console->warn("extDB: DB_CUSTOM_V5: Invalid Strip Chars Action: {0}", strip_chars_action_str);
 							#endif
 							extension->logger->warn("extDB: DB_CUSTOM_V5: Invalid Strip Chars Action: {0}", strip_chars_action_str);
 						}
@@ -253,7 +248,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 											{
 												status = false;
 												#ifdef TESTING
-													std::cout << "extDB: DB_CUSTOM_V5: Invalid Strip Output Option: " << call_name << ":" << options_tokens[x] << std::endl;
+													extension->console->warn("extDB: DB_CUSTOM_V5: Invalid Strip Output Option: {0}: {1}", call_name, options_tokens[x]);
 												#endif
 												extension->logger->warn("extDB: DB_CUSTOM_V5: Invalid Strip Output Option: {0}: {1}", call_name, options_tokens[x]);
 											}
@@ -337,7 +332,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 										{
 											status = false;
 											#ifdef TESTING
-												std::cout << "extDB: DB_CUSTOM_V5: Invalid Strip Input Option: " << call_name << ":" << *tokens_input_options_it << std::endl;
+												extension->console->warn("extDB: DB_CUSTOM_V5: Invalid Strip Input Option: {0}: {1}", call_name, *tokens_input_options_it);
 											#endif
 												extension->logger->warn("extDB: DB_CUSTOM_V5: Invalid Strip Input Option: {0}: {1}", call_name, *tokens_input_options_it);
 										}
@@ -350,7 +345,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 						{
 							status = false;
 							#ifdef TESTING
-								std::cout << "extDB: DB_CUSTOM_V5: Invalid Strip Strings Action for " << call_name << ":" << custom_protocol[call_name].strip_chars_action << std::endl;
+								extension->console->warn("extDB: DB_CUSTOM_V5: Invalid Strip Strings Action for : {0}: {1}", call_name, custom_protocol[call_name].strip_chars_action);
 							#endif
 							extension->logger->warn("extDB: DB_CUSTOM_V5: Invalid Strip Strings Action for : {0}: {1}", call_name, custom_protocol[call_name].strip_chars_action);
 						}
@@ -361,7 +356,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 			{
 				status = false;
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V5: Template File Incompatible Version: " << db_template_file << std::endl;
+					extension->console->warn("extDB: DB_CUSTOM_V5: Template File Incompatible Version: {0}", db_template_file);
 				#endif
 				extension->logger->warn("extDB: DB_CUSTOM_V5: Template File Incompatible Version: {0}", db_template_file);
 			}
@@ -370,7 +365,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 		{
 			status = false;
 			#ifdef TESTING
-				std::cout << "extDB: DB_CUSTOM_V5: Template File Missing Default Options: " << db_template_file << std::endl;
+				extension->console->warn("extDB: DB_CUSTOM_V5: Template File Missing Default Options: {0}", db_template_file);
 			#endif
 			extension->logger->warn("extDB: DB_CUSTOM_V5: Template File Missing Default Options: {0}", db_template_file);
 		}
@@ -379,7 +374,7 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension, const std::string init_str)
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V5: Template File Not Found: " << db_template_file << std::endl;
+			extension->console->warn("extDB: DB_CUSTOM_V5: Template File Not Found: {0}", db_template_file);
 		#endif
 		extension->logger->warn("extDB: DB_CUSTOM_V5: Template File Not Found: {0}", db_template_file);
 	}
@@ -584,50 +579,76 @@ void DB_CUSTOM_V5::executeSQL(AbstractExt *extension, Poco::Data::Statement &sql
 	{
 		sql_statement.execute();
 	}
-
+	catch (Poco::InvalidAccessException& e)
+	{
+		status = false;
+		#ifdef TESTING
+			extension->console->error("extDB: DB_CUSTOM_V5: Error NotConnectedException: {0}", e.displayText());
+		#endif
+		extension->logger->error("extDB: DB_CUSTOM_V5: Error NotConnectedException: {0}", e.displayText());
+		result = "[0,\"Error DBLocked Exception\"]";
+	}
+	catch (Poco::Data::NotConnectedException& e)
+	{
+		status = false;
+		#ifdef TESTING
+			extension->console->error("extDB: DB_CUSTOM_V5: Error NotConnectedException: {0}", e.displayText());
+		#endif
+		extension->logger->error("extDB: DB_CUSTOM_V5: Error NotConnectedException: {0}", e.displayText());
+		result = "[0,\"Error DBLocked Exception\"]";
+	}
+	catch (Poco::NotImplementedException& e)
+	{
+		status = false;
+		#ifdef TESTING
+			extension->console->error("extDB: DB_CUSTOM_V5: Error NotImplementedException: {0}", e.displayText());
+		#endif
+		extension->logger->error("extDB: DB_CUSTOM_V5: Error NotImplementedException: {0}", e.displayText());
+		result = "[0,\"Error DBLocked Exception\"]";
+	}
 	catch (Poco::Data::SQLite::DBLockedException& e)
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V5: Error DBLockedException: " + e.displayText() << std::endl;
+			extension->console->error("extDB: DB_CUSTOM_V5: Error DBLockedException: {0}", e.displayText());
 		#endif
-		extension->logger->warn("extDB: DB_CUSTOM_V5: Error DBLockedException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_CUSTOM_V5: Error DBLockedException: {0}", e.displayText());
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V5: Error ConnectionException: " + e.displayText() << std::endl;
+			extension->console->error("extDB: DB_CUSTOM_V5: Error ConnectionException: {0}", e.displayText());
 		#endif
-		extension->logger->warn("extDB: DB_CUSTOM_V5: Error ConnectionException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_CUSTOM_V5: Error ConnectionException: {0}", e.displayText());
 		result = "[0,\"Error Connection Exception\"]";
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V5: Error StatementException: " + e.displayText() << std::endl;
+			extension->console->error("extDB: DB_CUSTOM_V5: Error StatementException: {0}", e.displayText());
 		#endif
-		extension->logger->warn("extDB: DB_CUSTOM_V5: Error StatementException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_CUSTOM_V5: Error StatementException: {0}", e.displayText());
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V5: Error DataException: " + e.displayText() << std::endl;
+			extension->console->error("extDB: DB_CUSTOM_V5: Error DataException: {0}", e.displayText());
 		#endif
-		extension->logger->warn("extDB: DB_CUSTOM_V5: Error DataException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_CUSTOM_V5: Error DataException: {0}", e.displayText());
 		result = "[0,\"Error Data Exception\"]";
 	}
 	catch (Poco::Exception& e)
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V5: Error Exception: " + e.displayText() << std::endl;
+			extension->console->error("extDB: DB_CUSTOM_V5: Error Exception: {0}", e.displayText());
 		#endif
-		extension->logger->warn("extDB: DB_CUSTOM_V5: Error Exception: {0}", e.displayText());
+		extension->logger->error("extDB: DB_CUSTOM_V5: Error Exception: {0}", e.displayText());
 		result = "[0,\"Error Exception\"]";
 	}
 }
@@ -727,7 +748,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 	else
 	{
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V5: Trace: Result: " + result << std::endl;
+			extension->console->info("extDB: DB_CUSTOM_V5: Trace: Result: {0}", result);
 		#endif
 		#ifdef DEBUG_LOGGING
 			extension->logger->info("extDB: DB_CUSTOM_V5: Trace: Result: {0}", result);
@@ -739,7 +760,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 void DB_CUSTOM_V5::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
 	#ifdef TESTING
-		std::cout << "extDB: DB_CUSTOM_V5: Trace: " + input_str << std::endl;
+		extension->console->info("extDB: DB_CUSTOM_V5: Trace: Input: {0}", input_str);
 	#endif
 	#ifdef DEBUG_LOGGING
 		extension->logger->info("extDB: DB_CUSTOM_V5: Trace: Input: {0}", input_str);
