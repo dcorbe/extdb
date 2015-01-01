@@ -32,7 +32,14 @@ http://a3wasteland.com/
 #### Documentation @  
 https://github.com/Torndeco/extDB/wiki
 
-#### Install Windows
+#### Linux Requirements
+Linux Distro with Glibc 2.17 or higher.
+Debian 8 / Centos 7 / Ubuntu 14.10
+
+#### Windows Requirements
+Windows Server 2008 + Later
+Windows 7 + Later
+
 Install vcredist_x86.exe @ http://www.microsoft.com/en-ie/download/details.aspx?id=40784  
 
 #### Crash C000005 ACCESS_VIOLATION
