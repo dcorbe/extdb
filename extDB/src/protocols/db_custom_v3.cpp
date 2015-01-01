@@ -525,7 +525,6 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		}
 		result += "]]";
 	}
-	extension->putbackDBSession_mutexlock(session_itr);
 	
 	#ifdef TESTING
 		extension->console->info("extDB: DB_CUSTOM_V3: Trace: Result: {0}", result);

@@ -437,20 +437,19 @@ void Ext::freeUniqueID_mutexlock(const int &unique_id)
 }
 
 
-Poco::Data::SessionPool::SessionDataPtr Ext::getDBSession_mutexlock()
+Poco::Data::Session Ext::getDBSession_mutexlock()
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	Poco::Data::SessionPool::SessionDataPtr session_data_ptr= db_pool->get_extDB();
-	return session_data_ptr;
+	return db_pool->get();
 }
 
 
-void Ext::putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
+Poco::Data::Session Ext::getDBSession_mutexlock(Poco::Data::SessionPool::SessionDataPtr &session_data_ptr)
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	db_pool->putBack(itr);
+	return db_pool->get(session_data_ptr);
 }
 
 
