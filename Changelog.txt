@@ -1,3 +1,9 @@
+27
+	CHANGED: DB_CUSTOM_V5 version bumped up to 7
+	FIXED: Database Session Leak (v22->26 are effected)
+	
+	UPDATED: Added more exception handling
+
 26
 	UPDATED: LOG PROTOCOL, 9:ADD:LOG:LOG:<filename>, 1:LOG:BANLOG:ban.log individual log files.
 	UPDATED: DB_CUSTOM_V5: added Setting Strip = true/false
