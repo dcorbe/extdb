@@ -90,8 +90,8 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		extension->logger->info("extDB: DB_PROCEDURE_V2: Trace: {0}", input_str);
 	#endif
 
-	Poco::Data::SessionPool::SessionList::iterator session_itr;
-	Poco::Data::Session session = extension->getDBSession_mutexlock(session_itr);
+	Poco::Data::Session session = extension->getDBSession_mutexlock();
+	Poco::Data::Statement sql(session);
 
 	try
 	{
@@ -251,16 +251,6 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		extension->logger->error("extDB: DB_PROCEDURE_V2: Error InvalidAccessException: SQL: {0}", input_str);
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
-	catch (Poco::Data::NotConnectedException& e)
-	{
-		#ifdef TESTING
-			extension->console->error("extDB: DB_PROCEDURE_V2: Error NotConnectedException: {0}", e.displayText());
-			extension->console->error("extDB: DB_PROCEDURE_V2: Error NotConnectedException: SQL: {0}", input_str);
-		#endif
-		extension->logger->error("extDB: DB_PROCEDURE_V2: Error NotConnectedException: {0}", e.displayText());
-		extension->logger->error("extDB: DB_PROCEDURE_V2: Error NotConnectedException: SQL: {0}", input_str);
-		result = "[0,\"Error DBLocked Exception\"]";
-	}
 	catch (Poco::NotImplementedException& e)
 	{
 		#ifdef TESTING
@@ -312,6 +302,4 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		extension->logger->error("extDB: DB_PROCEDURE_V2: Error Exception: SQL: {0}", input_str);
 		result = "[0,\"Error Exception\"]";
 	}
-
-	extension->putbackDBSession_mutexlock(session_itr);
 }

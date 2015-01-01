@@ -660,11 +660,11 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 
 	bool status = true;
 
-	Poco::Data::SessionPool::SessionList::iterator session_itr;
-	Poco::Data::Session session = extension->getDBSession_mutexlock(session_itr);
+	Poco::Data::SessionPool::SessionDataPtr session_data_ptr;
+	Poco::Data::Session session = extension->getDBSession_mutexlock(session_data_ptr);
 
-	std::unordered_map <std::string, Poco::Data::SessionPool::StatementCache>::iterator statement_cache_itr = session_itr->second.find(call_name);
-	if (statement_cache_itr == session_itr->second.end())
+	std::unordered_map <std::string, Poco::Data::SessionPool::StatementCache>::iterator statement_cache_itr = session_data_ptr->statements_map.find(call_name);
+	if (statement_cache_itr == session_data_ptr->statements_map.end())
 	{
 		// NO CACHE
 
@@ -698,12 +698,12 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 				}
 				if (itr->second.preparedStatement_cache)
 				{
-					session_itr->second[call_name].push_back(std::move(sql_statement));
+					session_data_ptr->statements_map[call_name].push_back(std::move(sql_statement));
 				}
 			}
 			else
 			{
-				session_itr->second.erase(call_name);
+				session_data_ptr->statements_map.erase(call_name);
 				break;
 			}
 		}
@@ -732,13 +732,11 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 			else
 			{
 				// Exception Encountered, Break + Remove Cache
-				session_itr->second.erase(call_name);
+				session_data_ptr->statements_map.erase(call_name);
 				break;
 			}
-			
 		}
 	}
-	extension->putbackDBSession_mutexlock(session_itr);
 
 	if (!status)
 	{

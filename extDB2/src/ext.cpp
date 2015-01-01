@@ -17,9 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "ext.h"
 
+#include <boost/algorithm/string.hpp>
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/random/random_device.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/regex.hpp>
+
 #include <Poco/Data/Session.h>
 #include <Poco/Data/SessionPool.h>
-
 #include <Poco/Data/MySQL/Connector.h>
 #include <Poco/Data/MySQL/MySQLException.h>
 #include <Poco/Data/SQLite/Connector.h>
@@ -34,20 +42,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/StringTokenizer.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/asio.hpp>
-#include <boost/bind.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/random/random_device.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
-#include <boost/regex.hpp>
-
 #include <cstring>
 #include <iostream>
 
-
 #include "uniqueid.h"
+
 #include "protocols/abstract_protocol.h"
 #include "protocols/db_custom_v3.h"
 #include "protocols/db_custom_v5.h"
@@ -438,20 +437,19 @@ void Ext::freeUniqueID_mutexlock(const int &unique_id)
 }
 
 
-Poco::Data::Session Ext::getDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
+Poco::Data::Session Ext::getDBSession_mutexlock()
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	Poco::Data::Session session =  db_pool->get(itr);
-	return session;
+	return db_pool->get();
 }
 
 
-void Ext::putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
+Poco::Data::Session Ext::getDBSession_mutexlock(Poco::Data::SessionPool::SessionDataPtr &session_data_ptr)
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	db_pool->putBack(itr);
+	return db_pool->get(session_data_ptr);
 }
 
 

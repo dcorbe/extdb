@@ -318,9 +318,7 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 {
 	result.clear();
 	
-	Poco::Data::SessionPool::SessionList::iterator session_itr;
-	Poco::Data::Session session = extension->getDBSession_mutexlock(session_itr);
-
+	Poco::Data::Session session = extension->getDBSession_mutexlock();
 	Poco::Data::Statement sql_current(session);
 
 	for(std::vector< std::list<Poco::DynamicAny> >::const_iterator it_sql_statements_vector = itr->second.sql_statements.begin(); it_sql_statements_vector != itr->second.sql_statements.end(); ++it_sql_statements_vector)
@@ -538,7 +536,6 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		}
 		result += "]]";
 	}
-	extension->putbackDBSession_mutexlock(session_itr);
 	
 	#ifdef TESTING
 		extension->console->info("extDB: DB_CUSTOM_V3: Trace: Result: {0}", result);
