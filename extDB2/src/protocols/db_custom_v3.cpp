@@ -42,10 +42,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/filesystem.hpp>
 #include <boost/thread/thread.hpp>
 
-#ifdef TESTING
-	#include <iostream>
-#endif
-
 #include "../sanitize.h"
 
 
@@ -67,7 +63,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 	{
 		// DATABASE NOT SETUP YET
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V3: No Database Connection" << std::endl;
+			extension->console->warn("extDB: DB_CUSTOM_V3: No Database Connection");
 		#endif
 		extension->logger->warn("extDB: DB_CUSTOM_V3: No Database Connection");
 		return false;
@@ -77,7 +73,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 	if (init_str.empty()) 
 	{
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V3: Missing Init Parameter" << std::endl;
+			extension->console->warn("extDB: DB_CUSTOM_V3: Missing Init Parameter");
 		#endif
 		extension->logger->warn("extDB: DB_CUSTOM_V3: Missing Init Parameter");
 		return false;
@@ -235,7 +231,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 						{
 							status = false;
 							#ifdef TESTING
-								std::cout << "extDB: DB_CUSTOM_V3: Invalid Bad Strings Action for " << call_name << ":" << custom_protocol[call_name].bad_chars_action << std::endl;
+								extension->console->warn("extDB: DB_CUSTOM_V3: Invalid Bad Strings Action for {0} : {1}", call_name, custom_protocol[call_name].bad_chars_action);
 							#endif
 							extension->logger->warn("extDB: DB_CUSTOM_V3: Invalid Bad Strings Action for {0} : {1}", call_name, custom_protocol[call_name].bad_chars_action);
 						}
@@ -246,7 +242,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 			{
 				status = false;
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version" << std::endl;
+					extension->console->warn("extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version: {0}", db_template_file);
 				#endif
 				extension->logger->warn("extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version: {0}", db_template_file);
 			}
@@ -255,7 +251,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 		{
 			status = false;
 			#ifdef TESTING
-				std::cout << "extDB: DB_CUSTOM_V3: Template File Missing Default Options" << db_template_file << std::endl;
+				extension->console->warn("extDB: DB_CUSTOM_V3: Template File Missing Default Options: {0}", db_template_file);
 			#endif
 			extension->logger->warn("extDB: DB_CUSTOM_V3: Template File Missing Default Options: {0}", db_template_file);
 		}
@@ -264,7 +260,7 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 	{
 		status = false;
 		#ifdef TESTING
-			std::cout << "extDB: DB_CUSTOM_V3: Template File Not Found" << db_template_file << std::endl;
+			extension->console->warn("extDB: DB_CUSTOM_V3: No Template File Found: {0}", db_template_file);
 		#endif
 		extension->logger->warn("extDB: DB_CUSTOM_V3: No Template File Found: {0}", db_template_file);
 	}
@@ -322,8 +318,8 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 {
 	result.clear();
 	
-	Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-	Poco::Data::Statement sql_current(db_session);
+	Poco::Data::Session session = extension->getDBSession_mutexlock();
+	Poco::Data::Statement sql_current(session);
 
 	for(std::vector< std::list<Poco::DynamicAny> >::const_iterator it_sql_statements_vector = itr->second.sql_statements.begin(); it_sql_statements_vector != itr->second.sql_statements.end(); ++it_sql_statements_vector)
 	{
@@ -382,15 +378,50 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		{
 			try 
 			{
-				Poco::Data::Statement sql(db_session);
+				Poco::Data::Statement sql(session);
 				sql << sql_str;
 				sql.execute();
 				sql_current.swap(sql);
 			}
+			catch (Poco::InvalidAccessException& e)
+			{
+				#ifdef TESTING
+					extension->console->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: {0}", e.displayText());
+					extension->console->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: SQL: {0}", sql_str);
+				#endif
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: {0}", e.displayText());
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: SQL: {0}", sql_str);
+				result = "[0,\"Error DBLocked Exception\"]";
+				break;
+			}
+			catch (Poco::Data::NotConnectedException& e)
+			{
+				#ifdef TESTING
+					extension->console->error("extDB: DB_CUSTOM_V3: Error NotConnectedException: {0}", e.displayText());
+					extension->console->error("extDB: DB_CUSTOM_V3: Error NotConnectedException: SQL: {0}", sql_str);
+				#endif
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error NotConnectedException: {0}", e.displayText());
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error NotConnectedException: SQL: {0}", sql_str);
+				result = "[0,\"Error DBLocked Exception\"]";
+				break;
+			}
+			catch (Poco::NotImplementedException& e)
+			{
+				#ifdef TESTING
+					extension->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+					extension->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
+
+				#endif
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+				extension->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
+				result = "[0,\"Error DBLocked Exception\"]";
+				break;
+			}
 			catch (Poco::Data::SQLite::DBLockedException& e)
 			{
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V3: Error DBLockedException: " + e.displayText() << std::endl;
+					extension->console->error("extDB: DB_CUSTOM_V3: Error DBLockedException: {0}", e.displayText());
+					extension->logger->error("extDB: DB_CUSTOM_V3: Error DBLockedException: SQL: {0}", sql_str);
 				#endif
 				extension->logger->error("extDB: DB_CUSTOM_V3: Error DBLockedException: {0}", e.displayText());
 				extension->logger->error("extDB: DB_CUSTOM_V3: Error DBLockedException: SQL: {0}", sql_str);
@@ -400,7 +431,8 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 			catch (Poco::Data::MySQL::ConnectionException& e)
 			{
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V3: Error ConnectionException: " + e.displayText() << std::endl;
+					extension->console->error("extDB: DB_CUSTOM_V3: Error ConnectionException: {0}", e.displayText());
+					extension->logger->error("extDB: DB_CUSTOM_V3: Error ConnectionException: SQL: {0}", sql_str);
 				#endif
 				extension->logger->error("extDB: DB_CUSTOM_V3: Error ConnectionException: {0}", e.displayText());
 				extension->logger->error("extDB: DB_CUSTOM_V3: Error ConnectionException: SQL: {0}", sql_str);
@@ -410,7 +442,8 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 			catch(Poco::Data::MySQL::StatementException& e)
 			{
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V3: Error StatementException: " + e.displayText() << std::endl;
+					extension->console->error("extDB: DB_CUSTOM_V3: Error StatementException: {0}", e.displayText());
+					extension->logger->error("extDB: DB_CUSTOM_V3: Error StatementException: SQL: {0}", sql_str);
 				#endif
 				extension->logger->error("extDB: DB_CUSTOM_V3: Error StatementException: {0}", e.displayText());
 				extension->logger->error("extDB: DB_CUSTOM_V3: Error StatementException: SQL: {0}", sql_str);
@@ -420,7 +453,8 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 			catch (Poco::Data::DataException& e)
 			{
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V3: Error DataException: " + e.displayText() << std::endl;
+					extension->console->error("extDB: DB_CUSTOM_V3: Error DataException: {0}", e.displayText());
+					extension->logger->error("extDB: DB_CUSTOM_V3: Error DataException: SQL: {0}", sql_str);
 				#endif
 				extension->logger->error("extDB: DB_CUSTOM_V3: Error DataException: {0}", e.displayText());
 				extension->logger->error("extDB: DB_CUSTOM_V3: Error DataException: SQL: {0}", sql_str);
@@ -430,7 +464,8 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 			catch (Poco::Exception& e)
 			{
 				#ifdef TESTING
-					std::cout << "extDB: DB_CUSTOM_V3: Error Exception: " + e.displayText() << std::endl;
+					extension->console->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+					extension->console->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
 				#endif
 				extension->logger->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
 				extension->logger->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
@@ -501,9 +536,9 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		}
 		result += "]]";
 	}
-
+	
 	#ifdef TESTING
-		std::cout << "extDB: DB_CUSTOM_V3: Trace: Result: " + result << std::endl;
+		extension->console->info("extDB: DB_CUSTOM_V3: Trace: Result: {0}", result);
 	#endif
 	#ifdef DEBUG_LOGGING
 		extension->logger->info("extDB: DB_CUSTOM_V3: Trace: Result: {0}", result);
@@ -514,7 +549,7 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
 	#ifdef TESTING
-		std::cout << "extDB: DB_CUSTOM_V3: Trace: " + input_str << std::endl;
+		extension->console->info("extDB: DB_CUSTOM_V3: Trace: Input: {0}", input_str);
 	#endif
 	#ifdef DEBUG_LOGGING
 		extension->logger->info("extDB: DB_CUSTOM_V3: Trace: Input: {0}", input_str);

@@ -82,45 +82,52 @@ Session SessionPool::get()
 	{
 		Session newSession(SessionFactory::instance().create(_sessionKey, _connectionString));
 		customizeSession(newSession);
+		
 		PooledSessionHolderPtr pHolder(new PooledSessionHolder(*this, newSession.impl()));
-		StatementCacheMap statement_cachemap;
-		_idleSessions.push_front(std::make_pair (pHolder, std::move(statement_cachemap)));
+		SessionDataPtr session_data_ptr(new SessionData);
+		session_data_ptr->session = pHolder;
+
+		_idleSessions.push_front(session_data_ptr);
 		++_nSessions;
 	}
-
-	PooledSessionHolderPtr pHolder(_idleSessions.front().first);
+	PooledSessionHolderPtr pHolder(_idleSessions.front()->session);
 	PooledSessionImplPtr pPSI(new PooledSessionImpl(pHolder));
 	
 	_activeSessions.push_front(std::move(_idleSessions.front()));
 	_idleSessions.pop_front();
+
 	return Session(pPSI);
 }
 
 
-Session SessionPool::get(SessionList::iterator &itr)
+Session SessionPool::get(SessionPool::SessionDataPtr &session_data_ptr)
 {
 	Poco::FastMutex::ScopedLock lock(_mutex);
-
+	
 	purgeDeadSessions();
 
-	if (_idleSessions.empty())
+	if (_nSessions < _maxSessions)
 	{
 		Session newSession(SessionFactory::instance().create(_sessionKey, _connectionString));
 		customizeSession(newSession);
+		
 		PooledSessionHolderPtr pHolder(new PooledSessionHolder(*this, newSession.impl()));
+		session_data_ptr.assign(new SessionData);
+		session_data_ptr->session = pHolder;
 
-		StatementCacheMap statement_cachemap;
-		_idleSessions.push_front(std::make_pair (pHolder, std::move(statement_cachemap)));
+		_idleSessions.push_front(session_data_ptr);
 		++_nSessions;
 	}
-	PooledSessionHolderPtr pHolder(_idleSessions.front().first);
+	PooledSessionHolderPtr pHolder(_idleSessions.front()->session);
 	PooledSessionImplPtr pPSI(new PooledSessionImpl(pHolder));
-
-
+	
 	_activeSessions.push_front(std::move(_idleSessions.front()));
 	_idleSessions.pop_front();
-
-	itr = _activeSessions.begin();
+	
+	if (session_data_ptr.isNull())
+	{
+		session_data_ptr.assign(_activeSessions.front());
+	}
 
 	return Session(pPSI);
 }
@@ -131,7 +138,7 @@ void SessionPool::purgeDeadSessions()
 	SessionList::iterator it = _idleSessions.begin();
 	for (; it != _idleSessions.end(); )
 	{
-		if (!(*it).first->session()->isConnected())
+		if (!(*it)->session->session()->isConnected())
 		{
 			it = _idleSessions.erase(it);
 			--_nSessions;
@@ -173,7 +180,7 @@ int SessionPool::dead()
 	SessionList::iterator itEnd = _activeSessions.end();
 	for (; it != itEnd; ++it)
 	{
-		if (!(*it).first->session()->isConnected())
+		if (!(*it)->session->session()->isConnected())
 			++count;
 	}
 
@@ -206,7 +213,7 @@ void SessionPool::putBack(PooledSessionHolderPtr pHolder)
 
 	for (SessionList::iterator it = _activeSessions.begin(); it != _activeSessions.end(); ++it)
 	{
-		if ((*it).first == pHolder)
+		if ((*it)->session == pHolder)
 		{
 			if (pHolder->session()->isConnected())
 			{
@@ -224,23 +231,6 @@ void SessionPool::putBack(PooledSessionHolderPtr pHolder)
 }
 
 
-void SessionPool::putBack(SessionList::iterator it)
-{
-	Poco::FastMutex::ScopedLock lock(_mutex);
-
-	if ((*it).first->session()->isConnected())
-	{
-		((*it).first)->access();
-		_idleSessions.push_front(std::move(*it));
-	}
-	else
-	{
-		--_nSessions;
-	};
-	_activeSessions.erase(it);
-}
-
-
 void SessionPool::onJanitorTimer(Poco::Timer&)
 {
 	Poco::FastMutex::ScopedLock lock(_mutex);
@@ -248,11 +238,11 @@ void SessionPool::onJanitorTimer(Poco::Timer&)
 	SessionList::iterator it = _idleSessions.begin(); 
 	while (_nSessions > _minSessions && it != _idleSessions.end())
 	{
-		if ((*it).first->idle() > _idleTime || !(*it).first->session()->isConnected())
+		if ((*it)->session->idle() > _idleTime || !(*it)->session->session()->isConnected())
 		{	
 			try
 			{
-				(*it).first->session()->close();
+				(*it)->session->session()->close();
 			}
 			catch (...)
 			{			

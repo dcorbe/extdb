@@ -7,7 +7,6 @@
 #include <boost/numeric/interval.hpp>
 #include <limits>
 #include <set>
-#include <iostream>
 #include <string>
 
 #include "uniqueid.h"

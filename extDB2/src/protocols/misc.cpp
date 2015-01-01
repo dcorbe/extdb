@@ -37,10 +37,6 @@ From Frank https://gist.github.com/Fank/11127158
 
 #include <cstdlib>
 
-#ifdef TEST_APP
-	#include <iostream>
-#endif
-
 #include "../sanitize.h"
 
 #include "abstract_ext.h"
@@ -138,7 +134,6 @@ void MISC::getBEGUID(std::string &input_str, std::string &result)
 
 void MISC::getRandomString(std::string &input_str, bool uniqueString, std::string &result)
 {
-	std::cout << "extDB: INPUT STRING:" << input_str << std::endl;
 	Poco::StringTokenizer tokens(input_str, ":");
 	if (tokens.count() != 2)
 	{
@@ -163,7 +158,8 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 				boost::lock_guard<boost::mutex> lock(mutex_RandomString);
 				std::string chars(
 					"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-					"1234567890");
+					//"1234567890"
+					);
 
 				boost::random::random_device rng;
 				boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
@@ -180,16 +176,12 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 						randomStringStream << chars[index_dist(rng)];
 					}
 
-
 					std::string randomString = randomStringStream.str();
-
 
 					if (uniqueString)
 					{
-						std::cout << "extDB: UNIQUE STRING:" << randomString << std::endl;
 						if (std::find(uniqueRandomVarNames.begin(), uniqueRandomVarNames.end(), randomString)!=uniqueRandomVarNames.end())
 						{
-							std::cout << "extDB: FOUND EXISTING VALUE" << std::endl;
 							numberOfVariables = numberOfVariables - 1;
 							numOfRetrys = numOfRetrys + 1;
 							if (numOfRetrys > 11)
@@ -202,11 +194,9 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 								--i;
 								break;
 							}
-							std::cout << result << std::endl;
 						}
 						else
 						{
-							std::cout << "extDB: i:" << i << ": " << randomString << std::endl;
 							if (i != 0)
 							{
 								result = result + "," + "\"" + randomString + "\"";
@@ -220,12 +210,7 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 							std::cout << result << std::endl;
 						}
 					}
-					else
-					{
-						std::cout << "extDB: NOT A UNIQUE STRING:" << randomString << std::endl;
-					}
 				}
-				std::cout << result << std::endl;
 				result = result + "]";
 			}
 		}

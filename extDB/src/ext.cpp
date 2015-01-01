@@ -17,9 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "ext.h"
 
+#include <boost/algorithm/string.hpp>
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/random/random_device.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/regex.hpp>
+
 #include <Poco/Data/Session.h>
 #include <Poco/Data/SessionPool.h>
-
 #include <Poco/Data/MySQL/Connector.h>
 #include <Poco/Data/MySQL/MySQLException.h>
 #include <Poco/Data/SQLite/Connector.h>
@@ -34,22 +42,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/StringTokenizer.h>
 #include <Poco/Util/IniFileConfiguration.h>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/asio.hpp>
-#include <boost/bind.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/random/random_device.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
-#include <boost/regex.hpp>
-
 #include <cstring>
-
-#ifdef TEST_APP
-	#include <iostream>
-#endif
+#include <iostream>
 
 #include "uniqueid.h"
+
 #include "protocols/abstract_protocol.h"
 #include "protocols/db_custom_v3.h"
 #include "protocols/db_custom_v5.h"
@@ -163,8 +160,12 @@ Ext::Ext(std::string dll_path) {
 	boost::filesystem::create_directories(log_relative_path);
 	log_relative_path /= log_filename;
 
-	auto logger_temp = spdlog::daily_logger_mt("extDB logger", log_relative_path.make_preferred().string(), true);
+	auto logger_temp = spdlog::daily_logger_mt("extDB File Logger", log_relative_path.make_preferred().string(), true);
+	auto console_temp = spdlog::stdout_logger_mt("extDB Console logger");
+
 	logger.swap(logger_temp);
+	console.swap(console_temp);
+
 	spdlog::set_level(spdlog::level::info);
 	spdlog::set_pattern("[%H:%M:%S %z] [Thread %t] %v");
 
@@ -173,7 +174,7 @@ Ext::Ext(std::string dll_path) {
 
 	if (!conf_found)
 	{
-		std::cout << "extDB: Unable to find extdb-conf.ini" << std::endl;
+		console->critical("extDB: Unable to find extdb-conf.ini");
 		logger->critical("extDB: Unable to find extdb-conf.ini");
 		// Kill Server no config file found -- Evil
 		std::exit(EXIT_SUCCESS);
@@ -182,7 +183,7 @@ Ext::Ext(std::string dll_path) {
 	{
 		pConf = (new Poco::Util::IniFileConfiguration(extDB_config_path.make_preferred().string()));
 		#ifdef TESTING
-			std::cout << "extDB: Found extdb-conf.ini" << std::endl;
+			console->info("extDB: Found extdb-conf.ini");
 		#endif
 		logger->info("extDB: Found extdb-conf.ini");
 
@@ -199,7 +200,7 @@ Ext::Ext(std::string dll_path) {
 		{
 			threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
 			#ifdef TESTING
-				std::cout << "extDB: Creating Worker Thread +1" << std::endl ;
+				console->info("extDB: Creating Worker Thread +1");
 			#endif
 			logger->info("extDB: Creating Worker Thread +1");
 		}
@@ -242,14 +243,13 @@ Ext::~Ext(void)
 
 void Ext::stop()
 {
-	#ifdef TESTING
-		std::cout << "extDB: Stopping Please Wait ..." << std::endl;
-	#endif
-
+	console->info("extDB: Stopping ...");
+	logger->info("extDB: Stopping ...");
 	io_service.stop();
 	threads.join_all();
 	serverRcon->disconnect();
 	unordered_map_protocol.clear();
+	unordered_map_wait.clear();
 }
 
 
@@ -261,9 +261,9 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 		if (!db_conn_info.db_type.empty())
 		{
 			#ifdef TESTING
-				std::cout << "extDB: Already Connected to Database" << std::endl;
+				console->warn("extDB: Already Connected to Database");
 			#endif
-			logger->warn("extDB: extDB: Already Connected to a Database");
+			logger->warn("extDB: Already Connected to a Database");
 			std::strcpy(output, "[0,\"Already Connected to Database\"]");
 		}
 		else
@@ -288,7 +288,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 				db_conn_info.idle_time = pConf->getInt(conf_option + ".idleTime", 600);
 
 				#ifdef TESTING
-					std::cout << "extDB: Database Type: " << db_conn_info.db_type << std::endl;
+					console->info("extDB: Database Type: {0}", db_conn_info.db_type);
 				#endif
 				logger->info("extDB: Database Type: {0}", db_conn_info.db_type);
 
@@ -318,7 +318,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					if (db_pool->get().isConnected())
 					{
 						#ifdef TESTING
-							std::cout << "extDB: Database Session Pool Started" << std::endl;
+							console->info("extDB: Database Session Pool Started");
 						#endif
 						logger->info("extDB: Database Session Pool Started");
 						std::strcpy(output, "[1]");
@@ -326,10 +326,10 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					else
 					{
 						#ifdef TESTING
-							std::cout << "extDB: Database Session Pool Failed" << std::endl;
+							console->warn("extDB: Database Session Pool Failed");
 						#endif
+						logger->warn("extDB: Database Session Pool Failed");
 						db_conn_info = DBConnectionInfo();
-						logger->info("extDB: Database Session Pool Failed");
 						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
 					}
 				}
@@ -352,7 +352,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					if (db_pool->get().isConnected())
 					{
 						#ifdef TESTING
-							std::cout << "extDB: Database Session Pool Started" << std::endl;
+							console->info("extDB: Database Session Pool Started");
 						#endif
 						logger->info("extDB: Database Session Pool Started");
 						std::strcpy(output, "[1]");
@@ -360,30 +360,30 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					else
 					{
 						#ifdef TESTING
-							std::cout << "extDB: Database Session Pool Failed" << std::endl;
+							console->warn("extDB: Database Session Pool Failed");
 						#endif
+						logger->warn("extDB: Database Session Pool Failed");
 						db_conn_info = DBConnectionInfo();
-						logger->info("extDB: Database Session Pool Failed");
 						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
 					}
 				}
 				else
 				{
 					#ifdef TESTING
-						std::cout << "extDB: No Database Engine Found for " << db_name << "." << std::endl;
+						console->warn("extDB: No Database Engine Found for {0}", db_name);
 					#endif
+					logger->warn("extDB: No Database Engine Found for {0}", db_name);
 					db_conn_info = DBConnectionInfo();
-					logger->info("extDB: No Database Engine Found for {0}", db_name);
 					std::strcpy(output, "[0,\"Unknown Database Type\"]");
 				}
 			}
 			else
 			{
 				#ifdef TESTING
-					std::cout << "extDB: WARNING No Config Option Found: " << conf_option << "." << std::endl;
+					console->warn("extDB: No Config Option Found: {0}", conf_option);
 				#endif
+				logger->warn("extDB: No Config Option Found: {0}", conf_option);
 				db_conn_info = DBConnectionInfo();
-				logger->info("extDB: No Config Option Found: {0}", conf_option);
 				std::strcpy(output, "[0,\"No Config Option Found\"]");
 			}
 		}
@@ -391,10 +391,10 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 	catch (Poco::Exception& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: Database Setup Failed: " << e.displayText() << std::endl;
+			console->error("extDB: Database Setup Failed: {0}", e.displayText());
 		#endif
-		db_conn_info = DBConnectionInfo();
 		logger->error("extDB: Database Setup Failed: {0}", e.displayText());
+		db_conn_info = DBConnectionInfo();
 		std::strcpy(output, "[0,\"Database Exception Error\"]");
 	}
 }
@@ -402,7 +402,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::getVersion() const
 {
-	return "26";
+	return "27";
 }
 
 
@@ -441,25 +441,15 @@ Poco::Data::Session Ext::getDBSession_mutexlock()
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	Poco::Data::Session free_session =  db_pool->get();
-	return free_session;
-}
-
- 
-Poco::Data::Session Ext::getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
-// Gets available DB Session (mutex lock)
-{
-	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	Poco::Data::Session free_session =  db_pool->get(itr);
-	return free_session;
+	return db_pool->get();
 }
 
 
-void Ext::putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr)
+Poco::Data::Session Ext::getDBSession_mutexlock(Poco::Data::SessionPool::SessionDataPtr &session_data_ptr)
 // Gets available DB Session (mutex lock)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_db_pool);
-	db_pool->putBack(itr);
+	return db_pool->get(session_data_ptr);
 }
 
 
@@ -801,7 +791,6 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 								// Check for Protocol Name Exists...
 								// Do this so if someone manages to get server, the error message wont get stored in the result unordered map
 								{
-									boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
 									if (unordered_map_protocol.find(protocol) == unordered_map_protocol.end())
 									{
 										std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
@@ -809,6 +798,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 									}
 									else
 									{
+										boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
 										unordered_map_wait[unique_id] = true;
 										found_procotol = true;
 									}
@@ -970,17 +960,22 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 			{
 				std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
 				#ifdef TESTING
-					std::cout << "extDB: Error: Invalid Message: " << input_str << std::endl;
+					console->error("extDB: Invalid Message: {0}", input_str);
 				#endif
 				logger->error("extDB: Invalid Message: {0}", input_str);
 			}
 		}
 	}
+	catch (spdlog::spdlog_ex& e)
+	{
+		std::strcpy(output, ("[0,\"Error LOGGER\"]"));
+		std::cout << "SPDLOG ERROR: " <<  e.what() << std::endl;
+	}
 	catch (Poco::Exception& e)
 	{
 		std::strcpy(output, ("[0,\"Error\"]"));
 		#ifdef TESTING
-			std::cout << "extDB: Error: " << e.displayText() << std::endl;
+			console->critical("extDB: Error: {0}", e.displayText());
 		#endif
 		logger->critical("extDB: Error: {0}", e.displayText());
 	}
@@ -1002,6 +997,7 @@ int main(int nNumberofArgs, char* pszArgs[])
 	std::string current_path;
 	extension = (new Ext(current_path));
 	bool test = false;
+	int test_counter = 0;
 	for (;;) {
 		std::getline(std::cin, input_str);
 		if (input_str == "quit")
@@ -1015,15 +1011,22 @@ int main(int nNumberofArgs, char* pszArgs[])
 		else
 		{
 			extension->callExtenion(result, 80, input_str.c_str());
-			std::cout << "extDB: " << result << std::endl;
+			extension->console->info("extDB: {0}", result);
 		}
 		while (test)
 		{
+			if (test_counter >= 10000)
+			{
+				test_counter = 0;
+				test = false;
+				break;
+			}
+			test_counter = test_counter + 1;
 			extension->callExtenion(result, 80, std::string("1:SQL:SELECT * FROM PlayerData").c_str());
-			std::cout << "extDB: " << result << std::endl;			
+			extension->console->info("extDB: {0}", result);			
 		}
 	}
-	std::cout << "extDB Test: Quitting Please Wait" << std::endl;
+	extension->console->info("extDB: Quiting Please Wait", result);
 	extension->stop();
 	//delete extension;
 	return 0;

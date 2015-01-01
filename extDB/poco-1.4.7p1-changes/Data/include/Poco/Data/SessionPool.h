@@ -93,8 +93,15 @@ public:
 	typedef Poco::AutoPtr<PooledSessionHolder> PooledSessionHolderPtr;
 	
 	typedef std::vector<Poco::Data::Statement> StatementCache;
-	typedef std::unordered_map <std::string, StatementCache> StatementCacheMap;
-	typedef std::list < std::pair < PooledSessionHolderPtr, StatementCacheMap > > SessionList;
+
+	struct SessionData
+	{
+		PooledSessionHolderPtr session;
+		std::unordered_map <std::string, StatementCache> statements_map;
+	};
+	
+	typedef Poco::SharedPtr<SessionData> SessionDataPtr;
+	typedef std::list < SessionDataPtr > SessionList;
 
 	SessionPool(const std::string& sessionKey, const std::string& connectionString, int minSessions = 1, int maxSessions = 32, int idleTime = 60);
 		/// Creates the SessionPool for sessions with the given sessionKey
@@ -119,10 +126,7 @@ public:
 		/// If the maximum number of sessions for this pool has
 		/// already been created, a SessionPoolExhaustedException
 		/// is thrown.
-
-	// Custom extDB Member		
-	Session get(SessionList::iterator &itr);
-	void extDB_updateStatementCacheMap(StatementCacheMap &statement_cachemap, SessionList::iterator &itr);
+	Session get(SessionDataPtr &session_data_ptr);
 		
 	int capacity() const;
 		/// Returns the maximum number of sessions the SessionPool will manage.
@@ -141,8 +145,7 @@ public:
 		
 	int available() const;
 		/// Returns the number of available (idle + remaining capacity) sessions.
-		
-	void putBack(SessionList::iterator ptr);
+
 
 protected:
 	virtual void customizeSession(Session& session);

@@ -28,10 +28,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/Exception.h>
 #include <Poco/StringTokenizer.h>
 
-#ifdef TEST_APP
-	#include <iostream>
-#endif
-
 #include "../sanitize.h"
 
 
@@ -45,7 +41,7 @@ bool DB_PROCEDURE_V2::init(AbstractExt *extension, const std::string init_str)
 	{
 		// SQLITE Doesn't Support Procedures
 		#ifdef TESTING
-			std::cout << "extDB: DB_PROCEDURE_V2: SQLite doesnt support Procedures"<< std::endl;
+			extension->console->warn("extDB: DB_PROCEDURE_V2: SQLite doesnt support Procedures");
 		#endif
 
 		extension->logger->warn("extDB: DB_PROCEDURE_V2: SQLite doesnt support Procedures");
@@ -55,7 +51,7 @@ bool DB_PROCEDURE_V2::init(AbstractExt *extension, const std::string init_str)
 	{
 		// DATABASE NOT SETUP YET
 		#ifdef TESTING
-			std::cout << "extDB: DB_PROCEDURE_V2: No Database Connection"<< std::endl;
+			extension->console->warn("extDB: DB_PROCEDURE_V2: No Database Connection");
 		#endif
 		extension->logger->warn("extDB: DB_PROCEDURE_V2: No Database Connection");
 		return false;
@@ -88,11 +84,14 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 //   |
 //  Output Count
 	#ifdef TESTING
-		std::cout << "extDB: DB_PROCEDURE_V2: Trace: " + input_str << std::endl;
+		extension->console->info("extDB: DB_PROCEDURE_V2: Trace: {0}", input_str);
 	#endif
 	#ifdef DEBUG_LOGGING
 		extension->logger->info("extDB: DB_PROCEDURE_V2: Trace: {0}", input_str);
 	#endif
+
+	Poco::Data::Session session = extension->getDBSession_mutexlock();
+	Poco::Data::Statement sql(session);
 
 	try
 	{
@@ -148,9 +147,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					}
 
 					// SQL Call Statement
-					Poco::Data::Session db_session = extension->getDBSession_mutexlock();
-					Poco::Data::Statement sql(db_session);
-
+					Poco::Data::Statement sql(session);
 					sql << sql_str_procedure, Poco::Data::Keywords::now;
 
 					result = "[1,[";
@@ -159,7 +156,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					{
 						// If Outputs.. SQL SELECT Statement to get Results
 						
-						Poco::Data::Statement sql2(db_session);
+						Poco::Data::Statement sql2(session);
 						sql2 << sql_str_select, Poco::Data::Keywords::now;
 							
 						extension->freeUniqueID_mutexlock(unique_id); // Free Unique ID
@@ -220,7 +217,7 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 					result += "]]";
 
 					#ifdef TESTING
-						std::cout << "extDB: DB_PROCEDURE_V2: Trace: Result: " + result << std::endl;
+						extension->console->info("extDB: DB_PROCEDURE_V2: Trace: Result: {0}", result);
 					#endif
 					extension->logger->info("extDB: DB_PROCEDURE_V2: Trace: Result: {0}", result);
 				}
@@ -238,46 +235,81 @@ void DB_PROCEDURE_V2::callProtocol(AbstractExt *extension, std::string input_str
 		else
 		{
 			#ifdef TESTING
-				std::cout << "extDB: DB_PROCEDURE_V2: Error: Invalid Format: " + input_str << std::endl;
+				extension->console->warn("extDB: DB_PROCEDURE: Error: Invalid Format: {0}", input_str);
 			#endif
 			extension->logger->warn("extDB: DB_PROCEDURE: Error: Invalid Format: {0}", input_str);
 			result = "[0,\"Invalid Format\"]";
 		}
 	}
+	catch (Poco::InvalidAccessException& e)
+	{
+		#ifdef TESTING
+			extension->console->error("extDB: DB_PROCEDURE_V2: Error InvalidAccessException: {0}", e.displayText());
+			extension->console->error("extDB: DB_PROCEDURE_V2: Error InvalidAccessException: SQL: {0}", input_str);
+		#endif
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error InvalidAccessException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error InvalidAccessException: SQL: {0}", input_str);
+		result = "[0,\"Error DBLocked Exception\"]";
+	}
+	catch (Poco::Data::NotConnectedException& e)
+	{
+		#ifdef TESTING
+			extension->console->error("extDB: DB_PROCEDURE_V2: Error NotConnectedException: {0}", e.displayText());
+			extension->console->error("extDB: DB_PROCEDURE_V2: Error NotConnectedException: SQL: {0}", input_str);
+		#endif
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error NotConnectedException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error NotConnectedException: SQL: {0}", input_str);
+		result = "[0,\"Error DBLocked Exception\"]";
+	}
+	catch (Poco::NotImplementedException& e)
+	{
+		#ifdef TESTING
+			extension->console->error("extDB: DB_PROCEDURE_V2: Error NotImplementedException: {0}", e.displayText());
+			extension->console->error("extDB: DB_PROCEDURE_V2: Error NotImplementedException: SQL: {0}", input_str);
+
+		#endif
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error NotImplementedException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error NotImplementedException: SQL: {0}", input_str);
+		result = "[0,\"Error DBLocked Exception\"]";
+	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: DB_PROCEDURE_V2: Error ConnectionException: " + e.displayText() << std::endl;
+			extension->console->error("extDB: DB_PROCEDURE_V2: Error ConnectionException: {0}", e.displayText());
+			extension->logger->error("extDB: DB_PROCEDURE_V2: Error ConnectionException: SQL: {0}", input_str);
 		#endif
-		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error ConnectionException: {0}", e.displayText());
-		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error Exception: Input: {0}", input_str);
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error ConnectionException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error ConnectionException: SQL: {0}", input_str);
 		result = "[0,\"Error Connection Exception\"]";
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: DB_PROCEDURE_V2: Error StatementException: " + e.displayText() << std::endl;
+			extension->console->error("extDB: DB_PROCEDURE_V2: Error StatementException: {0}", e.displayText());
+			extension->logger->error("extDB: DB_PROCEDURE_V2: Error StatementException: SQL: {0}", input_str);
 		#endif
-		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error StatementException: {0}", e.displayText());
-		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error Exception: Input: {0}", input_str);
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error StatementException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error StatementException: SQL: {0}", input_str);
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: DB_PROCEDURE_V2: Error DataException: " + e.displayText() << std::endl;
+			extension->console->error("extDB: DB_PROCEDURE_V2: Error DataException: {0}", e.displayText());
+			extension->logger->error("extDB: DB_PROCEDURE_V2: Error DataException: SQL: {0}", input_str);
 		#endif
-		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error DataException: {0}", e.displayText());
-		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error Exception: Input: {0}", input_str);
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error DataException: {0}", e.displayText());
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error DataException: SQL: {0}", input_str);
 		result = "[0,\"Error Data Exception\"]";
 	}
 	catch (Poco::Exception& e)
 	{
 		#ifdef TESTING
-			std::cout << "extDB: DB_PROCEDURE_V2: Error Exception: " + e.displayText() << std::endl;
+			extension->console->error("extDB: DB_PROCEDURE_V2: Error Exception: {0}", e.displayText());
+			extension->console->error("extDB: DB_PROCEDURE_V2: Error Exception: SQL: {0}", input_str);
 		#endif
-		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error Exception: {0}", e.displayText());
-		extension->logger->warn("extDB: DB_PROCEDURE_V2: Error Exception: Input: {0}", input_str);
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error Exception: {0}", e.displayText());
+		extension->logger->error("extDB: DB_PROCEDURE_V2: Error Exception: SQL: {0}", input_str);
 		result = "[0,\"Error Exception\"]";
 	}
 }

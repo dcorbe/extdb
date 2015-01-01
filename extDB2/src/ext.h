@@ -60,10 +60,7 @@ class Ext: public AbstractExt
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
 
 		Poco::Data::Session getDBSession_mutexlock();
-		Poco::Data::Session getDBSessionCustom_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
-		void putbackDBSession_mutexlock(Poco::Data::SessionPool::SessionList::iterator &itr);
-
-
+		Poco::Data::Session getDBSession_mutexlock(Poco::Data::SessionPool::SessionDataPtr &session_data_ptr);
 
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
 		void stop();
@@ -125,6 +122,9 @@ class Ext: public AbstractExt
 		// Unique ID for key for ^^
 		std::shared_ptr<IdManager> mgr;
 		boost::mutex mutex_unique_id;
+
+		// RCon
+		std::shared_ptr<Rcon> serverRcon;
 
 		// Protocols
 		void addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name, const std::string &init_data);

@@ -19,7 +19,7 @@
 #ifndef Data_SessionPool_INCLUDED
 #define Data_SessionPool_INCLUDED
 
-
+#include "Poco/SharedPtr.h"
 #include "Poco/Data/Data.h"
 #include "Poco/Data/PooledSessionHolder.h"
 #include "Poco/Data/PooledSessionImpl.h"
@@ -70,11 +70,17 @@ class Data_API SessionPool: public RefCountedObject
 	///     ...
 {
 public:
+	typedef Poco::AutoPtr<PooledSessionHolder> PooledSessionHolderPtr;
 	typedef std::vector<Poco::Data::Statement> StatementCache;
 
-	typedef std::unordered_map <std::string, StatementCache> StatementCacheMap;
-	typedef Poco::AutoPtr<PooledSessionHolder> PooledSessionHolderPtr;
-	typedef std::list < std::pair < PooledSessionHolderPtr, StatementCacheMap > > SessionList;
+	struct SessionData
+	{
+		PooledSessionHolderPtr session;
+		std::unordered_map <std::string, StatementCache> statements_map;
+	};
+	
+	typedef Poco::SharedPtr<SessionData> SessionDataPtr;
+	typedef std::list < SessionDataPtr > SessionList;
 
 	SessionPool(const std::string& connector, 
 		const std::string& connectionString, 
@@ -101,7 +107,7 @@ public:
 		/// If the maximum number of sessions for this pool has
 		/// already been created, a SessionPoolExhaustedException
 		/// is thrown.
-	Session get(SessionList::iterator &itr);
+	Session get(SessionDataPtr &session_data_ptr);
 	
 	template <typename T>
 	Session get(const std::string& name, const T& value)
@@ -166,8 +172,6 @@ public:
 
 	bool isActive() const;
 		/// Returns true if session pool is active (not shut down).
-		
-	void putBack(SessionList::iterator ptr);
 
 protected:
 	typedef Poco::AutoPtr<PooledSessionImpl>      PooledSessionImplPtr;
@@ -178,6 +182,7 @@ protected:
 	int deadImpl(SessionList& rSessions);
 	void applySettings(SessionImpl* pImpl);
 	void putBack(PooledSessionHolderPtr pHolder);
+	//void putBack(SessionDataPtr pSessionData);
 	void onJanitorTimer(Poco::Timer&);
 
 private:
