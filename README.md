@@ -1,4 +1,4 @@
-## Arma3 Extension DB  C++ (windows / linux)   v26  
+## Arma3 Extension DB  C++ (windows / linux)   v27  
 
 I got bored waiting on 2017 / Epoch for Arma3.
 So i decided to write up an C++ Extension for Arma3server.
@@ -32,13 +32,13 @@ http://a3wasteland.com/
 #### Documentation @  
 https://github.com/Torndeco/extDB/wiki
 
-#### Linux Requirements
-Linux Distro with Glibc 2.17 or higher.
-Debian 8 / Centos 7 / Ubuntu 14.10
+#### Linux Requirements  
+Linux Distro with Glibc 2.17 or higher  
+Debian 8 / Centos 7 / Ubuntu 14.10  
 
-#### Windows Requirements
-Windows Server 2008 + Later
-Windows 7 + Later
+#### Windows Requirements  
+Windows Server 2008 + Later  
+Windows 7 + Later  
 
 Install vcredist_x86.exe @ http://www.microsoft.com/en-ie/download/details.aspx?id=40784  
 
