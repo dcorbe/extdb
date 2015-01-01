@@ -971,24 +971,6 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		std::strcpy(output, ("[0,\"Error LOGGER\"]"));
 		std::cout << "SPDLOG ERROR: " <<  e.what() << std::endl;
 	}
-	catch (Poco::NotFoundException& e)
-	{
-		std::strcpy(output, ("[0,\"NotFoundException\"]"));
-		#ifdef TESTING
-			console->critical("extDB: NotFoundException: {0}", e.displayText());
-		#endif
-		logger->critical("extDB: NotFoundException: {0}", e.displayText());
-		std::exit(EXIT_FAILURE);
-	}
-	catch (Poco::RangeException& e)
-	{
-		std::strcpy(output, ("[0,\"RangeException\"]"));
-		#ifdef TESTING
-			console->critical("extDB: RangeException: {0}", e.displayText());
-		#endif
-		logger->critical("extDB: RangeException: {0}", e.displayText());
-		std::exit(EXIT_FAILURE);
-	}
 	catch (Poco::Exception& e)
 	{
 		std::strcpy(output, ("[0,\"Error\"]"));
@@ -1040,7 +1022,8 @@ int main(int nNumberofArgs, char* pszArgs[])
 				break;
 			}
 			test_counter = test_counter + 1;
-			extension->callExtenion(result, 80, std::string("1:SQL:SELECT * FROM PlayerData").c_str());
+			//extension->callExtenion(result, 80, std::string("1:SQL:SELECT * FROM PlayerData").c_str());
+			extension->callExtenion(result, 80, std::string("1:SQL:TEST:testing").c_str());
 			extension->console->info("extDB: {0}", result);			
 		}
 	}

@@ -666,6 +666,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 	std::unordered_map <std::string, Poco::Data::SessionPool::StatementCache>::iterator statement_cache_itr = session_data_ptr->statements_map.find(call_name);
 	if (statement_cache_itr == session_data_ptr->statements_map.end())
 	{
+		extension->console->info("extDB: DB_CUSTOM_V5: NO CACHED");
 		// NO CACHE
 
 		int i = -1;
@@ -710,6 +711,7 @@ void DB_CUSTOM_V5::callCustomProtocol(AbstractExt *extension, std::string call_n
 	}
 	else
 	{
+		extension->console->info("extDB: DB_CUSTOM_V5: CACHED");
 		// CACHE
 		for (std::vector<int>::size_type i = 0; i != statement_cache_itr->second.size(); i++)
 		{

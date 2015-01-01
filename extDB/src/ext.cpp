@@ -971,24 +971,6 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		std::strcpy(output, ("[0,\"Error LOGGER\"]"));
 		std::cout << "SPDLOG ERROR: " <<  e.what() << std::endl;
 	}
-	catch (Poco::NotFoundException& e)
-	{
-		std::strcpy(output, ("[0,\"NotFoundException\"]"));
-		#ifdef TESTING
-			console->critical("extDB: NotFoundException: {0}", e.displayText());
-		#endif
-		logger->critical("extDB: NotFoundException: {0}", e.displayText());
-		std::exit(EXIT_FAILURE);
-	}
-	catch (Poco::RangeException& e)
-	{
-		std::strcpy(output, ("[0,\"RangeException\"]"));
-		#ifdef TESTING
-			console->critical("extDB: RangeException: {0}", e.displayText());
-		#endif
-		logger->critical("extDB: RangeException: {0}", e.displayText());
-		std::exit(EXIT_FAILURE);
-	}
 	catch (Poco::Exception& e)
 	{
 		std::strcpy(output, ("[0,\"Error\"]"));
