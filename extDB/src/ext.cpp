@@ -54,6 +54,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/db_raw_v3.h"
 #include "protocols/log.h"
 #include "protocols/misc.h"
+#include "protocols/vac.h"
 
 
 void DBPool::customizeSession (Poco::Data::Session& session)
@@ -567,6 +568,21 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 		else if (boost::iequals(protocol, std::string("LOG")) == 1)
 		{
 			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new LOG());
+			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+			// Remove Class Instance if Failed to Load
+			{
+				unordered_map_protocol.erase(protocol_name);
+				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+				logger->warn("extDB: Failed to Load Protocol");
+			}
+			else
+			{
+				std::strcpy(output, "[1]");
+			}
+		}
+		else if (boost::iequals(protocol, std::string("VAC")) == 1)
+		{
+			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new VAC());
 			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
 			// Remove Class Instance if Failed to Load
 			{

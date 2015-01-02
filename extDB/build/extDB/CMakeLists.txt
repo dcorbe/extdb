@@ -38,9 +38,9 @@ SET(SOURCES
 	../../src/protocols/db_custom_v5.cpp
 	../../src/protocols/db_raw_v3.cpp
 	../../src/protocols/db_procedure_v2.cpp
-	../../src/protocols/misc_vac.cpp
 	../../src/protocols/misc.cpp
 	../../src/protocols/log.cpp
+	../../src/protocols/vac.cpp
 )
 
 if (COMPILE_TEST_APPLICATION)

@@ -20,7 +20,7 @@ From Frank https://gist.github.com/Fank/11127158
 */
 
 
-#include "misc_vac.h"
+#include "vac.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -55,7 +55,7 @@ From Frank https://gist.github.com/Fank/11127158
 #include "../sanitize.h"
 
 
-bool MISC_VAC::init(AbstractExt *extension, const std::string init_str) 
+bool VAC::init(AbstractExt *extension, const std::string init_str) 
 {
 	vac_ban_check.NumberOfVACBans = extension->pConf->getInt("VAC.NumberOfVACBans", 1);
 	vac_ban_check.DaysSinceLastBan = extension->pConf->getInt("VAC.DaysSinceLastBan", 0);
@@ -68,7 +68,7 @@ bool MISC_VAC::init(AbstractExt *extension, const std::string init_str)
 }
 
 
-bool MISC_VAC::isNumber(const std::string &input_str)
+bool VAC::isNumber(const std::string &input_str)
 {
 	bool status = true;
 	for (unsigned int index=0; index < input_str.length(); index++)
@@ -83,7 +83,7 @@ bool MISC_VAC::isNumber(const std::string &input_str)
 }
 
 
-std::string MISC_VAC::convertSteamIDtoBEGUID(const std::string &input_str)
+std::string VAC::convertSteamIDtoBEGUID(const std::string &input_str)
 // From Frank https://gist.github.com/Fank/11127158
 // Modified to use libpoco
 {
@@ -106,7 +106,7 @@ std::string MISC_VAC::convertSteamIDtoBEGUID(const std::string &input_str)
 }
 
 
-bool MISC_VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
+bool VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
 {
 	if (!(VAC_Cache->has(steamID)))
 	{
@@ -155,7 +155,7 @@ bool MISC_VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
 }
 
 
-void MISC_VAC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void VAC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
 {
 	Poco::StringTokenizer t_arg(input_str, ":");
 	const int num_of_inputs = t_arg.count();
@@ -163,7 +163,7 @@ void MISC_VAC::callProtocol(AbstractExt *extension, std::string input_str, std::
 	{
 		if (!isNumber(t_arg[1])) // Check Valid Steam ID
 		{
-			result  = "[0, \"MISC_VAC: Error Invalid Steam ID\"]";
+			result  = "[0, \"VAC: Error Invalid Steam ID\"]";
 		}
 		else
 		{
@@ -173,30 +173,30 @@ void MISC_VAC::callProtocol(AbstractExt *extension, std::string input_str, std::
 			if (boost::iequals(t_arg[0], std::string("GetFriends")) == 1)
 			{
 				//TODO
-				result  = "[0, \"MISC_VAC: NOT WORKING YET\"]";
+				result  = "[0, \"VAC: NOT WORKING YET\"]";
 			}
 			else if (boost::iequals(t_arg[0], std::string("VACBanned")) == 1)
 			{
 				//TODO
 				//	VAC_Cache.get(steamID).VACBanned
-				result  = "[0, \"MISC_VAC: NOT WORKING YET\"]";
+				result  = "[0, \"VAC: NOT WORKING YET\"]";
 			}
 			else if (boost::iequals(t_arg[0], std::string("NumberOfVACBans")) == 1)
 			{
 				//TODO
 				//	VAC_Cache.get(steamID).DaysSinceLastBan
-				result  = "[0, \"MISC_VAC: NOT WORKING YET\"]";
+				result  = "[0, \"VAC: NOT WORKING YET\"]";
 			}
 			else if (boost::iequals(t_arg[0], std::string("DaysSinceLastBan")) == 1)
 			{
 				//TODO
 				//	VAC_Cache.get(steamID).EconomyBan
-				result  = "[0, \"MISC_VAC: NOT WORKING YET\"]";
+				result  = "[0, \"VAC: NOT WORKING YET\"]";
 			}
 			else if (boost::iequals(t_arg[0], std::string("EconomyBan")) == 1)
 			{
 				//TODO
-				result  = "[0, \"MISC_VAC: NOT WORKING YET\"]";
+				result  = "[0, \"VAC: NOT WORKING YET\"]";
 			}
 			else if (boost::iequals(t_arg[0], std::string("VACAutoBan")) == 1)
 			{
@@ -208,7 +208,7 @@ void MISC_VAC::callProtocol(AbstractExt *extension, std::string input_str, std::
 			}
 			else
 			{
-				result  = "[0, \"MISC_VAC: Invalid Query Type\"]";
+				result  = "[0, \"VAC: Invalid Query Type\"]";
 			}
 		}
 	}

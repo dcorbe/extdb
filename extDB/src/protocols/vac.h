@@ -31,7 +31,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "../rcon.h"
 
 
-class MISC_VAC: public AbstractProtocol
+class VAC: public AbstractProtocol
 {
 	public:
 		bool init(AbstractExt *extension, const std::string init_str);
