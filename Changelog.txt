@@ -1,3 +1,40 @@
+28
+	FIXED: extDB2 Linux Deadlocks
+	ADDED: Support for MySQL Secure Auth, default = false
+	
+	CHANGED: Disabled Rcon Code
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
+27
+	CHANGED: DB_CUSTOM_V5 version bumped up to 7
+	FIXED: Database Session Leak (v22->26 are effected)
+	
+	UPDATED: Added more exception handling
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
+26
+	UPDATED: LOG PROTOCOL, 9:ADD:LOG:LOG:<filename>, 1:LOG:BANLOG:ban.log individual log files.
+	UPDATED: DB_CUSTOM_V5: added Setting Strip = true/false
+	UPDATED: DB_CUSTOM_V5: added Option AltisLifeRPG_Array
+	UPDATED: DB_CUSTOM_V5: added Option STRIP
+	UPDATED: DB_CUSTOM_V5: added Option NOSTRIP
+	
+	FIXED: DB_CUSTOM_V3 db_custom directory location is now based off extension location i.e @extDB/db_custom
+	FIXED: DB_CUSTOM_V3 Exception Handling now behaves as intended.
+	
+	CHANGED: Log Format changed slightly + removed some log options from extdb-conf.ini
+	CHANGED: 9 :DATABASE:<foo> will Return [1] or [0, <ERROR MSG>] if Database Connection Fails, instead of killing Server.
+	
+	IMPORTANT: DB_CUSTOM_V5 Bad Chars Settings got renamed to Strip Chars, forgot to bump the version for config file aswell.. sry slipped through
+	
+	ADDED: extDB2 Builds using Poco Library 1.6
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
+25
+	READDED: DB_CUSTOM_V3 was removed by mistake
+	FIXED: DB_CUSTOM_V5 INPUT STRING Option
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 24
 
 	ADDED: 9:LOCK_STATUS returns [1] if Locked or [0] if Unlocked.  
@@ -8,11 +45,13 @@
 
 	FIXED: extdb-conf.ini (& /extDB in same directory) file can now be located in custom path i.e @extDB, instead of Arma3 Root Directory.  
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 22-23
 
 	ADDED: DB_PROTOCOL_V5  uses Cached Prepared Statements.  
 	CHANGED: Updated Poco Library to 1.4.7p1 + custom changes.  
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 21
 
 	ADDED: STRIP+LOG / STRIP+ERROR Options for Bad Chars in DB_CUSTOM_V3.  
@@ -25,6 +64,7 @@
 	Windows Binarys are now built using VS2013 + Update Various Libraries i.e Poco Boost MySQL Client Library.    
 	Linux Binarys updated Boost / Poco etc...
 
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 20
 	ADDED: DB_CUSTOM_V3 Mult-SQL Statement Support.. you can now define multiple SQL Statements to run in sequence after each other.
 			Only result from last SQL Statement is returned.
