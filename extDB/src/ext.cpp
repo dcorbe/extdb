@@ -205,13 +205,13 @@ Ext::Ext(std::string dll_path) {
 			#endif
 			logger->info("extDB: Creating Worker Thread +1");
 		}
-
-		serverRcon.reset(new Rcon(std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password")));
+/*
 		if (pConf->getBool("Rcon.Enable", false))
 		{
+			serverRcon.reset(new Rcon(std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password")));
 			serverRcon->run();
 		}
-
+*/
 		#ifdef _WIN32
 			if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
 			// Only Gonna Randomize Once, Keeps things Simple
@@ -248,7 +248,7 @@ void Ext::stop()
 	logger->info("extDB: Stopping ...");
 	io_service.stop();
 	threads.join_all();
-	serverRcon->disconnect();
+	//serverRcon->disconnect();
 	unordered_map_protocol.clear();
 	unordered_map_wait.clear();
 }
@@ -305,6 +305,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 					db_conn_info.db_type = "MySQL";
 					Poco::Data::MySQL::Connector::registerConnector();
+
 					std::string compress = pConf->getString(conf_option + ".Compress", "false");
 					if (boost::iequals(compress, "true") == 1)
 					{
@@ -1038,7 +1039,8 @@ int main(int nNumberofArgs, char* pszArgs[])
 				break;
 			}
 			test_counter = test_counter + 1;
-			extension->callExtenion(result, 80, std::string("1:SQL:SELECT * FROM PlayerData").c_str());
+			//extension->callExtenion(result, 80, std::string("1:SQL:SELECT * FROM PlayerData").c_str());
+			extension->callExtenion(result, 80, std::string("1:SQL:TEST:testing").c_str());
 			extension->console->info("extDB: {0}", result);			
 		}
 	}
