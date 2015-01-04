@@ -34,7 +34,7 @@ class DB_CUSTOM_V5: public AbstractProtocol
 {
 	public:
 		bool init(AbstractExt *extension, const std::string init_str);
-		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
+		void callProtocol(std::string input_str, std::string &result);
 		
 	private:
 		Poco::MD5Engine md5;
@@ -74,8 +74,8 @@ class DB_CUSTOM_V5: public AbstractProtocol
 
 		std::unordered_map<std::string, PS_Template_Call> custom_protocol;
 
-		void callCustomProtocol(AbstractExt *extension, std::string call_name, std::unordered_map<std::string, PS_Template_Call>::const_iterator itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result);
-		void executeSQL(AbstractExt *extension, Poco::Data::Statement &sql_statement, std::string &result, bool &status);
+		void callCustomProtocol(std::string call_name, std::unordered_map<std::string, PS_Template_Call>::const_iterator itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result);
+		void executeSQL(Poco::Data::Statement &sql_statement, std::string &result, bool &status);
 
 		void getBEGUID(std::string &input_str, std::string &result);
 		void toArrayAltisLifeRpg(std::string &input_str, std::string &result, bool ToArray);
