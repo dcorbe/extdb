@@ -440,7 +440,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::getVersion() const
 {
-	return "28";
+	return "29";
 }
 
 

@@ -14,7 +14,6 @@ namespace {
 	{
 		Dl_info dl_info;
 		dladdr((void*)extension_init, &dl_info);
-//		std::string path(dl_info.dli_fname);
 		extension = (new Ext(boost::filesystem::path (dl_info.dli_fname).string()));
 	}
 

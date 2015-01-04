@@ -194,14 +194,14 @@ Ext::Ext(std::string dll_path) {
 				#endif
 				logger->info("extDB: Creating Worker Thread +1");
 			}
-	
+
 			if (pConf->getBool("Rcon.Enable", false))
 			{
 				extdb_connectors_info.rcon = true;
 				serverRcon.reset(new Rcon(std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password")));
 				serverRcon->run();
 			}
-	
+
 			#ifdef _WIN32
 				if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
 				// Only Gonna Randomize Once, Keeps things Simple
@@ -433,7 +433,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::getVersion() const
 {
-	return "28";
+	return "29";
 }
 
 
@@ -929,7 +929,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					case 9:
 					{
 						Poco::StringTokenizer tokens(input_str, ":");
-						if (extdb_info.lock)
+						if (extDB_lock)
 						{
 							if (tokens.count() == 2)
 							{
