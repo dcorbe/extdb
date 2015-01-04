@@ -71,166 +71,174 @@ void DBPool::customizeSession (Poco::Data::Session& session)
 
 
 Ext::Ext(std::string dll_path) {
-	mgr.reset (new IdManager);
-	extDB_lock = false;
-
-	bool conf_found = false;
-	bool conf_randomized = false;
-
-	boost::filesystem::path extDB_config_path(dll_path);
-
-	extDB_config_path = extDB_config_path.parent_path();
-  	extDB_config_path /= "extdb-conf.ini";
-
-	std::string extDB_config_str = extDB_config_path.make_preferred().string();
-
-	if (boost::filesystem::exists(extDB_config_str))
+	try
 	{
-		conf_found = true;
-		extDB_path = extDB_config_path.parent_path().string();
-	}
-	else if (boost::filesystem::exists("extdb-conf.ini"))
-	{
-		conf_found = true;
-		extDB_config_path = boost::filesystem::path("extdb-conf.ini");
-		extDB_path = boost::filesystem::current_path().string();
-	}
-	else
-	{
-		#ifdef _WIN32	// WINDOWS ONLY, Linux Arma2 Doesn't have extension Support
-			// Search for Randomize Config File -- Legacy Security Support For Arma2Servers
-			extDB_config_path = extDB_config_path.parent_path();
-			extDB_config_str = extDB_config_path.make_preferred().string();
+		mgr.reset (new IdManager);
+		extDB_lock = false;
 
-			boost::regex expression("extdb-conf.*ini");
+		bool conf_found = false;
+		bool conf_randomized = false;
 
-			if (!extDB_config_str.empty())
-			{
-				// CHECK DLL PATH FOR CONFIG
-				for (boost::filesystem::directory_iterator it(extDB_config_str); it != boost::filesystem::directory_iterator(); ++it)
-				{
-					if (is_regular_file(it->path()))
-					{
-						if(boost::regex_search(it->path().string(), expression))
-						{
-							conf_found = true;
-							conf_randomized = true;
-							extDB_config_path = boost::filesystem::path(it->path().string());
-							extDB_path = boost::filesystem::path (extDB_config_str).string();
-							break;
-						}
-					}
-				}
-			}
+		boost::filesystem::path extDB_config_path(dll_path);
 
-			// CHECK ARMA ROOT DIRECTORY FOR CONFIG
-			if (!conf_found)
-			{
-				for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
-				{
-					if (is_regular_file(it->path()))
-					{
-						if(boost::regex_search(it->path().string(), expression))
-						{
-							conf_found = true;
-							conf_randomized = true;
-							extDB_config_path = boost::filesystem::path(it->path().string());
-							extDB_path = boost::filesystem::current_path().string();
-							break;
-						}
-					}
-				}
-			}
-		#endif
-	}
+		extDB_config_path = extDB_config_path.parent_path();
+	  	extDB_config_path /= "extdb-conf.ini";
 
-	// Initialize Logger
-	Poco::DateTime now;
-	std::string log_filename = Poco::DateTimeFormatter::format(now, "%H-%M-%S.log");
+		std::string extDB_config_str = extDB_config_path.make_preferred().string();
 
-	boost::filesystem::path log_relative_path;
-
-	log_relative_path = boost::filesystem::path(extDB_path);
-	log_relative_path /= "extDB";
-	log_relative_path /= "logs";
-	log_relative_path /= Poco::DateTimeFormatter::format(now, "%Y");
-	log_relative_path /= Poco::DateTimeFormatter::format(now, "%n");
-	log_relative_path /= Poco::DateTimeFormatter::format(now, "%d");
-	extDB_log_path = log_relative_path.make_preferred().string();
-	boost::filesystem::create_directories(log_relative_path);
-	log_relative_path /= log_filename;
-
-	auto logger_temp = spdlog::daily_logger_mt("extDB File Logger", log_relative_path.make_preferred().string(), true);
-	auto console_temp = spdlog::stdout_logger_mt("extDB Console logger");
-
-	logger.swap(logger_temp);
-	console.swap(console_temp);
-
-	spdlog::set_level(spdlog::level::info);
-	spdlog::set_pattern("[%H:%M:%S %z] [Thread %t] %v");
-
-
-	logger->info("extDB: Version: {0}", getVersion());
-
-	if (!conf_found)
-	{
-		console->critical("extDB: Unable to find extdb-conf.ini");
-		logger->critical("extDB: Unable to find extdb-conf.ini");
-		// Kill Server no config file found -- Evil
-		std::exit(EXIT_SUCCESS);
-	}
-	else
-	{
-		pConf = (new Poco::Util::IniFileConfiguration(extDB_config_path.make_preferred().string()));
-		#ifdef TESTING
-			console->info("extDB: Found extdb-conf.ini");
-		#endif
-		logger->info("extDB: Found extdb-conf.ini");
-
-		steam_web_api_key = pConf->getString("Main.Steam Web API Key", "");
-
-		// Start Threads + ASIO
-		max_threads = pConf->getInt("Main.Threads", 0);
-		if (max_threads <= 0)
+		if (boost::filesystem::exists(extDB_config_str))
 		{
-			max_threads = boost::thread::hardware_concurrency();
+			conf_found = true;
+			extDB_path = extDB_config_path.parent_path().string();
 		}
-		io_work_ptr.reset(new boost::asio::io_service::work(io_service));
-		for (int i = 0; i < max_threads; ++i)
+		else if (boost::filesystem::exists("extdb-conf.ini"))
 		{
-			threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
-			#ifdef TESTING
-				console->info("extDB: Creating Worker Thread +1");
+			conf_found = true;
+			extDB_config_path = boost::filesystem::path("extdb-conf.ini");
+			extDB_path = boost::filesystem::current_path().string();
+		}
+		else
+		{
+			#ifdef _WIN32	// WINDOWS ONLY, Linux Arma2 Doesn't have extension Support
+				// Search for Randomize Config File -- Legacy Security Support For Arma2Servers
+				extDB_config_path = extDB_config_path.parent_path();
+				extDB_config_str = extDB_config_path.make_preferred().string();
+
+				boost::regex expression("extdb-conf.*ini");
+
+				if (!extDB_config_str.empty())
+				{
+					// CHECK DLL PATH FOR CONFIG
+					for (boost::filesystem::directory_iterator it(extDB_config_str); it != boost::filesystem::directory_iterator(); ++it)
+					{
+						if (is_regular_file(it->path()))
+						{
+							if(boost::regex_search(it->path().string(), expression))
+							{
+								conf_found = true;
+								conf_randomized = true;
+								extDB_config_path = boost::filesystem::path(it->path().string());
+								extDB_path = boost::filesystem::path (extDB_config_str).string();
+								break;
+							}
+						}
+					}
+				}
+
+				// CHECK ARMA ROOT DIRECTORY FOR CONFIG
+				if (!conf_found)
+				{
+					for(boost::filesystem::directory_iterator it(boost::filesystem::current_path()); it !=  boost::filesystem::directory_iterator(); ++it)
+					{
+						if (is_regular_file(it->path()))
+						{
+							if(boost::regex_search(it->path().string(), expression))
+							{
+								conf_found = true;
+								conf_randomized = true;
+								extDB_config_path = boost::filesystem::path(it->path().string());
+								extDB_path = boost::filesystem::current_path().string();
+								break;
+							}
+						}
+					}
+				}
 			#endif
-			logger->info("extDB: Creating Worker Thread +1");
 		}
 
-		serverRcon.reset(new Rcon(std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password")));
-		if (pConf->getBool("Rcon.Enable", false))
+		// Initialize Logger
+		Poco::DateTime now;
+		std::string log_filename = Poco::DateTimeFormatter::format(now, "%H-%M-%S.log");
+
+		boost::filesystem::path log_relative_path;
+
+		log_relative_path = boost::filesystem::path(extDB_path);
+		log_relative_path /= "extDB";
+		log_relative_path /= "logs";
+		log_relative_path /= Poco::DateTimeFormatter::format(now, "%Y");
+		log_relative_path /= Poco::DateTimeFormatter::format(now, "%n");
+		log_relative_path /= Poco::DateTimeFormatter::format(now, "%d");
+		extDB_log_path = log_relative_path.make_preferred().string();
+		boost::filesystem::create_directories(log_relative_path);
+		log_relative_path /= log_filename;
+
+		auto logger_temp = spdlog::daily_logger_mt("extDB File Logger", log_relative_path.make_preferred().string(), true);
+		auto console_temp = spdlog::stdout_logger_mt("extDB Console logger");
+
+		logger.swap(logger_temp);
+		console.swap(console_temp);
+
+		spdlog::set_level(spdlog::level::info);
+		spdlog::set_pattern("[%H:%M:%S %z] [Thread %t] %v");
+
+
+		logger->info("extDB: Version: {0}", getVersion());
+
+		if (!conf_found)
 		{
-			serverRcon->run();
+			console->critical("extDB: Unable to find extdb-conf.ini");
+			logger->critical("extDB: Unable to find extdb-conf.ini");
+			// Kill Server no config file found -- Evil
+			std::exit(EXIT_SUCCESS);
 		}
+		else
+		{
+			pConf = (new Poco::Util::IniFileConfiguration(extDB_config_path.make_preferred().string()));
+			#ifdef TESTING
+				console->info("extDB: Found extdb-conf.ini");
+			#endif
+			logger->info("extDB: Found extdb-conf.ini");
 
-		#ifdef _WIN32
-			if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
-			// Only Gonna Randomize Once, Keeps things Simple
+			steam_web_api_key = pConf->getString("Main.Steam Web API Key", "");
+
+			// Start Threads + ASIO
+			max_threads = pConf->getInt("Main.Threads", 0);
+			if (max_threads <= 0)
 			{
-				std::string chars("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-								  "1234567890");
-				// Skipping Lowercase, this function only for arma2 + extensions only available on windows.
-				boost::random::random_device rng;
-				boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
-
-				std::string randomized_filename = "extdb-conf-";
-				for(int i = 0; i < 8; ++i) {
-					randomized_filename += chars[index_dist(rng)];
-				}
-				randomized_filename += ".ini";
-
-				boost::filesystem::path randomize_configfile_path = extDB_config_path.parent_path() /= randomized_filename;
-				boost::filesystem::rename(extDB_config_path, randomize_configfile_path);
+				max_threads = boost::thread::hardware_concurrency();
 			}
-		#endif
+			io_work_ptr.reset(new boost::asio::io_service::work(io_service));
+			for (int i = 0; i < max_threads; ++i)
+			{
+				threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
+				#ifdef TESTING
+					console->info("extDB: Creating Worker Thread +1");
+				#endif
+				logger->info("extDB: Creating Worker Thread +1");
+			}
+
+			serverRcon.reset(new Rcon(std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password")));
+			if (pConf->getBool("Rcon.Enable", false))
+			{
+				serverRcon->run();
+			}
+
+			#ifdef _WIN32
+				if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
+				// Only Gonna Randomize Once, Keeps things Simple
+				{
+					std::string chars("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+									  "1234567890");
+					// Skipping Lowercase, this function only for arma2 + extensions only available on windows.
+					boost::random::random_device rng;
+					boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
+
+					std::string randomized_filename = "extdb-conf-";
+					for(int i = 0; i < 8; ++i) {
+						randomized_filename += chars[index_dist(rng)];
+					}
+					randomized_filename += ".ini";
+
+					boost::filesystem::path randomize_configfile_path = extDB_config_path.parent_path() /= randomized_filename;
+					boost::filesystem::rename(extDB_config_path, randomize_configfile_path);
+				}
+			#endif
+		}
+	}
+	catch (spdlog::spdlog_ex& e)
+	{
+		std::cout << "SPDLOG ERROR: " <<  e.what() << std::endl;
+		std::exit(EXIT_FAILURE);
 	}
 }
 
