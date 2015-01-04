@@ -587,145 +587,153 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &p
 {
 	{
 		boost::lock_guard<boost::mutex> lock(mutex_unordered_map_protocol);
-		if (boost::iequals(protocol, std::string("MISC")) == 1)
+		if (unordered_map_protocol.count(protocol_name) > 0)
 		{
-			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new MISC());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				logger->warn("extDB: Failed to Load Protocol");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("LOG")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new LOG());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				logger->warn("extDB: Failed to Load Protocol");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("VAC")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new VAC());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				logger->warn("extDB: Failed to Load Protocol");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V3")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V3());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				logger->warn("extDB: Failed to Load Protocol");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_CUSTOM_V5")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V5());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				logger->warn("extDB: Failed to Load Protocol");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_RAW_V3")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				logger->warn("extDB: Failed to Load Protocol");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, std::string("ADD_QUOTES")))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				logger->warn("extDB: Failed to Load Protocol");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, std::string()))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				logger->warn("extDB: Failed to Load Protocol");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
-		}
-		else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
-		{
-			unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
-			if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
-			// Remove Class Instance if Failed to Load
-			{
-				unordered_map_protocol.erase(protocol_name);
-				std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
-				logger->warn("extDB: Failed to Load Protocol");
-			}
-			else
-			{
-				std::strcpy(output, "[1]");
-			}
+			std::strcpy(output, "[0,\"Error Protocol Name Already Taken\"]");
+			logger->warn("extDB: Error Protocol Name Already Taken: {0}", protocol_name);
 		}
 		else
 		{
-			std::strcpy(output, "[0,\"Error Unknown Protocol\"]");
-			logger->warn("extDB: Failed to Load Unknown Protocol: {0}", protocol);
+			if (boost::iequals(protocol, std::string("MISC")) == 1)
+			{
+				unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new MISC());
+				if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+				// Remove Class Instance if Failed to Load
+				{
+					unordered_map_protocol.erase(protocol_name);
+					std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+					logger->warn("extDB: Failed to Load Protocol");
+				}
+				else
+				{
+					std::strcpy(output, "[1]");
+				}
+			}
+			else if (boost::iequals(protocol, std::string("LOG")) == 1)
+			{
+				unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new LOG());
+				if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+				// Remove Class Instance if Failed to Load
+				{
+					unordered_map_protocol.erase(protocol_name);
+					std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+					logger->warn("extDB: Failed to Load Protocol");
+				}
+				else
+				{
+					std::strcpy(output, "[1]");
+				}
+			}
+			else if (boost::iequals(protocol, std::string("VAC")) == 1)
+			{
+				unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new VAC());
+				if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+				// Remove Class Instance if Failed to Load
+				{
+					unordered_map_protocol.erase(protocol_name);
+					std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+					logger->warn("extDB: Failed to Load Protocol");
+				}
+				else
+				{
+					std::strcpy(output, "[1]");
+				}
+			}
+			else if (boost::iequals(protocol, std::string("DB_CUSTOM_V3")) == 1)
+			{
+				unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V3());
+				if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+				// Remove Class Instance if Failed to Load
+				{
+					unordered_map_protocol.erase(protocol_name);
+					std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+					logger->warn("extDB: Failed to Load Protocol");
+				}
+				else
+				{
+					std::strcpy(output, "[1]");
+				}
+			}
+			else if (boost::iequals(protocol, std::string("DB_CUSTOM_V5")) == 1)
+			{
+				unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_CUSTOM_V5());
+				if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+				// Remove Class Instance if Failed to Load
+				{
+					unordered_map_protocol.erase(protocol_name);
+					std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+					logger->warn("extDB: Failed to Load Protocol");
+				}
+				else
+				{
+					std::strcpy(output, "[1]");
+				}
+			}
+			else if (boost::iequals(protocol, std::string("DB_RAW_V3")) == 1)
+			{
+				unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+				if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+				// Remove Class Instance if Failed to Load
+				{
+					unordered_map_protocol.erase(protocol_name);
+					std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+					logger->warn("extDB: Failed to Load Protocol");
+				}
+				else
+				{
+					std::strcpy(output, "[1]");
+				}
+			}
+			else if (boost::iequals(protocol, std::string("DB_RAW_V2")) == 1)
+			{
+				unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+				if (!unordered_map_protocol[protocol_name].get()->init(this, std::string("ADD_QUOTES")))
+				// Remove Class Instance if Failed to Load
+				{
+					unordered_map_protocol.erase(protocol_name);
+					std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+					logger->warn("extDB: Failed to Load Protocol");
+				}
+				else
+				{
+					std::strcpy(output, "[1]");
+				}
+			}
+			else if (boost::iequals(protocol, std::string("DB_RAW_NO_EXTRA_QUOTES_V2")) == 1)
+			{
+				unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_RAW_V3());
+				if (!unordered_map_protocol[protocol_name].get()->init(this, std::string()))
+				// Remove Class Instance if Failed to Load
+				{
+					unordered_map_protocol.erase(protocol_name);
+					std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+					logger->warn("extDB: Failed to Load Protocol");
+				}
+				else
+				{
+					std::strcpy(output, "[1]");
+				}
+			}
+			else if (boost::iequals(protocol, std::string("DB_PROCEDURE_V2")) == 1)
+			{
+				unordered_map_protocol[protocol_name] = std::shared_ptr<AbstractProtocol> (new DB_PROCEDURE_V2());
+				if (!unordered_map_protocol[protocol_name].get()->init(this, init_data))
+				// Remove Class Instance if Failed to Load
+				{
+					unordered_map_protocol.erase(protocol_name);
+					std::strcpy(output, "[0,\"Failed to Load Protocol\"]");
+					logger->warn("extDB: Failed to Load Protocol");
+				}
+				else
+				{
+					std::strcpy(output, "[1]");
+				}
+			}
+			else
+			{
+				std::strcpy(output, "[0,\"Error Unknown Protocol\"]");
+				logger->warn("extDB: Failed to Load Unknown Protocol: {0}", protocol);
+			}
 		}
 	}
 }
