@@ -481,62 +481,85 @@ void DB_CUSTOM_V3::callCustomProtocol(boost::unordered_map<std::string, Template
 		}
 	}
 
-	if (result.empty())
+	try
 	{
-		Poco::Data::RecordSet rs(sql_current);
-
-		result = "[1,[";
-		std::size_t cols = rs.columnCount();
-		if (cols >= 1)
+		if (result.empty())
 		{
-			bool more = rs.moveFirst();
-			while (more)
-			{
-				result += "[";
-				for (std::size_t col = 0; col < cols; ++col)
-				{
-					std::string temp_str = rs[col].convert<std::string>();
+			Poco::Data::RecordSet rs(sql_current);
 
-					if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
+			result = "[1,[";
+			std::size_t cols = rs.columnCount();
+			if (cols >= 1)
+			{
+				bool more = rs.moveFirst();
+				while (more)
+				{
+					result += "[";
+					for (std::size_t col = 0; col < cols; ++col)
 					{
-						if (temp_str.empty())
+						std::string temp_str = rs[col].convert<std::string>();
+
+						if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
 						{
-							result += ("\"\"");
+							if (temp_str.empty())
+							{
+								result += ("\"\"");
+							}
+							else
+							{
+								result += "\"" + temp_str + "\"";
+							}
 						}
 						else
 						{
-							result += "\"" + temp_str + "\"";
+							if (temp_str.empty())
+							{
+								result += ("\"\"");
+							}
+							else
+							{
+								result += temp_str;
+							}
 						}
+
+						if (col < (cols - 1))
+						{
+							result += ",";
+						}
+					}
+					more = rs.moveNext();
+					if (more)
+					{
+						result += "],";
 					}
 					else
 					{
-						if (temp_str.empty())
-						{
-							result += ("\"\"");
-						}
-						else
-						{
-							result += temp_str;
-						}
+						result += "]";
 					}
-
-					if (col < (cols - 1))
-					{
-						result += ",";
-					}
-				}
-				more = rs.moveNext();
-				if (more)
-				{
-					result += "],";
-				}
-				else
-				{
-					result += "]";
 				}
 			}
+			result += "]]";
 		}
-		result += "]]";
+		catch (Poco::NotImplementedException& e)
+		{
+			#ifdef TESTING
+				extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+				extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
+			#endif
+			extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+			extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
+			result = "[0,\"Error NotImplementedException\"]";
+		}
+		catch (Poco::Exception& e)
+		{
+			#ifdef TESTING
+				extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+				extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
+			#endif
+			extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+			extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
+			result = "[0,\"Error Exception\"]";
+		}
 	}
 	
 	#ifdef TESTING

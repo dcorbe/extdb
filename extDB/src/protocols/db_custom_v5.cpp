@@ -447,130 +447,153 @@ void DB_CUSTOM_V5::toArrayAltisLifeRpg(std::string &input_str, std::string &resu
 
 void DB_CUSTOM_V5::getResult(std::unordered_map<std::string, PS_Template_Call>::const_iterator itr, Poco::Data::Statement &sql_statement, std::string &result)
 {
-	bool sanitize_value_check = true;
-	Poco::Data::RecordSet rs(sql_statement);
-
-	result = "[1,[";
-	std::size_t cols = rs.columnCount();
-	if (cols >= 1)
+	try
 	{
-		bool more = rs.moveFirst();
-		while (more)
-		{
-			result += "[";
-			std::size_t sql_output_options_size = itr->second.sql_outputs_options.size();
+		bool sanitize_value_check = true;
+		Poco::Data::RecordSet rs(sql_statement);
 
-			for (std::size_t col = 0; col < cols; ++col)
+		result = "[1,[";
+		std::size_t cols = rs.columnCount();
+		if (cols >= 1)
+		{
+			bool more = rs.moveFirst();
+			while (more)
 			{
-				std::string temp_str = rs[col].convert<std::string>();
-				
-				// NO OUTPUT OPTIONS 
-				if (col >= sql_output_options_size)
+				result += "[";
+				std::size_t sql_output_options_size = itr->second.sql_outputs_options.size();
+
+				for (std::size_t col = 0; col < cols; ++col)
 				{
-					// DEFAULT BEHAVIOUR
-					if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
+					std::string temp_str = rs[col].convert<std::string>();
+					
+					// NO OUTPUT OPTIONS 
+					if (col >= sql_output_options_size)
 					{
-						if (temp_str.empty())
+						// DEFAULT BEHAVIOUR
+						if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
+						{
+							if (temp_str.empty())
+							{
+								result += ("\"\"");
+							}
+							else
+							{
+								result += "\"" + temp_str + "\"";
+							}
+						}
+						else if (temp_str.empty())
 						{
 							result += ("\"\"");
 						}
 						else
 						{
-							result += "\"" + temp_str + "\"";
+							result += temp_str;
 						}
-					}
-					else if (temp_str.empty())
-					{
-						result += ("\"\"");
 					}
 					else
 					{
+					// OUTPUT OPTIONS
+
+						if (itr->second.sql_outputs_options[col].toArray_AltisLifeRpg)
+						{
+							toArrayAltisLifeRpg(temp_str, temp_str, true);
+						}
+
+						// BEGUID
+						if (itr->second.sql_outputs_options[col].beguid)
+						{
+							getBEGUID(temp_str, temp_str);
+						}
+
+						// STRING
+						if (itr->second.sql_outputs_options[col].string)
+						{
+							if (temp_str.empty())
+							{
+								temp_str = ("\"\"");
+							}
+							else
+							{
+								boost::erase_all(temp_str, "\"");
+								temp_str = "\"" + temp_str + "\"";
+							}
+						}
+
+						// STRING DATATYPE CHECK
+						else if ((itr->second.sql_outputs_options[col].string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
+						{
+							if (temp_str.empty())
+							{
+								temp_str = ("\"\"");
+							}
+							else
+							{
+								boost::erase_all(temp_str, "\"");
+								temp_str = "\"" + temp_str + "\"";
+							}
+						}
+						else
+						{
+							if (temp_str.empty())
+							{
+								temp_str = ("\"\"");
+							}
+						}						
+
+						// SANITIZE CHECK
+						if (itr->second.sql_outputs_options[col].check)
+						{
+							if (!Sqf::check(temp_str))
+							{
+								sanitize_value_check = false;
+							}
+						}
 						result += temp_str;
 					}
+
+					if (col < (cols - 1))
+					{
+						result += ",";
+					}
+				}
+
+				more = rs.moveNext();
+				if (more)
+				{
+					result += "],";
 				}
 				else
 				{
-				// OUTPUT OPTIONS
-
-					if (itr->second.sql_outputs_options[col].toArray_AltisLifeRpg)
-					{
-						toArrayAltisLifeRpg(temp_str, temp_str, true);
-					}
-
-					// BEGUID
-					if (itr->second.sql_outputs_options[col].beguid)
-					{
-						getBEGUID(temp_str, temp_str);
-					}
-
-					// STRING
-					if (itr->second.sql_outputs_options[col].string)
-					{
-						if (temp_str.empty())
-						{
-							temp_str = ("\"\"");
-						}
-						else
-						{
-							boost::erase_all(temp_str, "\"");
-							temp_str = "\"" + temp_str + "\"";
-						}
-					}
-
-					// STRING DATATYPE CHECK
-					else if ((itr->second.sql_outputs_options[col].string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
-					{
-						if (temp_str.empty())
-						{
-							temp_str = ("\"\"");
-						}
-						else
-						{
-							boost::erase_all(temp_str, "\"");
-							temp_str = "\"" + temp_str + "\"";
-						}
-					}
-					else
-					{
-						if (temp_str.empty())
-						{
-							temp_str = ("\"\"");
-						}
-					}						
-
-					// SANITIZE CHECK
-					if (itr->second.sql_outputs_options[col].check)
-					{
-						if (!Sqf::check(temp_str))
-						{
-							sanitize_value_check = false;
-						}
-					}
-					result += temp_str;
+					result += "]";
 				}
-
-				if (col < (cols - 1))
-				{
-					result += ",";
-				}
-			}
-
-			more = rs.moveNext();
-			if (more)
-			{
-				result += "],";
-			}
-			else
-			{
-				result += "]";
 			}
 		}
-	}
-	result += "]]";
+		result += "]]";
 
-	if (!(sanitize_value_check))
+		if (!(sanitize_value_check))
+		{
+			result = "[0,\"Error Values Input is not sanitized\"]";
+		}
+	}
+	catch (Poco::NotImplementedException& e)
 	{
-		result = "[0,\"Error Values Input is not sanitized\"]";
+		#ifdef TESTING
+			extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+			extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
+		#endif
+		extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+		extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
+		result = "[0,\"Error NotImplementedException\"]";
+	}
+	catch (Poco::Exception& e)
+	{
+		#ifdef TESTING
+			extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+			extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
+		#endif
+		extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+		extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
+		result = "[0,\"Error Exception\"]";
 	}
 }
 
