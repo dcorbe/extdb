@@ -57,19 +57,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "protocols/vac.h"
 
 
-void DBPool::customizeSession (Poco::Data::Session& session)
-{
-	try
-	{
-		// This is mainly for SQLite Database Locks when its writing changes.. 
-		//		i.e multi-threaded queries -> SQLite 
-		session.setProperty("maxRetryAttempts", 100);  
-	}
-	catch (Poco::Data::NotSupportedException&)
-	{
-	}
-}
-
 
 Ext::Ext(std::string dll_path) {
 	try
@@ -207,13 +194,14 @@ Ext::Ext(std::string dll_path) {
 				#endif
 				logger->info("extDB: Creating Worker Thread +1");
 			}
-	/*
+	
 			if (pConf->getBool("Rcon.Enable", false))
 			{
+				extdb_connectors_info.rcon = true;
 				serverRcon.reset(new Rcon(std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password")));
 				serverRcon->run();
 			}
-	*/
+	
 			#ifdef _WIN32
 				if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
 				// Only Gonna Randomize Once, Keeps things Simple
@@ -256,9 +244,26 @@ void Ext::stop()
 	logger->info("extDB: Stopping ...");
 	io_service.stop();
 	threads.join_all();
-	//serverRcon->disconnect();
+
+	if (extdb_connectors_info.mysql)
+	{
+		Poco::Data::MySQL::Connector::unregisterConnector();
+		//extdb_connectors_info.sqlite = false;
+	}
+	if (extdb_connectors_info.sqlite)
+	{
+		Poco::Data::SQLite::Connector::unregisterConnector();
+		//extdb_connectors_info.sqlite = false;
+	}
+	if (extdb_connectors_info.rcon)
+	{
+		serverRcon->disconnect();
+		//extdb_connectors_info.rcon = false;
+	}
+
 	unordered_map_protocol.clear();
 	unordered_map_wait.clear();
+	unordered_map_results.clear();
 }
 
 
@@ -303,6 +308,12 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 				if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
 				{
+					if (!(extdb_connectors_info.mysql))
+					{
+						Poco::Data::MySQL::Connector::registerConnector();
+						extdb_connectors_info.mysql = true;
+					}
+
 					std::string username = pConf->getString(conf_option + ".Username");
 					std::string password = pConf->getString(conf_option + ".Password");
 
@@ -312,7 +323,6 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
 
 					db_conn_info.db_type = "MySQL";
-					Poco::Data::MySQL::Connector::registerConnector();
 
 					std::string compress = pConf->getString(conf_option + ".Compress", "false");
 					if (boost::iequals(compress, "true") == 1)
@@ -326,7 +336,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 						db_conn_info.connection_str = db_conn_info.connection_str + ";secure-auth=true";	
 					}
 
-					db_pool.reset(new DBPool(db_conn_info.db_type, 
+					db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
 																db_conn_info.connection_str, 
 																db_conn_info.min_sessions, 
 																db_conn_info.max_sessions, 
@@ -351,8 +361,13 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 				}
 				else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
 				{
+					if (!(extdb_connectors_info.sqlite))
+					{
+						Poco::Data::SQLite::Connector::registerConnector();
+						extdb_connectors_info.sqlite = true;
+					}
+
 					db_conn_info.db_type = "SQLite";
-					Poco::Data::SQLite::Connector::registerConnector();
 
 					boost::filesystem::path sqlite_path(getExtensionPath());
 					sqlite_path /= "extDB";
@@ -360,7 +375,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					sqlite_path /= "db_name";
 					db_conn_info.connection_str = sqlite_path.make_preferred().string();
 
-					db_pool.reset(new DBPool(db_conn_info.db_type, 
+					db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
 																db_conn_info.connection_str, 
 																db_conn_info.min_sessions, 
 																db_conn_info.max_sessions, 
@@ -914,7 +929,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 					case 9:
 					{
 						Poco::StringTokenizer tokens(input_str, ":");
-						if (extDB_lock)
+						if (extdb_info.lock)
 						{
 							if (tokens.count() == 2)
 							{

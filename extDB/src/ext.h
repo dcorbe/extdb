@@ -82,6 +82,13 @@ class Ext: public AbstractExt
 		std::string extDB_log_path;
 		std::string steam_web_api_key;
 
+		struct extDBConnectors
+		{
+			bool rcon=false;
+			bool mysql=false;
+			bool sqlite=false;
+		};
+
 		struct DBConnectionInfo {
 			std::string db_type;
 			std::string connection_str;
@@ -90,6 +97,7 @@ class Ext: public AbstractExt
 			int idle_time;
 		};
 
+		extDBConnectors extdb_connectors_info;
 		DBConnectionInfo db_conn_info;
 
 		// ASIO Thread Queue
