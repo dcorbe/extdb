@@ -777,7 +777,7 @@ void Ext::onewayCallProtocol(const std::string protocol, const std::string data)
 	{
 		std::string result;
 		result.reserve(2000);
-		itr->second->callProtocol(this, data, result);
+		itr->second->callProtocol(data, result);
 	}
 }
 
@@ -788,7 +788,7 @@ void Ext::asyncCallProtocol(const std::string protocol, const std::string data, 
 {
 	std::string result;
 	result.reserve(2000);
-	unordered_map_protocol[protocol].get()->callProtocol(this, data, result);
+	unordered_map_protocol[protocol].get()->callProtocol(data, result);
 	saveResult_mutexlock(result, unique_id);
 }
 

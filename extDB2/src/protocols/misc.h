@@ -32,7 +32,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class MISC: public AbstractProtocol
 {
 	public:
-		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
+		void init(AbstractExt *extension, const std::string init_str);
+		void callProtocol(std::string input_str, std::string &result);
 		Poco::Checksum checksum_crc32;
 
 	private:

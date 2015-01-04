@@ -218,7 +218,7 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 }
 
 
-void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void MISC::callProtocol(std::string input_str, std::string &result)
 {
 	// Protocol
 	const std::string sep_char(":");
@@ -280,4 +280,11 @@ void MISC::callProtocol(AbstractExt *extension, std::string input_str, std::stri
 	{
 		result.clear();
 	}
+}
+
+
+bool MISC::init(AbstractExt *extension, const std::string init_str)
+{
+	extension_ptr = extension;
+	return true;
 }

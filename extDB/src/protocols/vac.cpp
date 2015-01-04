@@ -57,6 +57,8 @@ From Frank https://gist.github.com/Fank/11127158
 
 bool VAC::init(AbstractExt *extension, const std::string init_str) 
 {
+	extension_ptr = extension;
+
 	vac_ban_check.NumberOfVACBans = extension->pConf->getInt("VAC.NumberOfVACBans", 1);
 	vac_ban_check.DaysSinceLastBan = extension->pConf->getInt("VAC.DaysSinceLastBan", 0);
 	vac_ban_check.BanDuration = extension->pConf->getString("VAC.BanDuration", "0");
@@ -127,7 +129,7 @@ bool VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
 		Poco::Net::HTTPResponse res;
 		//http://www.appinf.com/docs/poco/Poco.Net.HTTPResponse.html#17176
 		#ifdef TESTING
-			std::cout << res.getStatus() << " " << res.getReason() << std::endl;
+			extension_ptr->console->info("VAC: Response Status {0}", res.getReason());
 		#endif
 
 		// print response
@@ -155,7 +157,7 @@ bool VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
 }
 
 
-void VAC::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void VAC::callProtocol(std::string input_str, std::string &result)
 {
 	Poco::StringTokenizer t_arg(input_str, ":");
 	const int num_of_inputs = t_arg.count();

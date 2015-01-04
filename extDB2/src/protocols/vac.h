@@ -35,7 +35,7 @@ class VAC: public AbstractProtocol
 {
 	public:
 		bool init(AbstractExt *extension, const std::string init_str);
-		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
+		void callProtocol(std::string input_str, std::string &result);
 		
 	private:
 		struct SteamVacInfo
