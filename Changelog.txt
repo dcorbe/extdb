@@ -1,5 +1,19 @@
+29
+	CHANGED: 9:ADD Protocol, now checks if Protocol Name already exists
+	
+	FIXED: DB_CUSTOM_V5 INPUT Option Logic
+	
+	FIXED: Added Exception Handling for Logging Initialization
+	FIXED: Cleaner Shutdown for Database Connectors
+	FIXED: Added Exception Handling for DB_CUSTOM_V3/5 + NotImplemented when fetching results
+
+	FIXED: Sanitize Test App Input Limit
+	
+	FIXED : extDB2 Linux Builds
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
+
 28
-	FIXED: extDB2 Linux Deadlocks
 	ADDED: Support for MySQL Secure Auth, default = false
 	
 	CHANGED: Disabled Rcon Code
@@ -31,7 +45,7 @@
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------  
 25
-	READDED: DB_CUSTOM_V3 was removed by mistake
+	RE-ADDED: DB_CUSTOM_V3 was removed by mistake
 	FIXED: DB_CUSTOM_V5 INPUT STRING Option
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------  
