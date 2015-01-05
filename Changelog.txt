@@ -1,6 +1,8 @@
 29
 	CHANGED: 9:ADD Protocol, now checks if Protocol Name already exists
 	
+	ADDED: DB_CUSTOM_V5 Prepared Statement Cache = true/false
+	
 	FIXED: DB_CUSTOM_V5 INPUT Option Logic
 	
 	FIXED: Added Exception Handling for Logging Initialization
