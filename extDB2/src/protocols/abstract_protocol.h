@@ -29,7 +29,5 @@ class AbstractProtocol
 		virtual bool init(AbstractExt *extension, const std::string init_str)=0;
 		virtual void callProtocol(std::string input_str, std::string &result)=0;
 
-
-	private:
-		AbstractExt *extension_ptr;
+		AbstractExt *extension_ptr;	
 };

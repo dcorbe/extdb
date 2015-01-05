@@ -170,7 +170,7 @@ void VAC::callProtocol(std::string input_str, std::string &result)
 		else
 		{
 			std::string steamdID = convertSteamIDtoBEGUID(t_arg[1]);
-			updateVAC(extension->getAPIKey(), steamdID);
+			updateVAC(extension_ptr->getAPIKey(), steamdID);
 
 			if (boost::iequals(t_arg[0], std::string("GetFriends")) == 1)
 			{
