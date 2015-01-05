@@ -16,18 +16,24 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#pragma once
+#include "abstract_protocol.h"
 
-#include "abstract_ext.h"
 
-class AbstractProtocol
+AbstractProtocol::AbstractProtocol()
 {
-	public:
-		AbstractProtocol();
-		virtual ~AbstractProtocol();
+}
 
-		virtual bool init(AbstractExt *extension, const std::string init_str)=0;
-		virtual void callProtocol(std::string input_str, std::string &result)=0;
+AbstractProtocol::~AbstractProtocol()
+{
+}
 
-		AbstractExt *extension_ptr;	
-};
+void AbstractProtocol::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+{
+}
+
+bool AbstractProtocol::init(AbstractExt *extension, const std::string init_str)
+{
+	// Use this function for any initialize, or if u need to read value from extdb-conf.ini i.e
+	//		extension.pConf (Poco::AutoPtr<Poco::Util::IniFileConfiguration>)
+	return true;
+}

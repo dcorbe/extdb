@@ -529,26 +529,22 @@ void DB_CUSTOM_V3::callCustomProtocol(boost::unordered_map<std::string, Template
 			}
 			result += "]]";
 		}
-		catch (Poco::NotImplementedException& e)
-		{
-			#ifdef TESTING
-				extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
-				extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
-			#endif
-			extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
-			extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
-			result = "[0,\"Error NotImplementedException\"]";
-		}
-		catch (Poco::Exception& e)
-		{
-			#ifdef TESTING
-				extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
-				extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
-			#endif
-			extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
-			extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
-			result = "[0,\"Error Exception\"]";
-		}
+	}
+	catch (Poco::NotImplementedException& e)
+	{
+		#ifdef TESTING
+			extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+		#endif
+		extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+		result = "[0,\"Error NotImplementedException\"]";
+	}
+	catch (Poco::Exception& e)
+	{
+		#ifdef TESTING
+			extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+		#endif
+		extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+		result = "[0,\"Error Exception\"]";
 	}
 	
 	#ifdef TESTING
@@ -664,7 +660,7 @@ void DB_CUSTOM_V3::callProtocol(std::string input_str, std::string &result)
 			if (!(bad_chars_error))
 			{
 				bool sanitize_value_check_ok = true;
-				callCustomProtocol(extension, itr, inputs, sanitize_value_check_ok, result);
+				callCustomProtocol(itr, inputs, sanitize_value_check_ok, result);
 				if (!sanitize_value_check_ok)
 				{
 					result = "[0,\"Error Values Input is not sanitized\"]";

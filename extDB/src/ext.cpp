@@ -754,7 +754,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 		//   if >, then sends ID Message arma + stores rest. (mutex locks)
 		std::string result;
 		result.reserve(2000);
-		itr->second->callProtocol(this, data, result);
+		itr->second->callProtocol(data, result);
 		if (result.length() <= (output_size-6))
 		{
 			std::strcpy(output, ("[1, " + result + "]").c_str());
