@@ -159,7 +159,7 @@ void DB_PROCEDURE_V2::callProtocol(std::string input_str, std::string &result)
 						// If Outputs.. SQL SELECT Statement to get Results
 						
 						Poco::Data::Statement sql2(session);
-						sql2 << sql_str_select, Poco::Data::Keywords::now;
+						sql2 << sql_str_select, Poco::Data::now;
 							
 						extension_ptr->freeUniqueID_mutexlock(unique_id); // Free Unique ID
 							

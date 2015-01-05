@@ -27,7 +27,7 @@ AbstractProtocol::~AbstractProtocol()
 {
 }
 
-void AbstractProtocol::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void AbstractProtocol::callProtocol(std::string input_str, std::string &result)
 {
 }
 
