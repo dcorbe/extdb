@@ -40,11 +40,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class Rcon: public Poco::Runnable
 {
 	public:
-//		#ifdef RCON_APP
-			Rcon(std::string address, int port, std::string password);
-//		#else
-//			Rcon(AbstractExt *extension, std::string address, int port, std::string password);
-//		#endif
+		Rcon(std::shared_ptr<spdlog::logger> console, std::string address, int port, std::string password);
 
 		void run();
 		void disconnect();
@@ -77,7 +73,8 @@ class Rcon: public Poco::Runnable
 
 		Poco::Stopwatch rcon_timer;
 
-		std::shared_ptr<spdlog::logger> logger;
+		std::shared_ptr<spdlog::logger> logger_console;
+		std::shared_ptr<spdlog::logger> logger_file;
 		
 		char buffer[4096];
 		int buffer_size;
