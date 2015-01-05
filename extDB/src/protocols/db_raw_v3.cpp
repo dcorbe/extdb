@@ -34,13 +34,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bool DB_RAW_V3::init(AbstractExt *extension, const std::string init_str)
 {
+	extension_ptr = extension;
+
 	bool status;
 
-	if (extension->getDBType() == std::string("MySQL"))
+	if (extension_ptr->getDBType() == std::string("MySQL"))
 	{
 		status = true;
 	}
-	else if (extension->getDBType() == std::string("SQLite"))
+	else if (extension_ptr->getDBType() == std::string("SQLite"))
 	{
 		status = true;
 	}
@@ -48,9 +50,9 @@ bool DB_RAW_V3::init(AbstractExt *extension, const std::string init_str)
 	{
 		// DATABASE NOT SETUP YET
 		#ifdef TESTING
-			extension->console->warn("extDB: DB_RAW_V3: No Database Connection");
+			extension_ptr->console->warn("extDB: DB_RAW_V3: No Database Connection");
 		#endif
-		extension->logger->warn("extDB: DB_RAW_V3: No Database Connection");
+		extension_ptr->logger->warn("extDB: DB_RAW_V3: No Database Connection");
 		status = false;
 	}
 
@@ -60,17 +62,17 @@ bool DB_RAW_V3::init(AbstractExt *extension, const std::string init_str)
 		{
 			stringDataTypeCheck = false;
 			#ifdef TESTING
-				extension->console->info("extDB: DB_RAW_V3: Initialized: ADD_QUOTES False");
+				extension_ptr->console->info("extDB: DB_RAW_V3: Initialized: ADD_QUOTES False");
 			#endif
-			extension->logger->info("extDB: DB_RAW_V3: Initialized: ADD_QUOTES False");
+			extension_ptr->logger->info("extDB: DB_RAW_V3: Initialized: ADD_QUOTES False");
 		}
 		else if (boost::iequals(init_str, std::string("ADD_QUOTES")))
 		{
 			stringDataTypeCheck = true;
 			#ifdef TESTING
-				extension->console->info("extDB: DB_RAW_V3: Initialized: ADD_QUOTES True");
+				extension_ptr->console->info("extDB: DB_RAW_V3: Initialized: ADD_QUOTES True");
 			#endif
-			extension->logger->info("extDB: DB_RAW_V3: Initialized: ADD_QUOTES True");
+			extension_ptr->logger->info("extDB: DB_RAW_V3: Initialized: ADD_QUOTES True");
 		}
 		else 
 		{
@@ -80,18 +82,18 @@ bool DB_RAW_V3::init(AbstractExt *extension, const std::string init_str)
 	return status;
 }
 
-void DB_RAW_V3::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void DB_RAW_V3::callProtocol(std::string input_str, std::string &result)
 {
 	try
 	{
 		#ifdef TESTING
-			extension->console->info("extDB: DB_RAW_V3: Trace: Input: {0}", input_str);
+			extension_ptr->console->info("extDB: DB_RAW_V3: Trace: Input: {0}", input_str);
 		#endif
 		#ifdef DEBUG_LOGGING
-			extension->logger->info("extDB: DB_RAW_V3: Trace: Input: {0}", input_str);
+			extension_ptr->logger->info("extDB: DB_RAW_V3: Trace: Input: {0}", input_str);
 		#endif
 
-		Poco::Data::Session session = extension->getDBSession_mutexlock();
+		Poco::Data::Session session = extension_ptr->getDBSession_mutexlock();
 		Poco::Data::Statement sql(session);
 
 		sql << input_str;
@@ -155,81 +157,81 @@ void DB_RAW_V3::callProtocol(AbstractExt *extension, std::string input_str, std:
 		}
 		result += "]]";
 		#ifdef TESTING
-			extension->console->info("extDB: DB_RAW_V3: Trace: Result: {0}", result);
+			extension_ptr->console->info("extDB: DB_RAW_V3: Trace: Result: {0}", result);
 		#endif
 		#ifdef DEBUG_LOGGING
-			extension->logger->info("extDB: DB_RAW_V3: Trace: Result: {0}", result);
+			extension_ptr->logger->info("extDB: DB_RAW_V3: Trace: Result: {0}", result);
 		#endif
 	}
 	catch (Poco::InvalidAccessException& e)
 	{
 		#ifdef TESTING
-			extension->console->error("extDB: DB_RAW_V3: Error InvalidAccessException: {0}", e.displayText());
-			extension->console->error("extDB: DB_RAW_V3: Error InvalidAccessException: SQL: {0}", input_str);
+			extension_ptr->console->error("extDB: DB_RAW_V3: Error InvalidAccessException: {0}", e.displayText());
+			extension_ptr->console->error("extDB: DB_RAW_V3: Error InvalidAccessException: SQL: {0}", input_str);
 		#endif
-		extension->logger->error("extDB: DB_RAW_V3: Error InvalidAccessException: {0}", e.displayText());
-		extension->logger->error("extDB: DB_RAW_V3: Error InvalidAccessException: SQL: {0}", input_str);
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error InvalidAccessException: {0}", e.displayText());
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error InvalidAccessException: SQL: {0}", input_str);
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
 	catch (Poco::NotImplementedException& e)
 	{
 		#ifdef TESTING
-			extension->console->error("extDB: DB_RAW_V3: Error NotImplementedException: {0}", e.displayText());
-			extension->console->error("extDB: DB_RAW_V3: Error NotImplementedException: SQL: {0}", input_str);
+			extension_ptr->console->error("extDB: DB_RAW_V3: Error NotImplementedException: {0}", e.displayText());
+			extension_ptr->console->error("extDB: DB_RAW_V3: Error NotImplementedException: SQL: {0}", input_str);
 
 		#endif
-		extension->logger->error("extDB: DB_RAW_V3: Error NotImplementedException: {0}", e.displayText());
-		extension->logger->error("extDB: DB_RAW_V3: Error NotImplementedException: SQL: {0}", input_str);
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error NotImplementedException: {0}", e.displayText());
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error NotImplementedException: SQL: {0}", input_str);
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
 	catch (Poco::Data::SQLite::DBLockedException& e)
 	{
 		#ifdef TESTING
-			extension->console->error("extDB: DB_RAW_V3: Error DBLockedException: {0}", e.displayText());
-			extension->logger->error("extDB: DB_RAW_V3: Error DBLockedException: SQL: {0}", input_str);
+			extension_ptr->console->error("extDB: DB_RAW_V3: Error DBLockedException: {0}", e.displayText());
+			extension_ptr->logger->error("extDB: DB_RAW_V3: Error DBLockedException: SQL: {0}", input_str);
 		#endif
-		extension->logger->error("extDB: DB_RAW_V3: Error DBLockedException: {0}", e.displayText());
-		extension->logger->error("extDB: DB_RAW_V3: Error DBLockedException: SQL: {0}", input_str);
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error DBLockedException: {0}", e.displayText());
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error DBLockedException: SQL: {0}", input_str);
 		result = "[0,\"Error DBLocked Exception\"]";
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
 	{
 		#ifdef TESTING
-			extension->console->error("extDB: DB_RAW_V3: Error ConnectionException: {0}", e.displayText());
-			extension->logger->error("extDB: DB_RAW_V3: Error ConnectionException: SQL: {0}", input_str);
+			extension_ptr->console->error("extDB: DB_RAW_V3: Error ConnectionException: {0}", e.displayText());
+			extension_ptr->logger->error("extDB: DB_RAW_V3: Error ConnectionException: SQL: {0}", input_str);
 		#endif
-		extension->logger->error("extDB: DB_RAW_V3: Error ConnectionException: {0}", e.displayText());
-		extension->logger->error("extDB: DB_RAW_V3: Error ConnectionException: SQL: {0}", input_str);
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error ConnectionException: {0}", e.displayText());
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error ConnectionException: SQL: {0}", input_str);
 		result = "[0,\"Error Connection Exception\"]";
 	}
 	catch(Poco::Data::MySQL::StatementException& e)
 	{
 		#ifdef TESTING
-			extension->console->error("extDB: DB_RAW_V3: Error StatementException: {0}", e.displayText());
-			extension->logger->error("extDB: DB_RAW_V3: Error StatementException: SQL: {0}", input_str);
+			extension_ptr->console->error("extDB: DB_RAW_V3: Error StatementException: {0}", e.displayText());
+			extension_ptr->logger->error("extDB: DB_RAW_V3: Error StatementException: SQL: {0}", input_str);
 		#endif
-		extension->logger->error("extDB: DB_RAW_V3: Error StatementException: {0}", e.displayText());
-		extension->logger->error("extDB: DB_RAW_V3: Error StatementException: SQL: {0}", input_str);
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error StatementException: {0}", e.displayText());
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error StatementException: SQL: {0}", input_str);
 		result = "[0,\"Error Statement Exception\"]";
 	}
 	catch (Poco::Data::DataException& e)
 	{
 		#ifdef TESTING
-			extension->console->error("extDB: DB_RAW_V3: Error DataException: {0}", e.displayText());
-			extension->logger->error("extDB: DB_RAW_V3: Error DataException: SQL: {0}", input_str);
+			extension_ptr->console->error("extDB: DB_RAW_V3: Error DataException: {0}", e.displayText());
+			extension_ptr->logger->error("extDB: DB_RAW_V3: Error DataException: SQL: {0}", input_str);
 		#endif
-		extension->logger->error("extDB: DB_RAW_V3: Error DataException: {0}", e.displayText());
-		extension->logger->error("extDB: DB_RAW_V3: Error DataException: SQL: {0}", input_str);
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error DataException: {0}", e.displayText());
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error DataException: SQL: {0}", input_str);
 		result = "[0,\"Error Data Exception\"]";
 	}
 	catch (Poco::Exception& e)
 	{
 		#ifdef TESTING
-			extension->console->error("extDB: DB_RAW_V3: Error Exception: {0}", e.displayText());
-			extension->console->error("extDB: DB_RAW_V3: Error Exception: SQL: {0}", input_str);
+			extension_ptr->console->error("extDB: DB_RAW_V3: Error Exception: {0}", e.displayText());
+			extension_ptr->console->error("extDB: DB_RAW_V3: Error Exception: SQL: {0}", input_str);
 		#endif
-		extension->logger->error("extDB: DB_RAW_V3: Error Exception: {0}", e.displayText());
-		extension->logger->error("extDB: DB_RAW_V3: Error Exception: SQL: {0}", input_str);
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error Exception: {0}", e.displayText());
+		extension_ptr->logger->error("extDB: DB_RAW_V3: Error Exception: SQL: {0}", input_str);
 		result = "[0,\"Error Exception\"]";
 	}
 }

@@ -21,6 +21,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bool LOG::init(AbstractExt *extension, const std::string init_str)
 {
+	extension_ptr = extension;
 	if (!(init_str.empty()))
 	{
 		boost::filesystem::path customlog(extension->getLogPath());
@@ -44,7 +45,7 @@ bool LOG::init(AbstractExt *extension, const std::string init_str)
 }
 
 
-void LOG::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void LOG::callProtocol(std::string input_str, std::string &result)
 {
 	logger->info(input_str.c_str());
 	result = "[1]";

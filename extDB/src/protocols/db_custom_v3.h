@@ -34,7 +34,7 @@ class DB_CUSTOM_V3: public AbstractProtocol
 {
 	public:
 		bool init(AbstractExt *extension, const std::string init_str);
-		void callProtocol(AbstractExt *extension, std::string input_str, std::string &result);
+		void callProtocol(std::string input_str, std::string &result);
 		
 	private:
 		Poco::MD5Engine md5;
@@ -53,6 +53,6 @@ class DB_CUSTOM_V3: public AbstractProtocol
 		};
 		boost::unordered_map<std::string, Template_Calls> custom_protocol;
 
-		void callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result);
+		void callCustomProtocol(boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result);
 		void getBEGUID(std::string &input_str, std::string &result);
 };

@@ -411,7 +411,6 @@ Rcon::Rcon(std::string address, int port, std::string password)
 		
 	char *passwd = new char[password.size()+1] ;
 	std::strcpy(passwd, password.c_str());
-	delete []rcon_login.password;
 	rcon_login.password = passwd;
 		
 	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);

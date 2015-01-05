@@ -94,26 +94,22 @@ namespace Sqf
 #ifdef TEST_SANITIZE_APP
 int main(int nNumberofArgs, char* pszArgs[])
 {
-	//SqfValueParser test_parser;
-
-	std::string result;
+	std::string input_str;
 	for (;;) {
-		char input_str[100];
-		std::cin.getline(input_str, sizeof(input_str));
-		if (std::string(input_str) == "quit")
+		std::getline(std::cin, input_str);
+		if (input_str == "quit")
 		{
 			break;
 		}
 		else
 		{
-			result = input_str;
-			if (Sqf::check(result))
+			if (Sqf::check(input_str))
 			{
-				std::cout << "extDB: True " << result << std::endl;
+				std::cout << "extDB: True: " << input_str << std::endl;
 			}
 			else
 			{
-				std::cout << "extDB: False " << result << std::endl;
+				std::cout << "extDB: False: " << input_str << std::endl;
 			}
 		}
 	}

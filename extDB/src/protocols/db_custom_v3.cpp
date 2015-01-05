@@ -47,15 +47,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 {
+	extension_ptr = extension;
+
 	db_custom_name = init_str;
 	
 	bool status = false;
 	
-	if (extension->getDBType() == std::string("MySQL"))
+	if (extension_ptr->getDBType() == std::string("MySQL"))
 	{
 		status = true;
 	}
-	else if (extension->getDBType() == std::string("SQLite"))
+	else if (extension_ptr->getDBType() == std::string("SQLite"))
 	{
 		status =  true;
 	}
@@ -63,9 +65,9 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 	{
 		// DATABASE NOT SETUP YET
 		#ifdef TESTING
-			extension->console->warn("extDB: DB_CUSTOM_V3: No Database Connection");
+			extension_ptr->console->warn("extDB: DB_CUSTOM_V3: No Database Connection");
 		#endif
-		extension->logger->warn("extDB: DB_CUSTOM_V3: No Database Connection");
+		extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: No Database Connection");
 		return false;
 	}
 
@@ -73,13 +75,13 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 	if (init_str.empty()) 
 	{
 		#ifdef TESTING
-			extension->console->warn("extDB: DB_CUSTOM_V3: Missing Init Parameter");
+			extension_ptr->console->warn("extDB: DB_CUSTOM_V3: Missing Init Parameter");
 		#endif
-		extension->logger->warn("extDB: DB_CUSTOM_V3: Missing Init Parameter");
+		extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: Missing Init Parameter");
 		return false;
 	}
 	
-	boost::filesystem::path extension_path(extension->getExtensionPath());
+	boost::filesystem::path extension_path(extension_ptr->getExtensionPath());
 	extension_path /= "extDB";
 	extension_path /= "db_custom";
 
@@ -231,9 +233,9 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 						{
 							status = false;
 							#ifdef TESTING
-								extension->console->warn("extDB: DB_CUSTOM_V3: Invalid Bad Strings Action for {0} : {1}", call_name, custom_protocol[call_name].bad_chars_action);
+								extension_ptr->console->warn("extDB: DB_CUSTOM_V3: Invalid Bad Strings Action for {0} : {1}", call_name, custom_protocol[call_name].bad_chars_action);
 							#endif
-							extension->logger->warn("extDB: DB_CUSTOM_V3: Invalid Bad Strings Action for {0} : {1}", call_name, custom_protocol[call_name].bad_chars_action);
+							extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: Invalid Bad Strings Action for {0} : {1}", call_name, custom_protocol[call_name].bad_chars_action);
 						}
 					}
 				}
@@ -242,27 +244,27 @@ bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
 			{
 				status = false;
 				#ifdef TESTING
-					extension->console->warn("extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version: {0}", db_template_file);
+					extension_ptr->console->warn("extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version: {0}", db_template_file);
 				#endif
-				extension->logger->warn("extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version: {0}", db_template_file);
+				extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: Template File Missing Incompatiable Version: {0}", db_template_file);
 			}
 		}
 		else
 		{
 			status = false;
 			#ifdef TESTING
-				extension->console->warn("extDB: DB_CUSTOM_V3: Template File Missing Default Options: {0}", db_template_file);
+				extension_ptr->console->warn("extDB: DB_CUSTOM_V3: Template File Missing Default Options: {0}", db_template_file);
 			#endif
-			extension->logger->warn("extDB: DB_CUSTOM_V3: Template File Missing Default Options: {0}", db_template_file);
+			extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: Template File Missing Default Options: {0}", db_template_file);
 		}
 	}
 	else 
 	{
 		status = false;
 		#ifdef TESTING
-			extension->console->warn("extDB: DB_CUSTOM_V3: No Template File Found: {0}", db_template_file);
+			extension_ptr->console->warn("extDB: DB_CUSTOM_V3: No Template File Found: {0}", db_template_file);
 		#endif
-		extension->logger->warn("extDB: DB_CUSTOM_V3: No Template File Found: {0}", db_template_file);
+		extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: No Template File Found: {0}", db_template_file);
 	}
 	return status;
 }
@@ -314,11 +316,11 @@ void DB_CUSTOM_V3::getBEGUID(std::string &input_str, std::string &result)
 }
 
 
-void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result)
+void DB_CUSTOM_V3::callCustomProtocol(boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result)
 {
 	result.clear();
 	
-	Poco::Data::Session session = extension->getDBSession_mutexlock();
+	Poco::Data::Session session = extension_ptr->getDBSession_mutexlock();
 	Poco::Data::Statement sql_current(session);
 
 	for(std::vector< std::list<Poco::DynamicAny> >::const_iterator it_sql_statements_vector = itr->second.sql_statements.begin(); it_sql_statements_vector != itr->second.sql_statements.end(); ++it_sql_statements_vector)
@@ -386,78 +388,78 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 			catch (Poco::InvalidAccessException& e)
 			{
 				#ifdef TESTING
-					extension->console->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: {0}", e.displayText());
-					extension->console->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: SQL: {0}", sql_str);
+					extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: {0}", e.displayText());
+					extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: SQL: {0}", sql_str);
 				#endif
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: {0}", e.displayText());
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: SQL: {0}", sql_str);
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: {0}", e.displayText());
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error InvalidAccessException: SQL: {0}", sql_str);
 				result = "[0,\"Error DBLocked Exception\"]";
 				break;
 			}
 			catch (Poco::NotImplementedException& e)
 			{
 				#ifdef TESTING
-					extension->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
-					extension->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
+					extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+					extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
 
 				#endif
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: SQL: {0}", sql_str);
 				result = "[0,\"Error DBLocked Exception\"]";
 				break;
 			}
 			catch (Poco::Data::SQLite::DBLockedException& e)
 			{
 				#ifdef TESTING
-					extension->console->error("extDB: DB_CUSTOM_V3: Error DBLockedException: {0}", e.displayText());
-					extension->logger->error("extDB: DB_CUSTOM_V3: Error DBLockedException: SQL: {0}", sql_str);
+					extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error DBLockedException: {0}", e.displayText());
+					extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error DBLockedException: SQL: {0}", sql_str);
 				#endif
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error DBLockedException: {0}", e.displayText());
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error DBLockedException: SQL: {0}", sql_str);
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error DBLockedException: {0}", e.displayText());
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error DBLockedException: SQL: {0}", sql_str);
 				result = "[0,\"Error DBLocked Exception\"]";
 				break;
 			}
 			catch (Poco::Data::MySQL::ConnectionException& e)
 			{
 				#ifdef TESTING
-					extension->console->error("extDB: DB_CUSTOM_V3: Error ConnectionException: {0}", e.displayText());
-					extension->logger->error("extDB: DB_CUSTOM_V3: Error ConnectionException: SQL: {0}", sql_str);
+					extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error ConnectionException: {0}", e.displayText());
+					extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error ConnectionException: SQL: {0}", sql_str);
 				#endif
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error ConnectionException: {0}", e.displayText());
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error ConnectionException: SQL: {0}", sql_str);
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error ConnectionException: {0}", e.displayText());
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error ConnectionException: SQL: {0}", sql_str);
 				result = "[0,\"Error Connection Exception\"]";
 				break;
 			}
 			catch(Poco::Data::MySQL::StatementException& e)
 			{
 				#ifdef TESTING
-					extension->console->error("extDB: DB_CUSTOM_V3: Error StatementException: {0}", e.displayText());
-					extension->logger->error("extDB: DB_CUSTOM_V3: Error StatementException: SQL: {0}", sql_str);
+					extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error StatementException: {0}", e.displayText());
+					extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error StatementException: SQL: {0}", sql_str);
 				#endif
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error StatementException: {0}", e.displayText());
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error StatementException: SQL: {0}", sql_str);
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error StatementException: {0}", e.displayText());
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error StatementException: SQL: {0}", sql_str);
 				result = "[0,\"Error Statement Exception\"]";
 				break;
 			}
 			catch (Poco::Data::DataException& e)
 			{
 				#ifdef TESTING
-					extension->console->error("extDB: DB_CUSTOM_V3: Error DataException: {0}", e.displayText());
-					extension->logger->error("extDB: DB_CUSTOM_V3: Error DataException: SQL: {0}", sql_str);
+					extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error DataException: {0}", e.displayText());
+					extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error DataException: SQL: {0}", sql_str);
 				#endif
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error DataException: {0}", e.displayText());
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error DataException: SQL: {0}", sql_str);
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error DataException: {0}", e.displayText());
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error DataException: SQL: {0}", sql_str);
 				result = "[0,\"Error Data Exception\"]";
 				break;
 			}
 			catch (Poco::Exception& e)
 			{
 				#ifdef TESTING
-					extension->console->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
-					extension->console->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
+					extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+					extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
 				#endif
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
-				extension->logger->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+				extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error Exception: SQL: {0}", sql_str);
 				result = "[0,\"Error Exception\"]";
 				break;
 			}
@@ -468,80 +470,99 @@ void DB_CUSTOM_V3::callCustomProtocol(AbstractExt *extension, boost::unordered_m
 		}
 	}
 
-	if (result.empty())
+	try
 	{
-		Poco::Data::RecordSet rs(sql_current);
-
-		result = "[1,[";
-		std::size_t cols = rs.columnCount();
-		if (cols >= 1)
+		if (result.empty())
 		{
-			bool more = rs.moveFirst();
-			while (more)
-			{
-				result += "[";
-				for (std::size_t col = 0; col < cols; ++col)
-				{
-					std::string temp_str = rs[col].convert<std::string>();
+			Poco::Data::RecordSet rs(sql_current);
 
-					if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
+			result = "[1,[";
+			std::size_t cols = rs.columnCount();
+			if (cols >= 1)
+			{
+				bool more = rs.moveFirst();
+				while (more)
+				{
+					result += "[";
+					for (std::size_t col = 0; col < cols; ++col)
 					{
-						if (temp_str.empty())
+						std::string temp_str = rs[col].convert<std::string>();
+
+						if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
 						{
-							result += ("\"\"");
+							if (temp_str.empty())
+							{
+								result += ("\"\"");
+							}
+							else
+							{
+								result += "\"" + temp_str + "\"";
+							}
 						}
 						else
 						{
-							result += "\"" + temp_str + "\"";
+							if (temp_str.empty())
+							{
+								result += ("\"\"");
+							}
+							else
+							{
+								result += temp_str;
+							}
 						}
+
+						if (col < (cols - 1))
+						{
+							result += ",";
+						}
+					}
+					more = rs.moveNext();
+					if (more)
+					{
+						result += "],";
 					}
 					else
 					{
-						if (temp_str.empty())
-						{
-							result += ("\"\"");
-						}
-						else
-						{
-							result += temp_str;
-						}
+						result += "]";
 					}
-
-					if (col < (cols - 1))
-					{
-						result += ",";
-					}
-				}
-				more = rs.moveNext();
-				if (more)
-				{
-					result += "],";
-				}
-				else
-				{
-					result += "]";
 				}
 			}
+			result += "]]";
 		}
-		result += "]]";
+	}
+	catch (Poco::NotImplementedException& e)
+	{
+		#ifdef TESTING
+			extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+		#endif
+		extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error NotImplementedException: {0}", e.displayText());
+		result = "[0,\"Error NotImplementedException\"]";
+	}
+	catch (Poco::Exception& e)
+	{
+		#ifdef TESTING
+			extension_ptr->console->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+		#endif
+		extension_ptr->logger->error("extDB: DB_CUSTOM_V3: Error Exception: {0}", e.displayText());
+		result = "[0,\"Error Exception\"]";
 	}
 	
 	#ifdef TESTING
-		extension->console->info("extDB: DB_CUSTOM_V3: Trace: Result: {0}", result);
+		extension_ptr->console->info("extDB: DB_CUSTOM_V3: Trace: Result: {0}", result);
 	#endif
 	#ifdef DEBUG_LOGGING
-		extension->logger->info("extDB: DB_CUSTOM_V3: Trace: Result: {0}", result);
+		extension_ptr->logger->info("extDB: DB_CUSTOM_V3: Trace: Result: {0}", result);
 	#endif
 }
 
 
-void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, std::string &result)
+void DB_CUSTOM_V3::callProtocol(std::string input_str, std::string &result)
 {
 	#ifdef TESTING
-		extension->console->info("extDB: DB_CUSTOM_V3: Trace: Input: {0}", input_str);
+		extension_ptr->console->info("extDB: DB_CUSTOM_V3: Trace: Input: {0}", input_str);
 	#endif
 	#ifdef DEBUG_LOGGING
-		extension->logger->info("extDB: DB_CUSTOM_V3: Trace: Input: {0}", input_str);
+		extension_ptr->logger->info("extDB: DB_CUSTOM_V3: Trace: Input: {0}", input_str);
 	#endif
 
 	Poco::StringTokenizer tokens(input_str, ":");
@@ -551,14 +572,14 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 	if (itr == custom_protocol.end())
 	{
 		result = "[0,\"Error No Custom Call Not Found\"]";
-		extension->logger->warn("extDB: DB_CUSTOM_V3: Error No Custom Call Not Found: {0}", input_str);
+		extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: Error No Custom Call Not Found: {0}", input_str);
 	}
 	else
 	{
 		if (itr->second.number_of_inputs != (token_count - 1))
 		{
 			result = "[0,\"Error Incorrect Number of Inputs\"]";
-			extension->logger->warn("extDB: DB_CUSTOM_V3: Incorrect Number of Inputs: {0}", input_str);
+			extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: Incorrect Number of Inputs: {0}", input_str);
 		}
 		else
 		{
@@ -597,8 +618,8 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 
 					if (input_value_str != tokens[i])
 					{
-						extension->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Input: {0}", input_str);
-						extension->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Token: {0}", tokens[i]);
+						extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Input: {0}", input_str);
+						extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Token: {0}", tokens[i]);
 					}
 
 					// Add String to List
@@ -619,8 +640,8 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 
 					if (input_value_str != tokens[i])
 					{
-						extension->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Input: {0}", input_str);
-						extension->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Token: {0}", tokens[i]);
+						extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Input: {0}", input_str);
+						extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: Error Bad Char Detected: Token: {0}", tokens[i]);
 						bad_chars_error = true;
 					}
 
@@ -639,11 +660,11 @@ void DB_CUSTOM_V3::callProtocol(AbstractExt *extension, std::string input_str, s
 			if (!(bad_chars_error))
 			{
 				bool sanitize_value_check_ok = true;
-				callCustomProtocol(extension, itr, inputs, sanitize_value_check_ok, result);
+				callCustomProtocol(itr, inputs, sanitize_value_check_ok, result);
 				if (!sanitize_value_check_ok)
 				{
 					result = "[0,\"Error Values Input is not sanitized\"]";
-					extension->logger->warn("extDB: DB_CUSTOM_V3: Sanitize Check error: Input: {0}", input_str);
+					extension_ptr->logger->warn("extDB: DB_CUSTOM_V3: Sanitize Check error: Input: {0}", input_str);
 				}
 			}
 			else
