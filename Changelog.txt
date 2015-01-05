@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 29
 	CHANGED: 9:ADD Protocol, now checks if Protocol Name already exists
 	
@@ -14,24 +12,19 @@
 	FIXED : extDB2 Linux Builds
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
 28
 	ADDED: Support for MySQL Secure Auth, default = false
 	
 	CHANGED: Disabled Rcon Code
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------  
->>>>>>> dev
 27
 	CHANGED: DB_CUSTOM_V5 version bumped up to 7
 	FIXED: Database Session Leak (v22->26 are effected)
 	
 	UPDATED: Added more exception handling
 
-<<<<<<< HEAD
-=======
 ------------------------------------------------------------------------------------------------------------------------------------------------------------  
->>>>>>> dev
 26
 	UPDATED: LOG PROTOCOL, 9:ADD:LOG:LOG:<filename>, 1:LOG:BANLOG:ban.log individual log files.
 	UPDATED: DB_CUSTOM_V5: added Setting Strip = true/false
@@ -49,19 +42,13 @@
 	
 	ADDED: extDB2 Builds using Poco Library 1.6
 
-<<<<<<< HEAD
-25
-	READDED: DB_CUSTOM_V3 was removed by mistake
-	FIXED: DB_CUSTOM_V5 INPUT STRING Option
-
-=======
 ------------------------------------------------------------------------------------------------------------------------------------------------------------  
+
 25
 	RE-ADDED: DB_CUSTOM_V3 was removed by mistake
 	FIXED: DB_CUSTOM_V5 INPUT STRING Option
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------  
->>>>>>> dev
 24
 
 	ADDED: 9:LOCK_STATUS returns [1] if Locked or [0] if Unlocked.  
