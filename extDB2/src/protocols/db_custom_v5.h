@@ -54,7 +54,7 @@ class DB_CUSTOM_V5: public AbstractProtocol
 			bool strip = false;
 		};
 		
-		struct PS_Template_Call {
+		struct Template_Call {
 			bool input_sanitize_value_check;
 			bool output_sanitize_value_check;
 
@@ -72,12 +72,14 @@ class DB_CUSTOM_V5: public AbstractProtocol
 			std::vector< Value_Options > sql_outputs_options;
 		};
 
-		std::unordered_map<std::string, PS_Template_Call> custom_protocol;
+		typedef std::unordered_map<std::string, Template_Call> Custom_Call_UnorderedMap;
 
-		void callCustomProtocol(std::string call_name, std::unordered_map<std::string, PS_Template_Call>::const_iterator itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result);
+		Custom_Call_UnorderedMap custom_calls;
+
+		void callCustomProtocol(std::string call_name, std::unordered_map<std::string, Template_Call>::const_iterator custom_protocol_itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result);
 		void executeSQL(Poco::Data::Statement &sql_statement, std::string &result, bool &status);
 
 		void getBEGUID(std::string &input_str, std::string &result);
 		void toArrayAltisLifeRpg(std::string &input_str, std::string &result, bool ToArray);
-		void getResult(std::unordered_map<std::string, PS_Template_Call>::const_iterator itr, Poco::Data::Statement &sql_statement, std::string &result);
+		void getResult(std::unordered_map<std::string, Template_Call>::const_iterator &custom_protocol_itr, Poco::Data::Statement &sql_statement, std::string &result);
 };
