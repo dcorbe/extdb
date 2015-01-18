@@ -44,6 +44,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <cstring>
 #include <iostream>
+#include <cstdlib>
 
 #include "uniqueid.h"
 
@@ -139,7 +140,6 @@ Ext::Ext(std::string dll_path) {
 		std::string log_filename = Poco::DateTimeFormatter::format(now, "%H-%M-%S.log");
 
 		boost::filesystem::path log_relative_path;
-
 		log_relative_path = boost::filesystem::path(extDB_path);
 		log_relative_path /= "extDB";
 		log_relative_path /= "logs";
@@ -150,11 +150,23 @@ Ext::Ext(std::string dll_path) {
 		boost::filesystem::create_directories(log_relative_path);
 		log_relative_path /= log_filename;
 
-		auto logger_temp = spdlog::daily_logger_mt("extDB File Logger", log_relative_path.make_preferred().string(), true);
-		auto console_temp = spdlog::stdout_logger_mt("extDB Console logger");
+		std::string extDB_belog_path;
+		boost::filesystem::path belog_relative_path;
+		belog_relative_path = boost::filesystem::path(extDB_path);
+		belog_relative_path /= "extDB";
+		belog_relative_path /= "logs";
+		belog_relative_path /= Poco::DateTimeFormatter::format(now, "%Y");
+		belog_relative_path /= Poco::DateTimeFormatter::format(now, "%n");
+		belog_relative_path /= Poco::DateTimeFormatter::format(now, "%d");
+		extDB_belog_path = belog_relative_path.make_preferred().string();
+		boost::filesystem::create_directories(belog_relative_path);
+		belog_relative_path /= log_filename;
 
-		logger.swap(logger_temp);
+		auto console_temp = spdlog::stdout_logger_mt("extDB Console logger");
+		auto logger_temp = spdlog::daily_logger_mt("extDB File Logger", log_relative_path.make_preferred().string(), true);
+
 		console.swap(console_temp);
+		logger.swap(logger_temp);
 
 		spdlog::set_level(spdlog::level::info);
 		spdlog::set_pattern("[%H:%M:%S %z] [Thread %t] %v");
@@ -195,12 +207,21 @@ Ext::Ext(std::string dll_path) {
 				logger->info("extDB: Creating Worker Thread +1");
 			}
 
+			if (boost::iequals(pConf->getString("Log.Mode", "sync"), "async") == 1)
+			{
+				std::size_t q_size = 1048576; //queue size must be power of 2
+				spdlog::set_async_mode(q_size);
+			}
+
 			if (pConf->getBool("Rcon.Enable", false))
 			{
+				auto belogger_temp = spdlog::daily_logger_mt("extDB BE File Logger", belog_relative_path.make_preferred().string(), true);
+				belogger.swap(belogger_temp);
 				extdb_connectors_info.rcon = true;
-				serverRcon.reset(new Rcon(std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password")));
+				serverRcon.reset(new Rcon(logger, std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password")));
 				serverRcon->run();
 			}
+
 
 			#ifdef _WIN32
 				if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
@@ -433,7 +454,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::getVersion() const
 {
-	return "29";
+	return "30";
 }
 
 
