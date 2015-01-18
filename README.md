@@ -1,6 +1,6 @@
 ## Arma3 Extension DB  C++ (windows / linux)   v29  
 
-I got bored waiting on 2017 / Epoch for Arma3.
+I got bored waiting on 2017 / Epoch for Arma3.  
 So i decided to write up an C++ Extension for Arma3server.
 
 
@@ -42,10 +42,6 @@ Windows 7 + Later
 
 Install vcredist_x86.exe @ http://www.microsoft.com/en-ie/download/details.aspx?id=40784  
 
-#### Crash C000005 ACCESS_VIOLATION
-extDB doesn't work well with large datatypes in Database...  
-   Check for Longtext (4GB) change it to MediumText / Text  
-This only effects extDB and not extDB2
  
 #### Using Fred's Malloc
 extDB is incompatible with https://github.com/fred41/tbbmalloc_arma.  
