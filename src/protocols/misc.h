@@ -50,7 +50,7 @@ class MISC: public AbstractProtocol
 
 		void getDateTime(std::string &result);
 		void getDateTime(int hours, std::string &result);
-		//std::string getAdler32(std::string &input_str);
+
 		void getCrc32(std::string &input_str, std::string &result);
 		void getMD4(std::string &input_str, std::string &result);
 		void getMD5(std::string &input_str, std::string &result);

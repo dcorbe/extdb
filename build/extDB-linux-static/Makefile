@@ -4,10 +4,10 @@ STATIC_LIBRARYS := -lPocoCrypto -lPocoUtil -lPocoDataMySQL -lPocoDataSQLite -lPo
 DYNAMIC_LIBRARYS := -ldl -pthread -ltbbmalloc
 FILES := src/memory_allocator.cpp src/uniqueid.cpp src/rcon.cpp src/sanitize.cpp src/ext.cpp src/protocols/*.cpp 
 
-extdb2-static:
+extdb-static:
 	$(COMPILER) $(CFLAGS) -shared -static-libstdc++ -static-libgcc -o extDB2.so $(FILES) src/main.cpp -Wl,-Bstatic $(STATIC_LIBRARYS) -Wl,-Bdynamic $(DYNAMIC_LIBRARYS)
 
-extdb2-static-debug-logging:
+extdb-static-debug-logging:
 	$(COMPILER) $(CFLAGS) -shared -static-libstdc++ -static-libgcc -o extDB2.so $(FILES) src/main.cpp -DDEBUG_LOGGING -Wl,-Bstatic $(STATIC_LIBRARYS) -Wl,-Bdynamic $(DYNAMIC_LIBRARYS)
 
 test:
