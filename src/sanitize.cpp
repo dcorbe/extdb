@@ -32,7 +32,6 @@ namespace
 	{
 		SqfValueParser() : SqfValueParser::base_type(start,"Sqf::Value")
 		{
-			boost::spirit::qi::lexeme["'" >> *(boost::spirit::ascii::char_("a-zA-Z_0-9") - "'") >> "'"];
 			quoted_string = boost::spirit::qi::lexeme['"' >> *(boost::spirit::ascii::char_ - '"') >> '"'] | boost::spirit::qi::lexeme["'" >> *(boost::spirit::ascii::char_ - "'") >> "'"];
 			quoted_string.name("quoted_string");
 

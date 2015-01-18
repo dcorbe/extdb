@@ -16,18 +16,38 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#pragma once
+#include "log.h"
 
-#include "abstract_ext.h"
 
-class AbstractProtocol
+bool LOG::init(AbstractExt *extension, const std::string init_str)
 {
-	public:
-		AbstractProtocol();
-		virtual ~AbstractProtocol();
+	extension_ptr = extension;
+	if (!(init_str.empty()))
+	{
+		boost::filesystem::path customlog(extension->getLogPath());
+		customlog /= init_str;
 
-		virtual bool init(AbstractExt *extension, const std::string init_str)=0;
-		virtual void callProtocol(std::string input_str, std::string &result)=0;
+		if (customlog.parent_path().make_preferred().string() == extension->getLogPath())
+		{
+			auto logger_temp = spdlog::daily_logger_mt(init_str, customlog.make_preferred().string(), true);
+			logger.swap(logger_temp);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		logger = extension->logger;
+		return true;
+	}
+}
 
-		AbstractExt *extension_ptr;	
-};
+
+void LOG::callProtocol(std::string input_str, std::string &result)
+{
+	logger->info(input_str.c_str());
+	result = "[1]";
+}

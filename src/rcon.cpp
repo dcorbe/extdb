@@ -144,6 +144,7 @@ void Rcon::mainLoop()
 			{
 				if (buffer[8] == 0x01)
 				{
+					logger_console->warn("Rcon: Logged In");
 					logged_in = true;
 					rcon_timer.restart();
 				}
@@ -294,6 +295,7 @@ void Rcon::mainLoop()
 				if (elapsed_seconds >= 45)
 				{
 					logger_console->warn("Rcon: TIMED OUT...");
+					rcon_timer.restart();
 					connect();
 				}
 				else if (elapsed_seconds >= 30)
@@ -362,6 +364,8 @@ void Rcon::run()
 
 void Rcon::connect()
 {
+	logged_in = false;
+
 	// Connect
 	Poco::Net::SocketAddress sa(rcon_login.address, rcon_login.port);
 	dgs.connect(sa);

@@ -41,6 +41,7 @@ while{_loop} do
 		while{true} do {
 			_pipe = "extDB" callExtension format["5:%1", _key];
 			if(_pipe == "") exitWith {_loop = false};
+			_queryResult = _queryResult + _pipe;
 		};
 	}
 	else

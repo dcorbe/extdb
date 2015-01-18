@@ -188,7 +188,7 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 							{
 								if (numberOfVariables == 0)
 								{
-									result = "[1,";
+									result = "[";
 								}
 								// Break outof Loop if already tried 10 times
 								--i;
@@ -207,7 +207,6 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 							}
 							uniqueRandomVarNames.push_back(randomString);
 							numOfRetrys = 0;
-							std::cout << result << std::endl;
 						}
 					}
 				}
