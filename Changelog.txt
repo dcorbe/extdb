@@ -1,3 +1,11 @@
+32
+	ADDED: Better exception handling for when adding Database
+
+	FIXED: DB_CUSTOM_V5 Input String Option wasn't stripping ""
+	FIXED: DB_CUSTOM_V5 Input Sanitize Checks (was reversed results)
+	FIXED: Improved DB_CUSTOM_V5 Error Messages
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 31
 	FIXED: Shutdowns of extension
 	FIXED: NULL Values once returned ""
@@ -6,7 +14,7 @@
 30
 	ADDED: Option for ASync Logging i.e buffered log syncs to harddrive
 	
-	FIXED: MISC Log will now log to extDB logs if no filename given (old behaviour)
+	FIXED: LOG will now log to extDB logs if no filename given (old behaviour)
 	FIXED: MISC Random String + Random Unique String, was returning 1 for first value by mistake.
 	
 	REMOVED: old extDB builds, extDB2 builds renamed to extDB
