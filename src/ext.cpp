@@ -435,12 +435,30 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			}
 		}
 	}
+	catch (Poco::Data::NotConnectedException& e)
+	{
+		#ifdef TESTING
+			console->error("extDB: Database NotConnectedException Error: {0}", e.displayText());
+		#endif
+		logger->error("extDB: Database NotConnectedException Error: {0}", e.displayText());
+		db_conn_info = DBConnectionInfo();
+		std::strcpy(output, "[0,\"Database NotConnectedException Error\"]");
+	}
+	catch (Poco::Data::MySQL::ConnectionException& e)
+	{
+		#ifdef TESTING
+			console->error("extDB: Database ConnectionException Error: {0}", e.displayText());
+		#endif
+		logger->error("extDB: Database ConnectionException Error: {0}", e.displayText());
+		db_conn_info = DBConnectionInfo();
+		std::strcpy(output, "[0,\"Database ConnectionException Error\"]");
+	}
 	catch (Poco::Exception& e)
 	{
 		#ifdef TESTING
-			console->error("extDB: Database Setup Failed: {0}", e.displayText());
+			console->error("extDB: Database Exception Error: {0}", e.displayText());
 		#endif
-		logger->error("extDB: Database Setup Failed: {0}", e.displayText());
+		logger->error("extDB: Database Exception Error: {0}", e.displayText());
 		db_conn_info = DBConnectionInfo();
 		std::strcpy(output, "[0,\"Database Exception Error\"]");
 	}
@@ -449,7 +467,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::getVersion() const
 {
-	return "31";
+	return "32";
 }
 
 
