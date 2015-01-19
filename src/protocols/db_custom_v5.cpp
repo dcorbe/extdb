@@ -810,7 +810,9 @@ void DB_CUSTOM_V5::callProtocol(std::string input_str, std::string &result)
 	{
 		// NO CALLNAME FOUND IN PROTOCOL
 		result = "[0,\"Error No Custom Call Not Found\"]";
-		extension_ptr->logger->warn("extDB: DB_CUSTOM_V5: Error No Custom Call Not Found: {0}", input_str);
+		extension_ptr->logger->warn("extDB: DB_CUSTOM_V5: Error No Custom Call Not Found: Input String {0}", input_str);
+		extension_ptr->logger->warn("extDB: DB_CUSTOM_V5: Error No Custom Call Not Found: Callname {0}", tokens[0]);
+
 	}
 	else
 	{
@@ -819,7 +821,8 @@ void DB_CUSTOM_V5::callProtocol(std::string input_str, std::string &result)
 		{
 			// BAD Number of Inputs
 			result = "[0,\"Error Incorrect Number of Inputs\"]";
-			extension_ptr->logger->warn("extDB: DB_CUSTOM_V5:Incorrect Number of Inputs: {0}", input_str);
+			extension_ptr->logger->warn("extDB: DB_CUSTOM_V5:Incorrect Number of Inputs: Input String {0}", input_str);
+			extension_ptr->logger->warn("extDB: DB_CUSTOM_V5:Incorrect Number of Inputs: Expected: {0} Got: {1]", custom_calls_itr->second.number_of_inputs, tokens.count());
 		}
 		else
 		{
@@ -888,6 +891,7 @@ void DB_CUSTOM_V5::callProtocol(std::string input_str, std::string &result)
 							}
 							else
 							{
+								boost::erase_all(temp_str, "\"");
 								temp_str = "\"" + temp_str + "\"";
 							}
 						}
@@ -895,8 +899,9 @@ void DB_CUSTOM_V5::callProtocol(std::string input_str, std::string &result)
 							// SANITIZE CHECK
 						if (custom_calls_itr->second.sql_inputs_options[i][x].check)
 						{
-							abort_status = Sqf::check(temp_str);
-							extension_ptr->logger->warn("extDB: DB_CUSTOM_V5: Sanitize Check error: Input: {0}", input_str);
+							abort_status = !(Sqf::check(temp_str));
+							extension_ptr->logger->warn("extDB: DB_CUSTOM_V5: Sanitize Check Error: Input: {0}", input_str);
+							extension_ptr->logger->warn("extDB: DB_CUSTOM_V5: Sanitize Check Error: Value: {0}", temp_str);
 							result = "[0,\"Error Values Input is not sanitized\"]";
 						}
 						processed_inputs.push_back(std::move(temp_str));
