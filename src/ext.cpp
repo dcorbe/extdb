@@ -265,23 +265,18 @@ void Ext::stop()
 	logger->info("extDB: Stopping ...");
 	io_service.stop();
 	threads.join_all();
-
 	if (extdb_connectors_info.mysql)
 	{
-		Poco::Data::MySQL::Connector::unregisterConnector();
-		//extdb_connectors_info.sqlite = false;
+		//Poco::Data::MySQL::Connector::unregisterConnector();
 	}
 	if (extdb_connectors_info.sqlite)
 	{
 		Poco::Data::SQLite::Connector::unregisterConnector();
-		//extdb_connectors_info.sqlite = false;
 	}
 	if (extdb_connectors_info.rcon)
 	{
 		serverRcon->disconnect();
-		//extdb_connectors_info.rcon = false;
 	}
-
 	unordered_map_protocol.clear();
 	unordered_map_wait.clear();
 	unordered_map_results.clear();
@@ -454,7 +449,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 
 std::string Ext::getVersion() const
 {
-	return "30";
+	return "31";
 }
 
 
@@ -1102,9 +1097,8 @@ int main(int nNumberofArgs, char* pszArgs[])
 			extension->console->info("extDB: {0}", result);			
 		}
 	}
-	extension->console->info("extDB: Quiting Please Wait", result);
+	extension->console->info("extDB: Quitting Please Wait", result);
 	extension->stop();
-	//delete extension;
 	return 0;
 }
 #endif

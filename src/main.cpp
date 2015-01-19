@@ -55,7 +55,7 @@ namespace {
 		case DLL_THREAD_DETACH:
 			break;
 		case DLL_PROCESS_DETACH:
-			//extension->stop();
+			extension->stop();
 			break;
 		}
 		return TRUE;
