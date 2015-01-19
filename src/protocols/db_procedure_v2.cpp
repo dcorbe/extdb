@@ -153,6 +153,7 @@ void DB_PROCEDURE_V2::callProtocol(std::string input_str, std::string &result)
 					sql << sql_str_procedure, Poco::Data::Keywords::now;
 
 					result = "[1,[";
+					std::string temp_str;
 
 					if (num_of_outputs > 0)
 					{
@@ -174,8 +175,15 @@ void DB_PROCEDURE_V2::callProtocol(std::string input_str, std::string &result)
 								result += "[";
 								for (std::size_t col = 0; col < cols; ++col)
 								{
-									std::string temp_str = rs[col].convert<std::string>();
-									
+									if (rs[col].isEmpty())
+									{
+										temp_str.clear();
+									}
+									else
+									{
+										temp_str = rs[col].convert<std::string>();
+									}
+
 									if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
 									{
 										if (temp_str.empty())

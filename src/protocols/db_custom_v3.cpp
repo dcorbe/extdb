@@ -488,6 +488,8 @@ void DB_CUSTOM_V3::callCustomProtocol(boost::unordered_map<std::string, Template
 			Poco::Data::RecordSet rs(sql_current);
 
 			result = "[1,[";
+			std::string temp_str;
+
 			std::size_t cols = rs.columnCount();
 			if (cols >= 1)
 			{
@@ -497,7 +499,14 @@ void DB_CUSTOM_V3::callCustomProtocol(boost::unordered_map<std::string, Template
 					result += "[";
 					for (std::size_t col = 0; col < cols; ++col)
 					{
-						std::string temp_str = rs[col].convert<std::string>();
+						if (rs[col].isEmpty())
+						{
+							temp_str.clear();
+						}
+						else
+						{
+							temp_str = rs[col].convert<std::string>();
+						}
 
 						if ((itr->second.string_datatype_check) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
 						{

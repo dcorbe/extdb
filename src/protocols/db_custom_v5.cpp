@@ -463,6 +463,8 @@ void DB_CUSTOM_V5::getResult(Custom_Call_UnorderedMap::const_iterator &custom_ca
 		Poco::Data::RecordSet rs(sql_statement);
 
 		result = "[1,[";
+		std::string temp_str;
+
 		std::size_t cols = rs.columnCount();
 		if (cols >= 1)
 		{
@@ -474,7 +476,14 @@ void DB_CUSTOM_V5::getResult(Custom_Call_UnorderedMap::const_iterator &custom_ca
 
 				for (std::size_t col = 0; col < cols; ++col)
 				{
-					std::string temp_str = rs[col].convert<std::string>();
+					if (rs[col].isEmpty())
+					{
+						temp_str.clear();
+					}
+					else
+					{
+						temp_str = rs[col].convert<std::string>();
+					}
 					
 					// NO OUTPUT OPTIONS 
 					if (col >= sql_output_options_size)
