@@ -1,8 +1,13 @@
+31
+	FIXED: Shutdowns of extension
+	FIXED: NULL Values once returned ""
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 30
 	ADDED: Option for ASync Logging i.e buffered log syncs to harddrive
 	
 	FIXED: MISC Log will now log to extDB logs if no filename given (old behaviour)
-	FIXED: MISC Random String + Random Unique String, was return 1 for first value by mistake.
+	FIXED: MISC Random String + Random Unique String, was returning 1 for first value by mistake.
 	
 	REMOVED: old extDB builds, extDB2 builds renamed to extDB
 	
