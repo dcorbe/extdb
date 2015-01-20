@@ -696,8 +696,6 @@ void DB_CUSTOM_V5::executeSQL(Poco::Data::Statement &sql_statement, std::string 
 
 void DB_CUSTOM_V5::callCustomProtocol(std::string call_name, Custom_Call_UnorderedMap::const_iterator custom_calls_itr, std::vector< std::vector< std::string > > &all_processed_inputs, std::string &input_str, std::string &result)
 {
-	boost::lock_guard<boost::mutex> lock(extension_ptr->mutex_poco_cached_preparedStatements);
-
 	bool status = true;
 
 	Poco::Data::SessionPool::SessionDataPtr session_data_ptr;

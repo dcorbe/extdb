@@ -63,7 +63,6 @@ Ext::Ext(std::string dll_path) {
 	try
 	{
 		mgr.reset (new IdManager);
-		extDB_lock = false;
 
 		bool conf_found = false;
 		bool conf_randomized = false;
@@ -78,13 +77,13 @@ Ext::Ext(std::string dll_path) {
 		if (boost::filesystem::exists(extDB_config_str))
 		{
 			conf_found = true;
-			extDB_path = extDB_config_path.parent_path().string();
+			extDB_info.path = extDB_config_path.parent_path().string();
 		}
 		else if (boost::filesystem::exists("extdb-conf.ini"))
 		{
 			conf_found = true;
 			extDB_config_path = boost::filesystem::path("extdb-conf.ini");
-			extDB_path = boost::filesystem::current_path().string();
+			extDB_info.path = boost::filesystem::current_path().string();
 		}
 		else
 		{
@@ -107,7 +106,7 @@ Ext::Ext(std::string dll_path) {
 								conf_found = true;
 								conf_randomized = true;
 								extDB_config_path = boost::filesystem::path(it->path().string());
-								extDB_path = boost::filesystem::path (extDB_config_str).string();
+								extDB_info.path = boost::filesystem::path (extDB_config_str).string();
 								break;
 							}
 						}
@@ -126,7 +125,7 @@ Ext::Ext(std::string dll_path) {
 								conf_found = true;
 								conf_randomized = true;
 								extDB_config_path = boost::filesystem::path(it->path().string());
-								extDB_path = boost::filesystem::current_path().string();
+								extDB_info.path = boost::filesystem::current_path().string();
 								break;
 							}
 						}
@@ -140,19 +139,19 @@ Ext::Ext(std::string dll_path) {
 		std::string log_filename = Poco::DateTimeFormatter::format(now, "%H-%M-%S.log");
 
 		boost::filesystem::path log_relative_path;
-		log_relative_path = boost::filesystem::path(extDB_path);
+		log_relative_path = boost::filesystem::path(extDB_info.path);
 		log_relative_path /= "extDB";
 		log_relative_path /= "logs";
 		log_relative_path /= Poco::DateTimeFormatter::format(now, "%Y");
 		log_relative_path /= Poco::DateTimeFormatter::format(now, "%n");
 		log_relative_path /= Poco::DateTimeFormatter::format(now, "%d");
-		extDB_log_path = log_relative_path.make_preferred().string();
+		extDB_info.log_path = log_relative_path.make_preferred().string();
 		boost::filesystem::create_directories(log_relative_path);
 		log_relative_path /= log_filename;
 
 		std::string extDB_belog_path;
 		boost::filesystem::path belog_relative_path;
-		belog_relative_path = boost::filesystem::path(extDB_path);
+		belog_relative_path = boost::filesystem::path(extDB_info.path);
 		belog_relative_path /= "extDB";
 		belog_relative_path /= "logs";
 		belog_relative_path /= Poco::DateTimeFormatter::format(now, "%Y");
@@ -189,16 +188,16 @@ Ext::Ext(std::string dll_path) {
 			#endif
 			logger->info("extDB: Found extdb-conf.ini");
 
-			steam_web_api_key = pConf->getString("Main.Steam Web API Key", "");
+			extDB_info.steam_web_api_key = pConf->getString("Main.Steam Web API Key", "");
 
 			// Start Threads + ASIO
-			max_threads = pConf->getInt("Main.Threads", 0);
-			if (max_threads <= 0)
+			extDB_info.max_threads = pConf->getInt("Main.Threads", 0);
+			if (extDB_info.max_threads <= 0)
 			{
-				max_threads = boost::thread::hardware_concurrency();
+				extDB_info.max_threads = boost::thread::hardware_concurrency();
 			}
 			io_work_ptr.reset(new boost::asio::io_service::work(io_service));
-			for (int i = 0; i < max_threads; ++i)
+			for (int i = 0; i < extDB_info.max_threads; ++i)
 			{
 				threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
 				#ifdef TESTING
@@ -217,7 +216,7 @@ Ext::Ext(std::string dll_path) {
 			{
 				auto belogger_temp = spdlog::daily_logger_mt("extDB BE File Logger", belog_relative_path.make_preferred().string(), true);
 				belogger.swap(belogger_temp);
-				extdb_connectors_info.rcon = true;
+				extDB_connectors_info.rcon = true;
 				serverRcon.reset(new Rcon(logger, std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password")));
 				serverRcon->run();
 			}
@@ -265,15 +264,15 @@ void Ext::stop()
 	logger->info("extDB: Stopping ...");
 	io_service.stop();
 	threads.join_all();
-	if (extdb_connectors_info.mysql)
+	if (extDB_connectors_info.mysql)
 	{
 		//Poco::Data::MySQL::Connector::unregisterConnector();
 	}
-	if (extdb_connectors_info.sqlite)
+	if (extDB_connectors_info.sqlite)
 	{
 		Poco::Data::SQLite::Connector::unregisterConnector();
 	}
-	if (extdb_connectors_info.rcon)
+	if (extDB_connectors_info.rcon)
 	{
 		serverRcon->disconnect();
 	}
@@ -288,7 +287,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 	try
 	{
 		// Check if already connectted to Database.
-		if (!db_conn_info.db_type.empty())
+		if (!extDB_connectors_info.default_database.db_type.empty())
 		{
 			#ifdef TESTING
 				console->warn("extDB: Already Connected to Database");
@@ -301,33 +300,33 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			if (pConf->hasOption(conf_option + ".Type"))
 			{
 				// Database
-				db_conn_info.db_type = pConf->getString(conf_option + ".Type");
+				extDB_connectors_info.default_database.db_type = pConf->getString(conf_option + ".Type");
 				std::string db_name = pConf->getString(conf_option + ".Name");
 
-				db_conn_info.min_sessions = pConf->getInt(conf_option + ".minSessions", 1);
-				if (db_conn_info.min_sessions <= 0)
+				extDB_connectors_info.default_database.min_sessions = pConf->getInt(conf_option + ".minSessions", 1);
+				if (extDB_connectors_info.default_database.min_sessions <= 0)
 				{
-					db_conn_info.min_sessions = 1;
+					extDB_connectors_info.default_database.min_sessions = 1;
 				}
-				db_conn_info.min_sessions = pConf->getInt(conf_option + ".maxSessions", 1);
-				if (db_conn_info.max_sessions <= 0)
+				extDB_connectors_info.default_database.min_sessions = pConf->getInt(conf_option + ".maxSessions", 1);
+				if (extDB_connectors_info.default_database.max_sessions <= 0)
 				{
-					db_conn_info.max_sessions = max_threads;
+					extDB_connectors_info.default_database.max_sessions = extDB_info.max_threads;
 				}
 
-				db_conn_info.idle_time = pConf->getInt(conf_option + ".idleTime", 600);
+				extDB_connectors_info.default_database.idle_time = pConf->getInt(conf_option + ".idleTime", 600);
 
 				#ifdef TESTING
-					console->info("extDB: Database Type: {0}", db_conn_info.db_type);
+					console->info("extDB: Database Type: {0}", extDB_connectors_info.default_database.db_type);
 				#endif
-				logger->info("extDB: Database Type: {0}", db_conn_info.db_type);
+				logger->info("extDB: Database Type: {0}", extDB_connectors_info.default_database.db_type);
 
-				if (boost::iequals(db_conn_info.db_type, std::string("MySQL")) == 1)
+				if (boost::iequals(extDB_connectors_info.default_database.db_type, std::string("MySQL")) == 1)
 				{
-					if (!(extdb_connectors_info.mysql))
+					if (!(extDB_connectors_info.mysql))
 					{
 						Poco::Data::MySQL::Connector::registerConnector();
-						extdb_connectors_info.mysql = true;
+						extDB_connectors_info.mysql = true;
 					}
 
 					std::string username = pConf->getString(conf_option + ".Username");
@@ -336,27 +335,27 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					std::string ip = pConf->getString(conf_option + ".IP");
 					std::string port = pConf->getString(conf_option + ".Port");
 
-					db_conn_info.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
+					extDB_connectors_info.default_database.connection_str = "host=" + ip + ";port=" + port + ";user=" + username + ";password=" + password + ";db=" + db_name + ";auto-reconnect=true";
 
-					db_conn_info.db_type = "MySQL";
+					extDB_connectors_info.default_database.db_type = "MySQL";
 
 					std::string compress = pConf->getString(conf_option + ".Compress", "false");
 					if (boost::iequals(compress, "true") == 1)
 					{
-						db_conn_info.connection_str = db_conn_info.connection_str + ";compress=true";
+						extDB_connectors_info.default_database.connection_str = extDB_connectors_info.default_database.connection_str + ";compress=true";
 					}
 
 					std::string auth = pConf->getString(conf_option + ".Secure Auth", "false");
 					if (boost::iequals(auth, "true") == 1)
 					{
-						db_conn_info.connection_str = db_conn_info.connection_str + ";secure-auth=true";	
+						extDB_connectors_info.default_database.connection_str = extDB_connectors_info.default_database.connection_str + ";secure-auth=true";	
 					}
 
-					db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
-																db_conn_info.connection_str, 
-																db_conn_info.min_sessions, 
-																db_conn_info.max_sessions, 
-																db_conn_info.idle_time));
+					db_pool.reset(new Poco::Data::SessionPool(extDB_connectors_info.default_database.db_type, 
+																extDB_connectors_info.default_database.connection_str, 
+																extDB_connectors_info.default_database.min_sessions, 
+																extDB_connectors_info.default_database.max_sessions, 
+																extDB_connectors_info.default_database.idle_time));
 					if (db_pool->get().isConnected())
 					{
 						#ifdef TESTING
@@ -371,31 +370,31 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 							console->warn("extDB: Database Session Pool Failed");
 						#endif
 						logger->warn("extDB: Database Session Pool Failed");
-						db_conn_info = DBConnectionInfo();
+						extDB_connectors_info.default_database = DBConnectionInfo();
 						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
 					}
 				}
-				else if (boost::iequals(db_conn_info.db_type, "SQLite") == 1)
+				else if (boost::iequals(extDB_connectors_info.default_database.db_type, "SQLite") == 1)
 				{
-					if (!(extdb_connectors_info.sqlite))
+					if (!(extDB_connectors_info.sqlite))
 					{
 						Poco::Data::SQLite::Connector::registerConnector();
-						extdb_connectors_info.sqlite = true;
+						extDB_connectors_info.sqlite = true;
 					}
 
-					db_conn_info.db_type = "SQLite";
+					extDB_connectors_info.default_database.db_type = "SQLite";
 
 					boost::filesystem::path sqlite_path(getExtensionPath());
 					sqlite_path /= "extDB";
 					sqlite_path /= "sqlite";
 					sqlite_path /= "db_name";
-					db_conn_info.connection_str = sqlite_path.make_preferred().string();
+					extDB_connectors_info.default_database.connection_str = sqlite_path.make_preferred().string();
 
-					db_pool.reset(new Poco::Data::SessionPool(db_conn_info.db_type, 
-																db_conn_info.connection_str, 
-																db_conn_info.min_sessions, 
-																db_conn_info.max_sessions, 
-																db_conn_info.idle_time));
+					db_pool.reset(new Poco::Data::SessionPool(extDB_connectors_info.default_database.db_type, 
+																extDB_connectors_info.default_database.connection_str, 
+																extDB_connectors_info.default_database.min_sessions, 
+																extDB_connectors_info.default_database.max_sessions, 
+																extDB_connectors_info.default_database.idle_time));
 					if (db_pool->get().isConnected())
 					{
 						#ifdef TESTING
@@ -410,7 +409,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 							console->warn("extDB: Database Session Pool Failed");
 						#endif
 						logger->warn("extDB: Database Session Pool Failed");
-						db_conn_info = DBConnectionInfo();
+						extDB_connectors_info.default_database = DBConnectionInfo();
 						std::strcpy(output, "[0,\"Database Session Pool Failed\"]");
 					}
 				}
@@ -420,7 +419,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 						console->warn("extDB: No Database Engine Found for {0}", db_name);
 					#endif
 					logger->warn("extDB: No Database Engine Found for {0}", db_name);
-					db_conn_info = DBConnectionInfo();
+					extDB_connectors_info.default_database = DBConnectionInfo();
 					std::strcpy(output, "[0,\"Unknown Database Type\"]");
 				}
 			}
@@ -430,7 +429,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 					console->warn("extDB: No Config Option Found: {0}", conf_option);
 				#endif
 				logger->warn("extDB: No Config Option Found: {0}", conf_option);
-				db_conn_info = DBConnectionInfo();
+				extDB_connectors_info.default_database = DBConnectionInfo();
 				std::strcpy(output, "[0,\"No Config Option Found\"]");
 			}
 		}
@@ -441,7 +440,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			console->error("extDB: Database NotConnectedException Error: {0}", e.displayText());
 		#endif
 		logger->error("extDB: Database NotConnectedException Error: {0}", e.displayText());
-		db_conn_info = DBConnectionInfo();
+		extDB_connectors_info.default_database = DBConnectionInfo();
 		std::strcpy(output, "[0,\"Database NotConnectedException Error\"]");
 	}
 	catch (Poco::Data::MySQL::ConnectionException& e)
@@ -450,7 +449,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			console->error("extDB: Database ConnectionException Error: {0}", e.displayText());
 		#endif
 		logger->error("extDB: Database ConnectionException Error: {0}", e.displayText());
-		db_conn_info = DBConnectionInfo();
+		extDB_connectors_info.default_database = DBConnectionInfo();
 		std::strcpy(output, "[0,\"Database ConnectionException Error\"]");
 	}
 	catch (Poco::Exception& e)
@@ -459,7 +458,7 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 			console->error("extDB: Database Exception Error: {0}", e.displayText());
 		#endif
 		logger->error("extDB: Database Exception Error: {0}", e.displayText());
-		db_conn_info = DBConnectionInfo();
+		extDB_connectors_info.default_database = DBConnectionInfo();
 		std::strcpy(output, "[0,\"Database Exception Error\"]");
 	}
 }
@@ -473,18 +472,18 @@ std::string Ext::getVersion() const
 
 std::string Ext::getExtensionPath()
 {
-	return extDB_path;
+	return extDB_info.path;
 }
 
 
 std::string Ext::getLogPath()
 {
-	return extDB_log_path;
+	return extDB_info.log_path;
 }
 
 std::string Ext::getAPIKey()
 {
-	return steam_web_api_key;
+	return extDB_info.steam_web_api_key;
 }
 
 
@@ -520,7 +519,7 @@ Poco::Data::Session Ext::getDBSession_mutexlock(Poco::Data::SessionPool::Session
 
 std::string Ext::getDBType()
 {
-	return db_conn_info.db_type;
+	return extDB_connectors_info.default_database.db_type;
 }
 
 
@@ -968,10 +967,18 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						}
 						break;
 					}
+					case 8:
+					{
+						if (!extDB_info.extDB_lock)
+						{
+							//
+						};
+						break;
+					}
 					case 9:
 					{
 						Poco::StringTokenizer tokens(input_str, ":");
-						if (extDB_lock)
+						if (extDB_info.extDB_lock)
 						{
 							if (tokens.count() == 2)
 							{
@@ -998,7 +1005,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 									}
 									else if (tokens[1] == "LOCK")
 									{
-										extDB_lock = true;
+										extDB_info.extDB_lock = true;
 										std::strcpy(output, ("[1]"));
 									}
 									else if (tokens[1] == "LOCK_STATUS")

@@ -57,8 +57,6 @@ class Rcon: public Poco::Runnable
 			std::string packet;
 		};
 		
-		RconPacket rcon_packet;
-
 		struct RconLogin {
 			std::string address;
 			int port;
@@ -66,6 +64,7 @@ class Rcon: public Poco::Runnable
 			bool auto_reconnect;
 		};
 
+		RconPacket rcon_packet;
 		RconLogin rcon_login;
 
 		Poco::Net::SocketAddress sa;
