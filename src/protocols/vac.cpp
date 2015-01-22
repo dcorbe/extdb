@@ -55,22 +55,6 @@ From Frank https://gist.github.com/Fank/11127158
 #include "../sanitize.h"
 
 
-bool VAC::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str) 
-{
-	extension_ptr = extension;
-	database_ptr = database;
-
-	vac_ban_check.NumberOfVACBans = extension->pConf->getInt("VAC.NumberOfVACBans", 1);
-	vac_ban_check.DaysSinceLastBan = extension->pConf->getInt("VAC.DaysSinceLastBan", 0);
-	vac_ban_check.BanDuration = extension->pConf->getString("VAC.BanDuration", "0");
-	vac_ban_check.BanMessage = extension->pConf->getString("VAC.BanMessage", "VAC BAN FOUND");
-
-	VAC_Cache = (new Poco::ExpireCache<std::string, SteamVacInfo>(3600000));
-
-	return true;
-}
-
-
 bool VAC::isNumber(const std::string &input_str)
 {
 	bool status = true;
@@ -86,36 +70,64 @@ bool VAC::isNumber(const std::string &input_str)
 }
 
 
-std::string VAC::convertSteamIDtoBEGUID(const std::string &input_str)
+bool VAC::convertSteamIDtoBEGUID(const std::string &input_str, std::string &result)
 // From Frank https://gist.github.com/Fank/11127158
 // Modified to use libpoco
 {
-	Poco::Int64 steamID = Poco::NumberParser::parse64(input_str);
-	Poco::Int8 i = 0, parts[8] = { 0 };
-
-	do
+	bool status = true;
+	if (input_str.empty())
 	{
-		parts[i++] = steamID & 0xFFu;
-	} while (steamID >>= 8);
-
-	std::stringstream bestring;
-	bestring << "BE";
-	for (int i = 0; i < sizeof(parts); i++) {
-		bestring << char(parts[i]);
+		status = false;
+	}
+	else
+	{
+		for (unsigned int index=0; index < input_str.length(); index++)
+		{
+			if (!std::isdigit(input_str[index]))
+			{
+				status = false;
+				break;
+			}
+		}
 	}
 
-	md5.update(bestring.str());
-	return Poco::DigestEngine::digestToHex(md5.digest());
+	if (!status)
+	{
+		result = "[0,\"Invalid SteamID\"";
+	}
+	else
+	{
+		Poco::Int64 steamID = Poco::NumberParser::parse64(input_str);
+		Poco::Int8 i = 0, parts[8] = { 0 };
+
+		do
+		{
+			parts[i++] = steamID & 0xFFu;
+		} while (steamID >>= 8);
+
+		std::stringstream bestring;
+		bestring << "BE";
+		for (int i = 0; i < sizeof(parts); i++) {
+			bestring << char(parts[i]);
+		}
+
+		boost::lock_guard<boost::mutex> lock(mutex_md5);
+		md5.update(bestring.str());
+		result = Poco::DigestEngine::digestToHex(md5.digest());
+	}
+	return status;
 }
 
 
 bool VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
 {
-	if (!(VAC_Cache->has(steamID)))
+	if (!(VACBans_Cache->has(steamID)))
 	{
-		SteamVacInfo vac_info;
+		SteamVacBans vac_info;
 
-		Poco::URI uri("http://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=" + steam_web_api_key + "&format=json&steamids=" + steamID);
+		std::string url = "http://api.steampowered.com/ISteamUser/GetPlayerBans/v1/?key=" + steam_web_api_key + "&format=json&steamids=" + steamID;
+		extension_ptr->console->info("{0}", url);
+		Poco::URI uri(url);
 		Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
 
 		// prepare path
@@ -128,30 +140,61 @@ bool VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
 
 		// get response
 		Poco::Net::HTTPResponse res;
-		//http://www.appinf.com/docs/poco/Poco.Net.HTTPResponse.html#17176
 		#ifdef TESTING
 			extension_ptr->console->info("VAC: Response Status {0}", res.getReason());
+			extension_ptr->console->info("VAC: Response Status {0}", res.getStatus());
 		#endif
 
-		// print response
-		std::istream &is = session.receiveResponse(res);
-
-		boost::property_tree::ptree pt;
-		boost::property_tree::read_json(is, pt);
-
-		vac_info.steamID = pt.get<std::string>("players..SteamId", "");
-		vac_info.NumberOfVACBans = pt.get<int>("players..NumberOfVACBans", 0);
-		vac_info.VACBanned = pt.get<bool>("players..VACBanned", false);
-		vac_info.DaysSinceLastBan = pt.get<int>("players..DaysSinceLastBan", 0);
-
-		if (vac_info.steamID.empty())
+		if (res.getStatus() == 200)
 		{
-			return false;
+			try
+			{
+				//http://www.appinf.com/docs/poco/Poco.Net.HTTPResponse.html#17176
+
+				std::istream &is = session.receiveResponse(res);
+				//std::cout << is.rdbuf() << std::endl;
+
+				boost::property_tree::ptree pt;
+				boost::property_tree::read_json(is, pt);
+
+				std::cout << "-----------------------" << std::endl;
+				//std::cout <<  pt.get<int>("players..NumberOfVACBans", 0) << std::endl;
+				//std::cout <<  pt.get<bool>("players..VACBanned", false) << std::endl;
+				//std::cout <<  pt.get<int>("players..DaysSinceLastBan", 0) << std::endl;
+
+				vac_info.steamID = pt.get<std::string>("players..SteamId", "");
+				std::cout <<  pt.get<std::string>("players..SteamId", "") << std::endl;;
+				std::cout << vac_info.steamID << std::endl;
+				vac_info.NumberOfVACBans = pt.get<int>("players..NumberOfVACBans", 0);
+				vac_info.VACBanned = pt.get<bool>("players..VACBanned", false);
+				vac_info.DaysSinceLastBan = pt.get<int>("players..DaysSinceLastBan", 0);
+
+				if (vac_info.steamID.empty())
+				{
+					std::cout << "STEAM ID EMPTY" << std::endl;
+					return false;
+				}
+				else if (vac_info.steamID == steamID)
+				{
+					std::cout << "STEAM ID EXISTS" << std::endl;
+					VACBans_Cache->add(steamID, std::move(vac_info)); // Update Cache
+				}
+				else
+				{
+					std::cout << "STEAM ID NOPE" << std::endl;
+				}
+			}
+			catch(boost::property_tree::json_parser::json_parser_error &je)
+			{
+				std::cout << "Error parsing: " << je.filename() << " on line: " << je.line() << std::endl;
+				std::cout << je.message() << std::endl;
+			}
 		}
-		else if (vac_info.steamID == steamID)
+		else
 		{
-			boost::lock_guard<boost::mutex> lock(VAC_Cache_mutex);
-			VAC_Cache->add(steamID, std::move(vac_info)); // Update Cache
+			extension_ptr->logger->info("Steam VAC Error (Service Down?): SteamID {0}: Response Status {1}", steamID, res.getReason());
+			extension_ptr->console->info("Steam VAC Error (Service Down?): SteamID {0}: Response Status {1}", steamID, res.getReason());
+			return false;
 		}
 	}
 	return true;
@@ -161,58 +204,91 @@ bool VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
 void VAC::callProtocol(std::string input_str, std::string &result)
 {
 	Poco::StringTokenizer t_arg(input_str, ":");
-	const int num_of_inputs = t_arg.count();
-	if (num_of_inputs == 2)
+
+	if (t_arg.count() == 2)
 	{
 		if (!isNumber(t_arg[1])) // Check Valid Steam ID
 		{
-			result  = "[0, \"VAC: Error Invalid Steam ID\"]";
+			result = "[0, \"VAC: Error Invalid Steam ID\"]";
 		}
 		else
 		{
-			std::string steamdID = convertSteamIDtoBEGUID(t_arg[1]);
-			updateVAC(extension_ptr->getAPIKey(), steamdID);
-
 			if (boost::iequals(t_arg[0], std::string("GetFriends")) == 1)
 			{
-				//TODO
-				result  = "[0, \"VAC: NOT WORKING YET\"]";
-			}
-			else if (boost::iequals(t_arg[0], std::string("VACBanned")) == 1)
-			{
-				//TODO
-				//	VAC_Cache.get(steamID).VACBanned
-				result  = "[0, \"VAC: NOT WORKING YET\"]";
-			}
-			else if (boost::iequals(t_arg[0], std::string("NumberOfVACBans")) == 1)
-			{
-				//TODO
-				//	VAC_Cache.get(steamID).DaysSinceLastBan
-				result  = "[0, \"VAC: NOT WORKING YET\"]";
-			}
-			else if (boost::iequals(t_arg[0], std::string("DaysSinceLastBan")) == 1)
-			{
-				//TODO
-				//	VAC_Cache.get(steamID).EconomyBan
-				result  = "[0, \"VAC: NOT WORKING YET\"]";
-			}
-			else if (boost::iequals(t_arg[0], std::string("EconomyBan")) == 1)
-			{
-				//TODO
-				result  = "[0, \"VAC: NOT WORKING YET\"]";
-			}
-			else if (boost::iequals(t_arg[0], std::string("VACAutoBan")) == 1)
-			{
-				if (true)
-				{
-					//if ((Poco::NumberParser::parse(vac_info.NumberOfVACBans) >= vac_ban_check.NumberOfVACBans) && (Poco::NumberParser::parse(vac_info.DaysSinceLastBan) <=vac_ban_check.DaysSinceLastBan ))
-						//rcon.sendCommand("ban " + convertSteamIDtoBEGUID(steam_id) + " " + vac_ban_check.BanDuration + " " + vac_ban_check.BanMessage);
-				}
+				result = "[0, \"VAC: NOT WORKING YET\"]";
 			}
 			else
 			{
-				result  = "[0, \"VAC: Invalid Query Type\"]";
+				if (true) // TODO ADD Check Player on Server
+				{
+					if (updateVAC(extension_ptr->getAPIKey(), t_arg[1]))
+					{
+						if (boost::iequals(t_arg[0], std::string("VACBanned")) == 1)
+						{
+							if (VACBans_Cache->get(t_arg[1])->VACBanned)
+							{
+								result = "[1,1]";
+							}
+							else
+							{
+								result = "[1,0]";
+							}
+						}
+						else if (boost::iequals(t_arg[0], std::string("NumberOfVACBans")) == 1)
+						{
+							result = "[1," + Poco::NumberFormatter::format(VACBans_Cache->get(t_arg[1])->NumberOfVACBans) + "]";
+						}
+						else if (boost::iequals(t_arg[0], std::string("DaysSinceLastBan")) == 1)
+						{
+							result = "[1," + Poco::NumberFormatter::format(VACBans_Cache->get(t_arg[1])->DaysSinceLastBan) + "]";
+						}
+						else if (boost::iequals(t_arg[0], std::string("VACAutoBan")) == 1)
+						{
+							if (true)
+							{
+								if ((VACBans_Cache->get(t_arg[1])->NumberOfVACBans >= vac_ban_check.NumberOfVACBans) && (VACBans_Cache->get(t_arg[1])->DaysSinceLastBan <= vac_ban_check.DaysSinceLastBan))
+								{
+									result = "[1,1]";
+									//rcon.sendCommand("ban " + convertSteamIDtoBEGUID(t_arg[1]) + " " + vac_ban_check.BanDuration + " " + vac_ban_check.BanMessage);
+								}
+								else
+								{
+									result = "[1,0]";
+								}
+							}
+						}
+						else
+						{
+							result = "[0, \"VAC: Invalid Query Type\"]";
+						}
+					}
+					else
+					{
+						result = "[0, \"VAC: Steam Query Error\"]";
+					}
+				}
+				else
+				{
+					result = "[0, \"VAC: Invalid SteamID\"]";
+				}
 			}
 		}
 	}
+}
+
+
+bool VAC::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str) 
+{
+	extension_ptr = extension;
+	//database_ptr = database;
+
+	vac_ban_check.NumberOfVACBans = extension_ptr->pConf->getInt("VAC.NumberOfVACBans", 1);
+	vac_ban_check.DaysSinceLastBan = extension_ptr->pConf->getInt("VAC.DaysSinceLastBan", 0);
+	vac_ban_check.BanDuration = extension_ptr->pConf->getString("VAC.BanDuration", "0");
+	vac_ban_check.BanMessage = extension_ptr->pConf->getString("VAC.BanMessage", "Steam VAC Banned");
+
+	VACBans_Cache = new Poco::ExpireCache<std::string, SteamVacBans>(extension_ptr->pConf->getInt("VAC.BanCacheTime", 3600000));
+	VACFriends_Cache = new Poco::ExpireCache<std::string, SteamVacFriends>(extension_ptr->pConf->getInt("VAC.FriendsCacheTime", 3600000));
+
+	return true;
 }

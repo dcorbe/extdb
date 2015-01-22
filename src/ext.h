@@ -41,8 +41,6 @@ class Ext: public AbstractExt
 
 
 	protected:
-		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
-
 		std::string getAPIKey();
 		std::string getExtensionPath();
 		std::string getLogPath();

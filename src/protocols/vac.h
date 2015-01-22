@@ -38,12 +38,18 @@ class VAC: public AbstractProtocol
 		void callProtocol(std::string input_str, std::string &result);
 		
 	private:
-		struct SteamVacInfo
+		struct SteamVacBans
 		{
 			std::string steamID;
-			std::string VACBanned;
-			std::string NumberOfVACBans;
-			std::string DaysSinceLastBan;
+			bool VACBanned;
+			int NumberOfVACBans;
+			int DaysSinceLastBan;
+		};
+
+		struct SteamVacFriends
+		{
+			std::string steamID;
+			std::vector<std::string> friends;
 		};
 		
 		struct VacBanCheck
@@ -55,13 +61,13 @@ class VAC: public AbstractProtocol
 		};
 		
 		VacBanCheck vac_ban_check;
-		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamVacInfo> > VAC_Cache; // 1 Hour (3600000)
+		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamVacBans> > VACBans_Cache; // 1 Hour (3600000)
+		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamVacFriends> > VACFriends_Cache; // 1 Hour (3600000)
 
 		bool isNumber(const std::string &input_str);
 		bool updateVAC(std::string steam_web_api_key, std::string &steam_id);
-		std::string convertSteamIDtoBEGUID(const std::string &steamid);
-		
-		Poco::MD5Engine md5;
+		bool convertSteamIDtoBEGUID(const std::string &input_str, std::string &result);
 
-		boost::mutex VAC_Cache_mutex;
+		Poco::MD5Engine md5;
+		boost::mutex mutex_md5;
 };
