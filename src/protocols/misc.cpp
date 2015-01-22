@@ -282,7 +282,7 @@ void MISC::callProtocol(std::string input_str, std::string &result)
 }
 
 
-bool MISC::init(AbstractExt *extension, const std::string init_str)
+bool MISC::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str)
 {
 	extension_ptr = extension;
 	return true;

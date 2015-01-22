@@ -31,15 +31,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "../sanitize.h"
 
 
-bool DB_PROCEDURE_V2::init(AbstractExt *extension, const std::string init_str)
+bool DB_PROCEDURE_V2::init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *database, const std::string init_str)
 {
 	extension_ptr = extension;
+	database_ptr = database;
 
-	if (extension_ptr->getDBType() == std::string("MySQL"))
+	if (database_ptr->type == std::string("MySQL"))
 	{
 		return true;
 	}
-	else if (extension_ptr->getDBType() == std::string("SQLite"))
+	else if (database_ptr->type == std::string("SQLite"))
 	{
 		// SQLITE Doesn't Support Procedures
 		#ifdef TESTING
@@ -92,7 +93,7 @@ void DB_PROCEDURE_V2::callProtocol(std::string input_str, std::string &result)
 		extension_ptr->logger->info("extDB: DB_PROCEDURE_V2: Trace: {0}", input_str);
 	#endif
 
-	Poco::Data::Session session = extension_ptr->getDBSession_mutexlock();
+	Poco::Data::Session session = extension_ptr->getDBSession_mutexlock(*database_ptr);
 	Poco::Data::Statement sql(session);
 
 	try

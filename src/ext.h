@@ -36,50 +36,34 @@ class Ext: public AbstractExt
 	public:
 		Ext(std::string path);
 		~Ext();
-		void stop();
-		
+		void stop();	
 		void callExtenion(char *output, const int &output_size, const char *function);
 
 
 	protected:
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
 
-		std::shared_ptr<spdlog::logger> console;
-		std::shared_ptr<spdlog::logger> logger;
-		std::shared_ptr<spdlog::logger> belogger;
-
 		std::string getAPIKey();
-		std::string getDBType();
 		std::string getExtensionPath();
 		std::string getLogPath();
-
-
-		Poco::Data::Session getDBSession_mutexlock();
-		Poco::Data::Session getDBSession_mutexlock(Poco::Data::SessionPool::SessionDataPtr &session_data_ptr);
 
 		void saveResult_mutexlock(const std::string &result, const int &unique_id);
 
 		int getUniqueID_mutexlock();
 		void freeUniqueID_mutexlock(const int &unique_id);
 
+		Poco::Data::Session getDBSession_mutexlock(AbstractExt::DBConnectionInfo &database);
+		Poco::Data::Session getDBSession_mutexlock(AbstractExt::DBConnectionInfo &database, Poco::Data::SessionPool::SessionDataPtr &session_data_ptr);
+
 
 	private:
-		struct DBConnectionInfo
-		{
-			std::string db_type;
-			std::string connection_str;
-			int min_sessions;
-			int max_sessions;
-			int idle_time;
-		};
-
 		struct extDBConnectors
 		{
 			bool rcon=false;
 			bool mysql=false;
 			bool sqlite=false;
-			DBConnectionInfo default_database;
-			std::unordered_map<std::string, DBConnectionInfo> databases;
+			DBConnectionInfo database;
+			std::unordered_map<std::string, DBConnectionInfo> database_extra;
 		};
 
 		struct extDBInfo
@@ -104,10 +88,6 @@ class Ext: public AbstractExt
 		// RCon
 		std::shared_ptr<Rcon> serverRcon;
 
-		// Database Session Pool
-		std::shared_ptr<Poco::Data::SessionPool> db_pool;
-		boost::mutex mutex_db_pool;
-
 		// std::unordered_map + mutex -- for Protocols Loaded
 		std::unordered_map< std::string, std::shared_ptr<AbstractProtocol> > unordered_map_protocol;
 		boost::mutex mutex_unordered_map_protocol;
@@ -121,14 +101,14 @@ class Ext: public AbstractExt
 		std::shared_ptr<IdManager> mgr;
 		boost::mutex mutex_unique_id;
 
-		void connectDatabase(char *output, const int &output_size, const std::string &conf_option);
+		void connectDatabase(char *output, const int &output_size, const std::string &database_id, const std::string &database_conf);
 
 		void getSinglePartResult_mutexlock(const int &unique_id, char *output, const int &output_size);
 		void getMultiPartResult_mutexlock(const int &unique_id, char *output, const int &output_size);
 		void sendResult_mutexlock(const std::string &result, char *output, const int &output_size);
 
 		// Protocols
-		void addProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &protocol_name, const std::string &init_data);
+		void addProtocol(char *output, const int &output_size, const std::string &database_id, const std::string &protocol, const std::string &protocol_name, const std::string &init_data);
 		void syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data);
 		void onewayCallProtocol(const std::string protocol, const std::string data);
 		void asyncCallProtocol(const std::string protocol, const std::string data, const int unique_id);

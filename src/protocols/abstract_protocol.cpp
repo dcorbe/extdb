@@ -31,8 +31,9 @@ void AbstractProtocol::callProtocol(std::string input_str, std::string &result)
 {
 }
 
-bool AbstractProtocol::init(AbstractExt *extension, const std::string init_str)
+bool AbstractProtocol::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str)
 {
 	extension_ptr = extension;
+	database_ptr = database;
 	return true;
 }

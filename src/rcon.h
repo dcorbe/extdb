@@ -50,7 +50,8 @@ class Rcon: public Poco::Runnable
 	private:
 		typedef std::pair< int, std::unordered_map < int, std::string > > RconMultiPartMsg;
 		
-		struct RconPacket {
+		struct RconPacket
+		{
 			char cmd_char_workaround;
 			char *cmd;
 			unsigned char packetCode;

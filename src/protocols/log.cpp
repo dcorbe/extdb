@@ -19,15 +19,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "log.h"
 
 
-bool LOG::init(AbstractExt *extension, const std::string init_str)
+bool LOG::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str) 
 {
 	extension_ptr = extension;
+	//database_ptr = database;
+	
 	if (!(init_str.empty()))
 	{
-		boost::filesystem::path customlog(extension->getLogPath());
+		boost::filesystem::path customlog(extension_ptr->getLogPath());
 		customlog /= init_str;
 
-		if (customlog.parent_path().make_preferred().string() == extension->getLogPath())
+		if (customlog.parent_path().make_preferred().string() == extension_ptr->getLogPath())
 		{
 			auto logger_temp = spdlog::daily_logger_mt(init_str, customlog.make_preferred().string(), true);
 			logger.swap(logger_temp);
@@ -40,7 +42,7 @@ bool LOG::init(AbstractExt *extension, const std::string init_str)
 	}
 	else
 	{
-		logger = extension->logger;
+		logger = extension_ptr->logger;
 		return true;
 	}
 }
