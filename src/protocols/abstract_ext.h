@@ -54,12 +54,14 @@ class AbstractExt
 		virtual void freeUniqueID_mutexlock(const int &unique_id)=0;
 		virtual int getUniqueID_mutexlock()=0;
 
+		virtual void saveResult_mutexlock(const int &unique_id, const std::string &result)=0;
+
 		virtual Poco::Data::Session getDBSession_mutexlock(DBConnectionInfo &database)=0;
 		virtual Poco::Data::Session getDBSession_mutexlock(DBConnectionInfo &database, Poco::Data::SessionPool::SessionDataPtr &session_data_ptr)=0;
 		
-		virtual std::string getAPIKey()=0;
 		virtual std::string getExtensionPath()=0;
 		virtual std::string getLogPath()=0;
 
 		virtual void rconCommand(std::string &str)=0;
+		virtual void steamQuery(const int &unique_id, bool &queryFriends, bool &queryVacBans, std::vector<std::string> &steamIDs, bool wakeup)=0;
 };

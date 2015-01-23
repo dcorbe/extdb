@@ -46,6 +46,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <cstdlib>
 
+#include "steam.h"
 #include "uniqueid.h"
 
 #include "protocols/abstract_protocol.h"
@@ -188,8 +189,6 @@ Ext::Ext(std::string dll_path) {
 			#endif
 			logger->info("extDB: Found extdb-conf.ini");
 
-			extDB_info.steam_web_api_key = pConf->getString("Main.Steam Web API Key", "");
-
 			// Start Threads + ASIO
 			extDB_info.max_threads = pConf->getInt("Main.Threads", 0);
 			int detected_cpu_cores = boost::thread::hardware_concurrency();
@@ -248,10 +247,16 @@ Ext::Ext(std::string dll_path) {
 				auto belogger_temp = spdlog::daily_logger_mt("extDB BE File Logger", belog_relative_path.make_preferred().string(), true);
 				belogger.swap(belogger_temp);
 				extDB_connectors_info.rcon = true;
-				serverRcon.reset(new Rcon(logger, std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password")));
-				serverRcon->run();
+				rcon.init(logger, std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password"));
+				rcon_thread.start(rcon);
+				rcon.run();
 			}
 
+			if (pConf->getBool("Steam.Enable", false))
+			{
+				steam.init(this);
+				steam_thread.start(steam);
+			}
 
 			#ifdef _WIN32
 				if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
@@ -305,7 +310,8 @@ void Ext::stop()
 	}
 	if (extDB_connectors_info.rcon)
 	{
-		serverRcon->disconnect();
+		rcon.disconnect();
+		rcon_thread.join();
 	}
 	unordered_map_protocol.clear();
 	unordered_map_wait.clear();
@@ -329,11 +335,6 @@ std::string Ext::getExtensionPath()
 std::string Ext::getLogPath()
 {
 	return extDB_info.log_path;
-}
-
-std::string Ext::getAPIKey()
-{
-	return extDB_info.steam_web_api_key;
 }
 
 
@@ -367,11 +368,21 @@ Poco::Data::Session Ext::getDBSession_mutexlock(AbstractExt::DBConnectionInfo &d
 }
 
 
+void Ext::steamQuery(const int &unique_id, bool &queryFriends, bool &queryVacBans, std::vector<std::string> &steamIDs, bool wakeup)
+{
+	steam.addQuery(unique_id, queryFriends, queryVacBans, steamIDs);
+	if (wakeup)
+	{
+		steam_thread.wakeUp();
+	}
+}
+
+
 void Ext::rconCommand(std::string &str)
 {
 	if (extDB_connectors_info.rcon)
 	{
-		serverRcon->addCommand(str);
+		rcon.addCommand(str);
 	}
 }
 
@@ -825,7 +836,7 @@ void Ext::getMultiPartResult_mutexlock(const int &unique_id, char *output, const
 }
 
 
-void Ext::saveResult_mutexlock(const std::string &result, const int &unique_id)
+void Ext::saveResult_mutexlock(const int &unique_id, const std::string &result)
 // Stores Result String  in a unordered map array.
 //   Used when string > arma output char
 {
@@ -858,7 +869,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 		else
 		{
 			const int unique_id = getUniqueID_mutexlock();
-			saveResult_mutexlock(result, unique_id);
+			saveResult_mutexlock(unique_id, result);
 			std::strcpy(output, ("[2,\"" + Poco::NumberFormatter::format(unique_id) + "\"]").c_str());
 		}
 	}
@@ -885,7 +896,7 @@ void Ext::asyncCallProtocol(const std::string protocol, const std::string data, 
 	std::string result;
 	result.reserve(2000);
 	unordered_map_protocol[protocol].get()->callProtocol(data, result);
-	saveResult_mutexlock(result, unique_id);
+	saveResult_mutexlock(unique_id, result);
 }
 
 

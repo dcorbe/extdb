@@ -43,7 +43,8 @@ class DB_CUSTOM_V3: public AbstractProtocol
 		std::string db_custom_name;
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
 		
-		struct Template_Calls {
+		struct Template_Calls
+		{
 			int number_of_inputs;
 			bool sanitize_value_check;
 			bool string_datatype_check;
@@ -51,6 +52,7 @@ class DB_CUSTOM_V3: public AbstractProtocol
 			std::string bad_chars_action;
 			std::vector< std::list<Poco::DynamicAny> > sql_statements;
 		};
+
 		boost::unordered_map<std::string, Template_Calls> custom_protocol;
 
 		void callCustomProtocol(boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result);

@@ -26,50 +26,68 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <cstdlib>
 #include <iostream>
 
-#include "abstract_ext.h"
-#include "abstract_protocol.h"
-#include "../rcon.h"
+#include "rcon.h"
+#include "protocols/abstract_ext.h"
 
 
-class VAC: public AbstractProtocol
+class STEAM: public Poco::Runnable
 {
 	public:
-		bool init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *database, const std::string init_str);
-		void callProtocol(std::string input_str, std::string &result);
-		
+		void run();
+		void stop();
+
+		void init(AbstractExt *extension);
+		void addQuery(const int &unique_id, bool &queryFriends, bool &queryVacBans, std::vector<std::string> &steamIDs);
+
 	private:
-		struct SteamVacBans
+		AbstractExt *extension_ptr;
+		
+		struct SteamVACBans
 		{
 			std::string steamID;
 			bool VACBanned;
 			int NumberOfVACBans;
 			int DaysSinceLastBan;
+			bool extDBBanned;
 		};
 
-		struct SteamVacFriends
+		struct SteamFriends
 		{
 			std::string steamID;
 			std::vector<std::string> friends;
 		};
 		
-		struct VacBanCheck
+		struct SteamQuery
+		{
+			int unique_id;
+			bool queryFriends;
+			bool queryVACBans;
+			std::vector<std::string> steamIDs;
+		};
+
+		struct RConBan
 		{
 			int NumberOfVACBans;
 			int DaysSinceLastBan;
 			std::string BanDuration;
 			std::string BanMessage;
 		};
+
+		std::vector<SteamQuery> query_queue;
+		boost::mutex mutex_query_queue;
 		
-		std::string vac_api_key;
-		VacBanCheck vac_ban_check;
-		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamVacBans> > VACBans_Cache; // 1 Hour (3600000)
-		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamVacFriends> > VACFriends_Cache; // 1 Hour (3600000)
+		std::string STEAM_api_key;
+		RConBan rconBanSettings;
+		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamVACBans> > SteamVacBans_Cache; // 1 Hour (3600000)
+		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamFriends> > SteamFriends_Cache; // 1 Hour (3600000)
 
 		bool isNumber(const std::string &input_str);
-		bool updateVACBans(std::string &steam_id);
-		bool updateVACFriends(std::string &steam_id);
+		void updateSTEAMBans(std::vector<std::string> &steamIDs);
 		std::string convertSteamIDtoBEGUID(const std::string &input_str);
+		std::vector<std::string> generateSteamIDStrings(std::vector<std::string> &steamIDs);
 
 		Poco::MD5Engine md5;
 		boost::mutex mutex_md5;
+
+		std::atomic<bool> steam_run_flag = false;
 };

@@ -399,8 +399,7 @@ void Rcon::disconnect()
 	rcon_run_flag = false;	
 }
 
-
-Rcon::Rcon(std::shared_ptr<spdlog::logger> console, std::string address, int port, std::string password)
+void Rcon::init(std::shared_ptr<spdlog::logger> console, std::string address, int port, std::string password)
 {
 	logger_console.swap(console);
 
@@ -409,7 +408,7 @@ Rcon::Rcon(std::shared_ptr<spdlog::logger> console, std::string address, int por
 		
 	char *passwd = new char[password.size()+1] ;
 	std::strcpy(passwd, password.c_str());
-	rcon_login.password = passwd;
+	rcon_login.password = passwd;	
 }
 
 
@@ -457,9 +456,10 @@ Rcon::Rcon(std::shared_ptr<spdlog::logger> console, std::string address, int por
 			return 1;
 		}
 
-		Rcon rcon_runnable(console, options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>());	
+		Rcon rcon;
+		rcon.init(console, options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>());	
 		Poco::Thread thread;
-		thread.start(rcon_runnable);
+		thread.start(rcon);
 		
 		if (options.count("file"))
 		{
@@ -486,11 +486,11 @@ Rcon::Rcon(std::shared_ptr<spdlog::logger> console, std::string address, int por
 				}
 				else
 				{
-					rcon_runnable.addCommand(line);
+					rcon.addCommand(line);
 				}
 			}
 			console->info("OK");
-			rcon_runnable.disconnect();
+			rcon.disconnect();
 			thread.join();
 			return 0;
 		}
@@ -500,12 +500,12 @@ Rcon::Rcon(std::shared_ptr<spdlog::logger> console, std::string address, int por
 			console->info("**********************************");
 			console->info("To talk type ");
 			console->info("SAY -1 Server Restart in 10 mins");
-			console->info("");
+			console->info();
 			console->info("To see all players type");
 			console->info("players");
 			console->info("**********************************");
 			console->info("**********************************");
-			console->info("");
+			console->info();
 
 			std::string input_str;
 			for (;;) {
@@ -513,13 +513,13 @@ Rcon::Rcon(std::shared_ptr<spdlog::logger> console, std::string address, int por
 				if (std::string(input_str) == "quit")
 				{
 					console->info("Quitting Please Wait");
-					rcon_runnable.disconnect();
+					rcon.disconnect();
 					thread.join();
 					break;
 				}
 				else
 				{
-					rcon_runnable.addCommand(input_str);
+					rcon.addCommand(input_str);
 				}
 			}
 			console->info("Quitting");

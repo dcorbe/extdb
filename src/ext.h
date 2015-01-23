@@ -24,6 +24,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <unordered_map>
 
+#include "steam.h"
 #include "uniqueid.h"
 
 #include "protocols/abstract_ext.h"
@@ -38,25 +39,27 @@ class Ext: public AbstractExt
 		~Ext();
 		void stop();	
 		void callExtenion(char *output, const int &output_size, const char *function);
-
+		void rconCommand(std::string &str);
 
 	protected:
-		std::string getAPIKey();
 		std::string getExtensionPath();
 		std::string getLogPath();
-
-		void saveResult_mutexlock(const std::string &result, const int &unique_id);
 
 		int getUniqueID_mutexlock();
 		void freeUniqueID_mutexlock(const int &unique_id);
 
-		void rconCommand(std::string &str);
+		void saveResult_mutexlock(const int &unique_id, const std::string &result);
+
+		Poco::Thread rcon_thread;
+		Poco::Thread steam_thread;
 
 		Poco::Data::Session getDBSession_mutexlock(AbstractExt::DBConnectionInfo &database);
 		Poco::Data::Session getDBSession_mutexlock(AbstractExt::DBConnectionInfo &database, Poco::Data::SessionPool::SessionDataPtr &session_data_ptr);
 
+		void steamQuery(const int &unique_id, bool &queryFriends, bool &queryVacBans, std::vector<std::string> &steamIDs, bool wakeup);
 
 	private:
+		// extDBInfo + Connectors
 		struct extDBConnectors
 		{
 			bool rcon=false;
@@ -73,20 +76,22 @@ class Ext: public AbstractExt
 
 			std::string path;
 			std::string log_path;
-			std::string steam_web_api_key;
 		};
 
 		extDBConnectors extDB_connectors_info;
 		extDBInfo extDB_info;
+
+		// RCon
+		Rcon rcon;
+
+		// Steam
+		STEAM steam;
 
 		// ASIO Thread Queue
 		std::shared_ptr<boost::asio::io_service::work> io_work_ptr;
 		boost::asio::io_service io_service;
 		boost::mutex mutex_io_service;
 		boost::thread_group threads;
-
-		// RCon
-		std::shared_ptr<Rcon> serverRcon;
 
 		// std::unordered_map + mutex -- for Protocols Loaded
 		std::unordered_map< std::string, std::shared_ptr<AbstractProtocol> > unordered_map_protocol;
@@ -101,8 +106,10 @@ class Ext: public AbstractExt
 		std::shared_ptr<IdManager> mgr;
 		boost::mutex mutex_unique_id;
 
+		// Database
 		void connectDatabase(char *output, const int &output_size, const std::string &database_id, const std::string &database_conf);
 
+		// Results
 		void getSinglePartResult_mutexlock(const int &unique_id, char *output, const int &output_size);
 		void getMultiPartResult_mutexlock(const int &unique_id, char *output, const int &output_size);
 		void sendResult_mutexlock(const std::string &result, char *output, const int &output_size);
