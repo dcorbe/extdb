@@ -367,6 +367,15 @@ Poco::Data::Session Ext::getDBSession_mutexlock(AbstractExt::DBConnectionInfo &d
 }
 
 
+void Ext::rconCommand(std::string &str)
+{
+	if (extDB_connectors_info.rcon)
+	{
+		serverRcon->addCommand(str);
+	}
+}
+
+
 void Ext::connectDatabase(char *output, const int &output_size, const std::string &database_id, const std::string &database_conf)
 {
 	DBConnectionInfo *database;
@@ -844,7 +853,7 @@ void Ext::syncCallProtocol(char *output, const int &output_size, const std::stri
 		itr->second->callProtocol(data, result);
 		if (result.length() <= (output_size-6))
 		{
-			std::strcpy(output, ("[1, " + result + "]").c_str());
+			std::strcpy(output, ("[1," + result + "]").c_str());
 		}
 		else
 		{

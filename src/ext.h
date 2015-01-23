@@ -50,6 +50,8 @@ class Ext: public AbstractExt
 		int getUniqueID_mutexlock();
 		void freeUniqueID_mutexlock(const int &unique_id);
 
+		void rconCommand(std::string &str);
+
 		Poco::Data::Session getDBSession_mutexlock(AbstractExt::DBConnectionInfo &database);
 		Poco::Data::Session getDBSession_mutexlock(AbstractExt::DBConnectionInfo &database, Poco::Data::SessionPool::SessionDataPtr &session_data_ptr);
 

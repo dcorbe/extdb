@@ -37,6 +37,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "spdlog/spdlog.h"
 #include "protocols/abstract_ext.h"
 
+#include <atomic>
+
 class Rcon: public Poco::Runnable
 {
 	public:
@@ -49,7 +51,7 @@ class Rcon: public Poco::Runnable
 
 	private:
 		typedef std::pair< int, std::unordered_map < int, std::string > > RconMultiPartMsg;
-		
+
 		struct RconPacket
 		{
 			char cmd_char_workaround;
@@ -80,9 +82,8 @@ class Rcon: public Poco::Runnable
 		int buffer_size;
 		
 		// Mutex Locks
-		boost::recursive_mutex mutex_rcon_run_flag;
-		bool rcon_run_flag;
-		bool logged_in;
+		std::atomic<bool> rcon_run_flag = false;
+		bool logged_in = false;
 		
 		boost::recursive_mutex mutex_rcon_commands;
 		std::vector< std::string > rcon_commands;

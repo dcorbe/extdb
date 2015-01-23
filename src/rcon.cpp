@@ -47,6 +47,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/NumberFormatter.h>
 #include <Poco/Thread.h>
 
+#include <atomic>
 #include <sstream>
 #include <iomanip>
 #include <iostream>
@@ -123,6 +124,7 @@ void Rcon::extractData(int pos, std::string &result)
 	}
 	result = ss.str();
 }
+
 
 void Rcon::mainLoop()
 {
@@ -275,7 +277,6 @@ void Rcon::mainLoop()
 			{
 				// Check if Run Flag Still Set
 				//		Done here instead of while due to need of mutex lock
-				boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
 				if ((!rcon_run_flag) && (rcon_commands.empty()))
 				{
 					break;
@@ -284,7 +285,6 @@ void Rcon::mainLoop()
 		}
 		catch (Poco::TimeoutException&)
 		{
-			boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
 			if (!rcon_run_flag)  // Checking Run Flag
 			{
 				break;
@@ -347,11 +347,21 @@ void Rcon::mainLoop()
 	}
 }
 
-
-void Rcon::addCommand(std::string command)
+/*
+void Rcon::checkForSteamID(std::string &steamID)
 {
 	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
 	rcon_commands.push_back(std::move(command));
+}
+*/
+
+void Rcon::addCommand(std::string command)
+{
+	if (rcon_run_flag)
+	{
+		boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
+		rcon_commands.push_back(std::move(command));
+	}
 }
 
 
@@ -365,6 +375,7 @@ void Rcon::run()
 void Rcon::connect()
 {
 	logged_in = false;
+	rcon_run_flag = true;
 
 	// Connect
 	Poco::Net::SocketAddress sa(rcon_login.address, rcon_login.port);
@@ -385,7 +396,6 @@ void Rcon::connect()
 
 void Rcon::disconnect()
 {
-	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
 	rcon_run_flag = false;	
 }
 
@@ -400,10 +410,8 @@ Rcon::Rcon(std::shared_ptr<spdlog::logger> console, std::string address, int por
 	char *passwd = new char[password.size()+1] ;
 	std::strcpy(passwd, password.c_str());
 	rcon_login.password = passwd;
-		
-	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_run_flag);
-	rcon_run_flag = true;
 }
+
 
 #ifdef RCON_APP
 

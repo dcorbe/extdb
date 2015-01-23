@@ -60,4 +60,6 @@ class AbstractExt
 		virtual std::string getAPIKey()=0;
 		virtual std::string getExtensionPath()=0;
 		virtual std::string getLogPath()=0;
+
+		virtual void rconCommand(std::string &str)=0;
 };
