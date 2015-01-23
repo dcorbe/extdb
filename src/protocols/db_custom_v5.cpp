@@ -46,6 +46,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "../sanitize.h"
 
+
 bool DB_CUSTOM_V5::init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *database, const std::string init_str)
 {
 	extension_ptr = extension;
@@ -794,7 +795,7 @@ void DB_CUSTOM_V5::callCustomProtocol(std::string call_name, Custom_Call_Unorder
 }
 
 
-void DB_CUSTOM_V5::callProtocol(std::string input_str, std::string &result)
+bool DB_CUSTOM_V5::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
 	#ifdef TESTING
 		extension_ptr->console->info("extDB: DB_CUSTOM_V5: Trace: Input: {0}", input_str);
@@ -920,4 +921,5 @@ void DB_CUSTOM_V5::callProtocol(std::string input_str, std::string &result)
 			}
 		}
 	}
+	return true;
 }

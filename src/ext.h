@@ -56,7 +56,7 @@ class Ext: public AbstractExt
 		Poco::Data::Session getDBSession_mutexlock(AbstractExt::DBConnectionInfo &database);
 		Poco::Data::Session getDBSession_mutexlock(AbstractExt::DBConnectionInfo &database, Poco::Data::SessionPool::SessionDataPtr &session_data_ptr);
 
-		void steamQuery(const int &unique_id, bool &queryFriends, bool &queryVacBans, std::vector<std::string> &steamIDs, bool wakeup);
+		void steamQuery(const int &unique_id, bool queryFriends, bool queryVacBans, std::vector<std::string> &steamIDs, bool wakeup);
 
 	private:
 		// extDBInfo + Connectors

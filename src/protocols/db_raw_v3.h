@@ -26,7 +26,7 @@ class DB_RAW_V3: public AbstractProtocol
 {
 	public:
 		bool init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *database, const std::string init_str);
-		void callProtocol(std::string input_str, std::string &result);
+		bool callProtocol(std::string input_str, std::string &result, const int unique_id=-1);
 
 	private:
 		bool stringDataTypeCheck;

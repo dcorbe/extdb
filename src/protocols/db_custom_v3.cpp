@@ -577,7 +577,7 @@ void DB_CUSTOM_V3::callCustomProtocol(boost::unordered_map<std::string, Template
 }
 
 
-void DB_CUSTOM_V3::callProtocol(std::string input_str, std::string &result)
+bool DB_CUSTOM_V3::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
 	#ifdef TESTING
 		extension_ptr->console->info("extDB: DB_CUSTOM_V3: Trace: Input: {0}", input_str);
@@ -694,4 +694,5 @@ void DB_CUSTOM_V3::callProtocol(std::string input_str, std::string &result)
 			}
 		}
 	}
+	return true;
 }

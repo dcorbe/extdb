@@ -368,7 +368,7 @@ Poco::Data::Session Ext::getDBSession_mutexlock(AbstractExt::DBConnectionInfo &d
 }
 
 
-void Ext::steamQuery(const int &unique_id, bool &queryFriends, bool &queryVacBans, std::vector<std::string> &steamIDs, bool wakeup)
+void Ext::steamQuery(const int &unique_id, bool queryFriends, bool queryVacBans, std::vector<std::string> &steamIDs, bool wakeup)
 {
 	steam.addQuery(unique_id, queryFriends, queryVacBans, steamIDs);
 	if (wakeup)
@@ -895,8 +895,10 @@ void Ext::asyncCallProtocol(const std::string protocol, const std::string data, 
 {
 	std::string result;
 	result.reserve(2000);
-	unordered_map_protocol[protocol].get()->callProtocol(data, result);
-	saveResult_mutexlock(unique_id, result);
+	if (unordered_map_protocol[protocol].get()->callProtocol(data, result, unique_id))  // Allows callProtocol to return False to Override saveResult behaviour
+	{
+		saveResult_mutexlock(unique_id, result);
+	};
 }
 
 

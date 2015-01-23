@@ -26,9 +26,9 @@ class DB_PROCEDURE_V2: public AbstractProtocol
 {
 	public:
 		bool init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *database, const std::string init_str);
-		void callProtocol(std::string input_str, std::string &result);
+		bool callProtocol(std::string input_str, std::string &result, const int unique_id=-1);
 		
 	private:
 		bool isNumber(const std::string &input_str);
-		int unique_id;
+		int unique_id_proc;
 };

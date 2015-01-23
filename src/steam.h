@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <boost/thread/thread.hpp>
-#include <Poco/Data/SessionPool.h>
+
 #include <Poco/MD5Engine.h>
 #include <Poco/DigestEngine.h>
 
@@ -37,7 +37,7 @@ class STEAM: public Poco::Runnable
 		void stop();
 
 		void init(AbstractExt *extension);
-		void addQuery(const int &unique_id, bool &queryFriends, bool &queryVacBans, std::vector<std::string> &steamIDs);
+		void addQuery(const int &unique_id, bool queryFriends, bool queryVacBans, std::vector<std::string> &steamIDs);
 
 	private:
 		AbstractExt *extension_ptr;
@@ -81,7 +81,6 @@ class STEAM: public Poco::Runnable
 		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamVACBans> > SteamVacBans_Cache; // 1 Hour (3600000)
 		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamFriends> > SteamFriends_Cache; // 1 Hour (3600000)
 
-		bool isNumber(const std::string &input_str);
 		void updateSTEAMBans(std::vector<std::string> &steamIDs);
 		std::string convertSteamIDtoBEGUID(const std::string &input_str);
 		std::vector<std::string> generateSteamIDStrings(std::vector<std::string> &steamIDs);

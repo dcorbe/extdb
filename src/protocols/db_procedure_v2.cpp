@@ -77,7 +77,7 @@ return status;
 }
 
 
-void DB_PROCEDURE_V2::callProtocol(std::string input_str, std::string &result)
+bool DB_PROCEDURE_V2::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
 //  Unique ID
 //   |
@@ -136,10 +136,10 @@ void DB_PROCEDURE_V2::callProtocol(std::string input_str, std::string &result)
 					else
 					{
 						// Generate Output Values
-						unique_id = extension_ptr->getUniqueID_mutexlock(); // Using this to make sure no clashing of Output Values
+						unique_id_proc = extension_ptr->getUniqueID_mutexlock(); // Using this to make sure no clashing of Output Values
 						for(int i = 0; i != num_of_outputs; ++i)
 						{
-							const std::string temp_str = "@Output" + Poco::NumberFormatter::format(i) + "_" + Poco::NumberFormatter::format(unique_id) +  + "_" + t_arg[0] + ",";
+							const std::string temp_str = "@Output" + Poco::NumberFormatter::format(i) + "_" + Poco::NumberFormatter::format(unique_id_proc) +  + "_" + t_arg[0] + ",";
 							sql_str_procedure += temp_str;
 							sql_str_select += temp_str;
 						}
@@ -163,7 +163,7 @@ void DB_PROCEDURE_V2::callProtocol(std::string input_str, std::string &result)
 						Poco::Data::Statement sql2(session);
 						sql2 << sql_str_select, Poco::Data::Keywords::now;
 							
-						extension_ptr->freeUniqueID_mutexlock(unique_id); // Free Unique ID
+						extension_ptr->freeUniqueID_mutexlock(unique_id_proc); // Free Unique ID
 							
 						Poco::Data::RecordSet rs(sql2);
 						
@@ -323,4 +323,5 @@ void DB_PROCEDURE_V2::callProtocol(std::string input_str, std::string &result)
 		extension_ptr->logger->error("extDB: DB_PROCEDURE_V2: Error Exception: SQL: {0}", input_str);
 		result = "[0,\"Error Exception\"]";
 	}
+	return true;
 }

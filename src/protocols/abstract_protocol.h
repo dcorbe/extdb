@@ -27,7 +27,7 @@ class AbstractProtocol
 		virtual ~AbstractProtocol();
 
 		virtual bool init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str)=0;
-		virtual void callProtocol(std::string input_str, std::string &result)=0;
+		virtual bool callProtocol(std::string input_str, std::string &result, const int unique_id=-1)=0;
 
 		AbstractExt *extension_ptr;
 		AbstractExt::DBConnectionInfo *database_ptr;

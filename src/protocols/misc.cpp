@@ -218,7 +218,7 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 }
 
 
-void MISC::callProtocol(std::string input_str, std::string &result)
+bool MISC::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
 	// Protocol
 	const std::string sep_char(":");
@@ -280,6 +280,7 @@ void MISC::callProtocol(std::string input_str, std::string &result)
 	{
 		result.clear();
 	}
+	return true;
 }
 
 

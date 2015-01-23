@@ -83,7 +83,8 @@ bool DB_RAW_V3::init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *dat
 	return status;
 }
 
-void DB_RAW_V3::callProtocol(std::string input_str, std::string &result)
+
+bool DB_RAW_V3::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
 	try
 	{
@@ -254,4 +255,5 @@ void DB_RAW_V3::callProtocol(std::string input_str, std::string &result)
 		extension_ptr->logger->error("extDB: DB_RAW_V3: Error Exception: SQL: {0}", input_str);
 		result = "[0,\"Error Exception\"]";
 	}
+	return true;
 }

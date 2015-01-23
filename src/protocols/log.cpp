@@ -48,8 +48,9 @@ bool LOG::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, 
 }
 
 
-void LOG::callProtocol(std::string input_str, std::string &result)
+bool LOG::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
 	logger->info(input_str.c_str());
 	result = "[1]";
+	return true;
 }

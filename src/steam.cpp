@@ -37,7 +37,6 @@ From Frank https://gist.github.com/Fank/11127158
 #include <Poco/URI.h>
 
 #include <Poco/NumberParser.h>
-#include <Poco/StringTokenizer.h>
 
 #include <Poco/Thread.h>
 #include <Poco/Types.h>
@@ -45,21 +44,6 @@ From Frank https://gist.github.com/Fank/11127158
 #include <Poco/Exception.h>
 
 #include <string>
-
-
-bool STEAM::isNumber(const std::string &input_str)
-{
-	bool status = true;
-	for (unsigned int index=0; index < input_str.length(); index++)
-	{
-		if (!std::isdigit(input_str[index]))
-		{
-			status = false;
-			break;
-		}
-	}
-	return status;
-}
 
 
 std::string STEAM::convertSteamIDtoBEGUID(const std::string &input_str)
@@ -190,7 +174,7 @@ void STEAM::updateSTEAMBans(std::vector<std::string> &steamIDs)
 }
 
 
-void STEAM::addQuery(const int &unique_id, bool &queryFriends, bool &queryVacBans, std::vector<std::string> &steamIDs)
+void STEAM::addQuery(const int &unique_id, bool queryFriends, bool queryVacBans, std::vector<std::string> &steamIDs)
 {
 	SteamQuery info;
 	info.unique_id = unique_id;
