@@ -65,8 +65,8 @@ class VAC: public AbstractProtocol
 		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamVacFriends> > VACFriends_Cache; // 1 Hour (3600000)
 
 		bool isNumber(const std::string &input_str);
-		bool updateVAC(std::string steam_web_api_key, std::string &steam_id);
-		bool convertSteamIDtoBEGUID(const std::string &input_str, std::string &result);
+		bool updateVACBans(std::string steam_web_api_key, std::string &steam_id);
+		std::string convertSteamIDtoBEGUID(const std::string &input_str);
 
 		Poco::MD5Engine md5;
 		boost::mutex mutex_md5;

@@ -70,56 +70,31 @@ bool VAC::isNumber(const std::string &input_str)
 }
 
 
-bool VAC::convertSteamIDtoBEGUID(const std::string &input_str, std::string &result)
+std::string VAC::convertSteamIDtoBEGUID(const std::string &input_str)
 // From Frank https://gist.github.com/Fank/11127158
 // Modified to use libpoco
 {
-	bool status = true;
-	if (input_str.empty())
+	Poco::Int64 steamID = Poco::NumberParser::parse64(input_str);
+	Poco::Int8 i = 0, parts[8] = { 0 };
+
+	do
 	{
-		status = false;
-	}
-	else
-	{
-		for (unsigned int index=0; index < input_str.length(); index++)
-		{
-			if (!std::isdigit(input_str[index]))
-			{
-				status = false;
-				break;
-			}
-		}
+		parts[i++] = steamID & 0xFFu;
+	} while (steamID >>= 8);
+
+	std::stringstream bestring;
+	bestring << "BE";
+	for (int i = 0; i < sizeof(parts); i++) {
+		bestring << char(parts[i]);
 	}
 
-	if (!status)
-	{
-		result = "[0,\"Invalid SteamID\"";
-	}
-	else
-	{
-		Poco::Int64 steamID = Poco::NumberParser::parse64(input_str);
-		Poco::Int8 i = 0, parts[8] = { 0 };
-
-		do
-		{
-			parts[i++] = steamID & 0xFFu;
-		} while (steamID >>= 8);
-
-		std::stringstream bestring;
-		bestring << "BE";
-		for (int i = 0; i < sizeof(parts); i++) {
-			bestring << char(parts[i]);
-		}
-
-		boost::lock_guard<boost::mutex> lock(mutex_md5);
-		md5.update(bestring.str());
-		result = Poco::DigestEngine::digestToHex(md5.digest());
-	}
-	return status;
+	boost::lock_guard<boost::mutex> lock(mutex_md5);
+	md5.update(bestring.str());
+	return Poco::DigestEngine::digestToHex(md5.digest());
 }
 
 
-bool VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
+bool VAC::updateVACBans(std::string steam_web_api_key, std::string &steamID)
 {
 	if (!(VACBans_Cache->has(steamID)))
 	{
@@ -150,44 +125,42 @@ bool VAC::updateVAC(std::string steam_web_api_key, std::string &steamID)
 			try
 			{
 				//http://www.appinf.com/docs/poco/Poco.Net.HTTPResponse.html#17176
-
 				std::istream &is = session.receiveResponse(res);
-				//std::cout << is.rdbuf() << std::endl;
 
 				boost::property_tree::ptree pt;
 				boost::property_tree::read_json(is, pt);
 
-				std::cout << "-----------------------" << std::endl;
-				//std::cout <<  pt.get<int>("players..NumberOfVACBans", 0) << std::endl;
-				//std::cout <<  pt.get<bool>("players..VACBanned", false) << std::endl;
-				//std::cout <<  pt.get<int>("players..DaysSinceLastBan", 0) << std::endl;
-
 				vac_info.steamID = pt.get<std::string>("players..SteamId", "");
-				std::cout <<  pt.get<std::string>("players..SteamId", "") << std::endl;;
-				std::cout << vac_info.steamID << std::endl;
 				vac_info.NumberOfVACBans = pt.get<int>("players..NumberOfVACBans", 0);
 				vac_info.VACBanned = pt.get<bool>("players..VACBanned", false);
 				vac_info.DaysSinceLastBan = pt.get<int>("players..DaysSinceLastBan", 0);
 
 				if (vac_info.steamID.empty())
 				{
-					std::cout << "STEAM ID EMPTY" << std::endl;
 					return false;
 				}
 				else if (vac_info.steamID == steamID)
 				{
-					std::cout << "STEAM ID EXISTS" << std::endl;
 					VACBans_Cache->add(steamID, std::move(vac_info)); // Update Cache
+					#ifdef TESTING
+						extension_ptr->console->info("Steam VAC ADD INFO: {0}", steamID);
+					#endif
 				}
 				else
 				{
-					std::cout << "STEAM ID NOPE" << std::endl;
+					extension_ptr->logger->info("Steam VAC Error: Received Wrong SteamID Info {0}: Wanted Info For {1}", vac_info.steamID, steamID);
+					#ifdef TESTING
+						extension_ptr->console->info("Steam VAC Error: Received Wrong SteamID Info {0}: Wanted Info For {1}", vac_info.steamID, steamID);
+					#endif
+					return false;
 				}
 			}
-			catch(boost::property_tree::json_parser::json_parser_error &je)
+			catch(boost::property_tree::json_parser::json_parser_error &e)
 			{
-				std::cout << "Error parsing: " << je.filename() << " on line: " << je.line() << std::endl;
-				std::cout << je.message() << std::endl;
+				extension_ptr->logger->error("Steam VAC Error: Parsing Error: {0}", e.message());
+				#ifdef TESTING
+					extension_ptr->console->error("Steam VAC Error: Parsing Error: {0}", e.message());
+				#endif
 			}
 		}
 		else
@@ -221,7 +194,7 @@ void VAC::callProtocol(std::string input_str, std::string &result)
 			{
 				if (true) // TODO ADD Check Player on Server
 				{
-					if (updateVAC(extension_ptr->getAPIKey(), t_arg[1]))
+					if (updateVACBans(extension_ptr->getAPIKey(), t_arg[1]))
 					{
 						if (boost::iequals(t_arg[0], std::string("VACBanned")) == 1)
 						{
@@ -249,7 +222,7 @@ void VAC::callProtocol(std::string input_str, std::string &result)
 								if ((VACBans_Cache->get(t_arg[1])->NumberOfVACBans >= vac_ban_check.NumberOfVACBans) && (VACBans_Cache->get(t_arg[1])->DaysSinceLastBan <= vac_ban_check.DaysSinceLastBan))
 								{
 									result = "[1,1]";
-									//rcon.sendCommand("ban " + convertSteamIDtoBEGUID(t_arg[1]) + " " + vac_ban_check.BanDuration + " " + vac_ban_check.BanMessage);
+									extension_ptr->rconCommand("ban " + convertSteamIDtoBEGUID(t_arg[1]) + " " + vac_ban_check.BanDuration + " " + vac_ban_check.BanMessage);
 								}
 								else
 								{
