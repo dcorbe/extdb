@@ -21,30 +21,42 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bool LOG::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str) 
 {
+	bool status;
 	extension_ptr = extension;
 	//database_ptr = database;
-	
+
 	if (!(init_str.empty()))
 	{
-		boost::filesystem::path customlog(extension_ptr->getLogPath());
-		customlog /= init_str;
-
-		if (customlog.parent_path().make_preferred().string() == extension_ptr->getLogPath())
+		try
 		{
-			auto logger_temp = spdlog::daily_logger_mt(init_str, customlog.make_preferred().string(), true);
-			logger.swap(logger_temp);
-			return true;
+			boost::filesystem::path customlog(extension_ptr->getLogPath());
+			customlog /= init_str;
+			if (customlog.parent_path().make_preferred().string() == extension_ptr->getLogPath())
+			{
+				auto logger_temp = spdlog::daily_logger_mt(init_str, customlog.make_preferred().string(), true);
+				logger.swap(logger_temp);
+				status = true;
+			}
+			else
+			{
+				status = false;
+			}
 		}
-		else
+		catch (spdlog::spdlog_ex& e)
 		{
-			return false;
+			#ifdef TESTING
+				extension_ptr->console->warn("extDB: LOG: Error: {0}", e.what());
+			#endif
+			extension_ptr->logger->warn("extDB: LOG: Error: {0}", e.what());
+			status = false;
 		}
 	}
 	else
 	{
 		logger = extension_ptr->logger;
-		return true;
+		status = true;
 	}
+	return status;
 }
 
 
