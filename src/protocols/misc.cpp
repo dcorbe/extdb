@@ -285,4 +285,5 @@ bool MISC::callProtocol(std::string input_str, std::string &result, const int un
 	{
 		result.clear();
 	}
+	return true;
 }

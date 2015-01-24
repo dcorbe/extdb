@@ -475,7 +475,7 @@ void BERcon::init(std::shared_ptr<spdlog::logger> console, std::string address, 
 			return 1;
 		}
 
-		Rcon rcon;
+		BERcon rcon;
 		rcon.init(console, options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>());	
 		Poco::Thread thread;
 		thread.start(rcon);

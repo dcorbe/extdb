@@ -58,7 +58,7 @@ elseif (COMPILE_TEST_SANITIZE_APPLICATION)
 	add_definitions(-DTEST_SANITIZE_APP)
 	message(STATUS "Sanitization testing is enabled.")	
 elseif (COMPILE_RCON_APPLICATION)
-	SET(SOURCES ../../src/rcon.cpp) # Override Sources
+	SET(SOURCES ../../src/bercon.cpp) # Override Sources
 	set(EXECUTABLE_NAME "extDB-rcon")
 	add_executable(${EXECUTABLE_NAME} ${SOURCES})
 	add_definitions(-DBERCON_APP)
