@@ -44,6 +44,12 @@ From Frank https://gist.github.com/Fank/11127158
 #include "misc_v2.h"
 
 
+bool MISC_V2::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str)
+{
+	extension_ptr = extension;
+	return true;
+}
+
 
 void MISC_V2::getDateTime(std::string &result)
 {
@@ -280,12 +286,5 @@ bool MISC_V2::callProtocol(std::string input_str, std::string &result, const int
 	{
 		result = "[0, \"Error Invalid Format\"]";
 	}
-	return true;
-}
-
-
-bool MISC_V2::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str)
-{
-	extension_ptr = extension;
 	return true;
 }

@@ -33,6 +33,14 @@ From Frank https://gist.github.com/Fank/11127158
 #include "../steam.h"
 
 
+bool VAC::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str) 
+{
+	extension_ptr = extension;
+	//database_ptr = database;
+	return true;
+}
+
+
 bool VAC::isNumber(const std::string &input_str)
 {
 	bool status = true;
@@ -50,8 +58,19 @@ bool VAC::isNumber(const std::string &input_str)
 
 bool VAC::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
+	#ifdef TESTING
+		extension_ptr->console->info("extDB: RCON: Trace: Input: {0}", input_str);
+	#endif
+	#ifdef DEBUG_LOGGING
+		extension_ptr->logger->info("extDB: RCON: Trace: Input: {0}", input_str);
+	#endif
+
 	if (unique_id == -1)
 	{
+		#ifdef TESTING
+			extension_ptr->console->warn("extDB: VAC: SYNC MODE NOT SUPPORTED");
+		#endif
+		extension_ptr->logger->warn("extDB: VAC: SYNC MODE NOT SUPPORTED");
 		result = "[0, \"VAC: SYNC MODE NOT SUPPORTED\"]";
 	}
 	else
@@ -65,13 +84,16 @@ bool VAC::callProtocol(std::string input_str, std::string &result, const int uni
 			std::vector<std::string> steamIDs;
 			for (int i = 1; i < t_arg.count(); ++i)
 			{
-				extension_ptr->console->info("SteamIDs: {0}, {1}", i, t_arg[i]);
 				if (isNumber(t_arg[i]))
 				{
 					steamIDs.push_back(t_arg[i]);
 				}
 				else
 				{
+					#ifdef TESTING
+						extension_ptr->console->warn("extDB: VAC: Invalid SteamID: {0}", t_arg[i]);
+					#endif
+					extension_ptr->logger->warn("extDB: VAC: Invalid SteamID: {0}", t_arg[i]);
 					result = "[0, \"VAC: Invalid SteamID\"]";
 					status = false;
 					break;
@@ -90,8 +112,13 @@ bool VAC::callProtocol(std::string input_str, std::string &result, const int uni
 				}
 				else
 				{
+					#ifdef TESTING
+						extension_ptr->console->warn("extDB: VAC: Invalid Query Type: {0}", t_arg[0]);
+					#endif
+					extension_ptr->logger->warn("extDB: VAC: Invalid Query Type: {0}", t_arg[0]);
 					result = "[0, \"VAC: Invalid Query Type\"]";
 					status = false;
+
 				}
 			}
 		}
@@ -105,12 +132,4 @@ bool VAC::callProtocol(std::string input_str, std::string &result, const int uni
 	{
 		return true;
 	}
-}
-
-
-bool VAC::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str) 
-{
-	extension_ptr = extension;
-	//database_ptr = database;
-	return true;
 }

@@ -40,6 +40,12 @@ bool RCON::init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *database
 
 bool RCON::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
+	#ifdef TESTING
+		extension_ptr->console->info("extDB: RCON: Trace: Input: {0}", input_str);
+	#endif
+	#ifdef DEBUG_LOGGING
+		extension_ptr->logger->info("extDB: RCON: Trace: Input: {0}", input_str);
+	#endif
 	/*
 	Poco::StringTokenizer tokens(input_str, ":");
 	if (tokens.count() < 2)

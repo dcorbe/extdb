@@ -43,6 +43,12 @@ From Frank https://gist.github.com/Fank/11127158
 #include "misc.h"
 
 
+bool MISC::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str)
+{
+	extension_ptr = extension;
+	return true;
+}
+
 
 void MISC::getDateTime(std::string &result)
 {
@@ -279,11 +285,4 @@ bool MISC::callProtocol(std::string input_str, std::string &result, const int un
 	{
 		result.clear();
 	}
-}
-
-
-bool MISC::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str)
-{
-	extension_ptr = extension;
-	return true;
 }

@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
  * Changed Code to use Poco Net Library & Poco Checksums
 */
 
-#ifdef RCON_APP
+#ifdef BERCON_APP
 	#include <boost/program_options.hpp>
 	#include <fstream>
 #else
@@ -146,14 +146,18 @@ void BERcon::mainLoop()
 			{
 				if (buffer[8] == 0x01)
 				{
-					logger_console->warn("Rcon: Logged In");
+					#if defined(BERCON_APP) || (TESTING)
+						logger_console->warn("Rcon: Logged In");
+					#endif
 					logged_in = true;
 					rcon_timer.restart();
 				}
 				else
 				{
 					// Login Failed
-					logger_console->warn("Rcon: Failed Login... Disconnecting");
+					#if defined(BERCON_APP) || (TESTING)
+						logger_console->warn("Rcon: Failed Login... Disconnecting");
+					#endif
 					logged_in = false;
 					disconnect();
 					break;
@@ -172,14 +176,16 @@ void BERcon::mainLoop()
 					// Server Received Command Msg
 					std::string result;
 					extractData(9, result);
-					if (result.empty())
-					{
-						logger_console->info("EMPTY");
-					}
-					else
-					{
-						logger_console->info("{0}", result);
-					}
+					#if defined(BERCON_APP) || (TESTING)
+						if (result.empty())
+						{
+							logger_console->info("EMPTY");
+						}
+						else
+						{
+							logger_console->info("{0}", result);
+						}
+					#endif
 				}
 				else
 				{
@@ -236,7 +242,9 @@ void BERcon::mainLoop()
 					// Recieved Chat Messages
 					std::string result;
 					extractData(9, result);
-					logger_console->info("CHAT: {0}", result);
+					#if defined(BERCON_APP) || (TESTING)
+						logger_console->info("CHAT: {0}", result);
+					#endif
 					
 					// Respond to Server Msgs i.e chat messages, to prevent timeout
 					rcon_packet.packetCode = 0x02;
@@ -294,14 +302,18 @@ void BERcon::mainLoop()
 				elapsed_seconds = rcon_timer.elapsedSeconds();
 				if (elapsed_seconds >= 45)
 				{
-					logger_console->warn("Rcon: TIMED OUT...");
+					#if defined(BERCON_APP) || (TESTING)
+						logger_console->warn("Rcon: TIMED OUT...");
+					#endif
 					rcon_timer.restart();
 					connect();
 				}
 				else if (elapsed_seconds >= 30)
 				{
 					// Keep Alive
-					logger_console->info("Keep Alive Sending");
+					#if defined(BERCON_APP) || (TESTING)
+						logger_console->info("Keep Alive Sending");
+					#endif
 					rcon_packet.packetCode = 0x01;
 					rcon_packet.cmd = '\0';
 					rcon_packet.packet.clear();
@@ -336,13 +348,17 @@ void BERcon::mainLoop()
 		}
 		catch (Poco::Net::ConnectionRefusedException& e)
 		{
+			#if defined(BERCON_APP) || (TESTING)
+				logger_console->error("Rcon: Error Connect: {0}", e.displayText());
+			#endif
 			disconnect();
-			logger_console->error("Rcon: Error Connect: {0}", e.displayText());
 		}
 		catch (Poco::Exception& e)
 		{
+			#if defined(BERCON_APP) || (TESTING)
+				logger_console->error("Rcon: Error Rcon: {0}", e.displayText());
+			#endif
 			disconnect();
-			logger_console->error("Rcon: Error Rcon: {0}", e.displayText());
 		}
 	}
 }
@@ -387,7 +403,9 @@ void BERcon::connect()
 	rcon_packet.packet.clear();
 	makePacket(rcon_packet);
 	dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
-	logger_console->info("Rcon: Sent Login Info");
+	#if defined(BERCON_APP) || (TESTING)
+		logger_console->info("Rcon: Sent Login Info");
+	#endif
 	
 	// Reset Timer
 	rcon_timer.start();

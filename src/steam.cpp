@@ -166,14 +166,18 @@ void STEAM::updateSteamBans(std::vector<std::string> &steamIDs)
 			}
 			catch (boost::property_tree::json_parser::json_parser_error &e)
 			{
+				#ifdef TESTING
+					extension_ptr->console->error("Steam WEB API Error: Parsing Error: {0}", e.message());
+				#endif
 				extension_ptr->logger->error("Steam WEB API Error: Parsing Error: {0}", e.message());
-				extension_ptr->console->error("Steam WEB API Error: Parsing Error: {0}", e.message());
 			}
 		}
 		else
 		{
-			extension_ptr->logger->info("Steam WEB API Error (Service Down?): Response Status {0}", res.getReason());
-			extension_ptr->console->info("Steam WEB API Error (Service Down?): Response Status {0}", res.getReason());
+			#ifdef TESTING
+				extension_ptr->console->warn("Steam WEB API Error (Service Down?): Response Status {0}", res.getReason());
+			#endif
+			extension_ptr->logger->warn("Steam WEB API Error (Service Down?): Response Status {0}", res.getReason());
 		}
 		session.reset();
 	}
@@ -207,8 +211,14 @@ void STEAM::updateSteamFriends(std::vector<std::string> &steamIDs)
 		session.setTimeout(Poco::Timespan(30,0));
 		session.sendRequest(req);
 		Poco::Net::HTTPResponse res;
-		extension_ptr->console->info("STEAM: Response Status {0}", res.getReason());
-		extension_ptr->console->info("STEAM: Response Status {0}", res.getStatus());
+		#ifdef TESTING
+			extension_ptr->console->info("STEAM: Response Status {0}", res.getReason());
+			extension_ptr->console->info("STEAM: Response Status {0}", res.getStatus());
+		#endif
+		#ifdef DEBUG_LOGGING
+			extension_ptr->logger->info("STEAM: Response Status {0}", res.getReason());
+			extension_ptr->logger->info("STEAM: Response Status {0}", res.getStatus());
+		#endif
 
 		if (res.getStatus() == 200)
 		{
@@ -222,7 +232,6 @@ void STEAM::updateSteamFriends(std::vector<std::string> &steamIDs)
 				
 				SteamFriends steam_info;
 				steam_info.friends.clear();
-				extension_ptr->console->info("VAC:Friends Checking .... ");
 				for (const auto &val : pt.get_child("friendslist.friends"))
 				{
 					steam_info.steamID = val.second.get<std::string>("steamid", "");
@@ -236,14 +245,18 @@ void STEAM::updateSteamFriends(std::vector<std::string> &steamIDs)
 			}
 			catch (boost::property_tree::json_parser::json_parser_error &e)
 			{
+				#ifdef TESTING
+					extension_ptr->console->error("Steam WEB API Error: Parsing Error: {0}", e.message());
+				#endif
 				extension_ptr->logger->error("Steam WEB API Error: Parsing Error: {0}", e.message());
-				extension_ptr->console->error("Steam WEB API Error: Parsing Error: {0}", e.message());
 			}
 		}
 		else
 		{
+			#ifdef TESTING
+				extension_ptr->console->info("Steam WEB API Error (Service Down?): Response Status {0}", res.getReason());
+			#endif
 			extension_ptr->logger->info("Steam WEB API Error (Service Down?): Response Status {0}", res.getReason());
-			extension_ptr->console->info("Steam WEB API Error (Service Down?): Response Status {0}", res.getReason());
 		}
 		session.reset();
 	}
@@ -275,9 +288,19 @@ void STEAM::run()
 	*steam_run_flag = true;
 	while (*steam_run_flag)
 	{
-		extension_ptr->console->info("Sleep Thread");
+		#ifdef TESTING
+			extension_ptr->console->info("extDB: Steam: Sleep");
+		#endif
+		#ifdef DEBUG_LOGGING
+			extension_ptr->logger->info("extDB: Steam: Sleep");
+		#endif
 		Poco::Thread::trySleep(60000); // 1 Minute Sleep unless woken up
-		extension_ptr->console->info("Woke up Thread");
+		#ifdef TESTING
+			extension_ptr->console->info("extDB: Steam: Wake Up");
+		#endif
+		#ifdef DEBUG_LOGGING
+			extension_ptr->logger->info("extDB: Steam: Wake Up");
+		#endif
 
 		std::vector<SteamQuery> query_queue_copy;
 		{
