@@ -61,7 +61,7 @@ elseif (COMPILE_RCON_APPLICATION)
 	SET(SOURCES ../../src/rcon.cpp) # Override Sources
 	set(EXECUTABLE_NAME "extDB-rcon")
 	add_executable(${EXECUTABLE_NAME} ${SOURCES})
-	add_definitions(-DRCON_APP)
+	add_definitions(-DBERCON_APP)
 	message(STATUS "RCON testing is enabled.")
 else()
 	LIST(APPEND SOURCES ../../src/main.cpp)  # Add main.cpp for library build
