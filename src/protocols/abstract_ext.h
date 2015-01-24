@@ -25,7 +25,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/thread/thread.hpp>
 
-#include "../rcon.h"
 #include "../spdlog/spdlog.h"
 
 
@@ -62,6 +61,6 @@ class AbstractExt
 		virtual std::string getExtensionPath()=0;
 		virtual std::string getLogPath()=0;
 
-		virtual void rconCommand(std::string &str)=0;
+		virtual void rconCommand(std::string str)=0;
 		virtual void steamQuery(const int &unique_id, bool queryFriends, bool queryVacBans, std::vector<std::string> &steamIDs, bool wakeup)=0;
 };

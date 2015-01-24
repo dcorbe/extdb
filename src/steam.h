@@ -23,10 +23,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Poco/MD5Engine.h>
 #include <Poco/DigestEngine.h>
 
+#include <Poco/AbstractCache.h>
+#include <Poco/ExpireCache.h>
+#include <Poco/SharedPtr.h>
+
 #include <cstdlib>
 #include <iostream>
 
-#include "rcon.h"
 #include "protocols/abstract_ext.h"
 
 
@@ -88,5 +91,5 @@ class STEAM: public Poco::Runnable
 		Poco::MD5Engine md5;
 		boost::mutex mutex_md5;
 
-		std::atomic<bool> steam_run_flag = false;
+		std::atomic<bool> *steam_run_flag;
 };

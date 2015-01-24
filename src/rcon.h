@@ -81,7 +81,7 @@ class Rcon: public Poco::Runnable
 		int buffer_size;
 		
 		// Mutex Locks
-		std::atomic<bool> rcon_run_flag = false;
+		std::atomic<bool> *rcon_run_flag;
 		bool logged_in = false;
 		
 		boost::recursive_mutex mutex_rcon_commands;

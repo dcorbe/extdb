@@ -60,7 +60,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-Ext::Ext(std::string dll_path) {
+Ext::Ext(std::string dll_path)
+{
 	try
 	{
 		mgr.reset (new IdManager);
@@ -242,19 +243,21 @@ Ext::Ext(std::string dll_path) {
 				spdlog::set_async_mode(q_size);
 			}
 
+ 			// Initialize so have atomic setup correctly
+			rcon.init(logger, std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password"));
 			if (pConf->getBool("Rcon.Enable", false))
 			{
 				auto belogger_temp = spdlog::daily_logger_mt("extDB BE File Logger", belog_relative_path.make_preferred().string(), true);
 				belogger.swap(belogger_temp);
 				extDB_connectors_info.rcon = true;
-				rcon.init(logger, std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password"));
 				rcon_thread.start(rcon);
 				rcon.run();
 			}
 
+			// Initialize so have atomic setup correctly
+			steam.init(this);
 			if (pConf->getBool("Steam.Enable", false))
-			{
-				steam.init(this);
+			{	
 				steam_thread.start(steam);
 			}
 
@@ -378,7 +381,7 @@ void Ext::steamQuery(const int &unique_id, bool queryFriends, bool queryVacBans,
 }
 
 
-void Ext::rconCommand(std::string &str)
+void Ext::rconCommand(std::string str)
 {
 	if (extDB_connectors_info.rcon)
 	{

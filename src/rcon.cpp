@@ -277,7 +277,7 @@ void Rcon::mainLoop()
 			{
 				// Check if Run Flag Still Set
 				//		Done here instead of while due to need of mutex lock
-				if ((!rcon_run_flag) && (rcon_commands.empty()))
+				if ((!*rcon_run_flag) && (rcon_commands.empty()))
 				{
 					break;
 				}
@@ -357,7 +357,7 @@ void Rcon::checkForSteamID(std::string &steamID)
 
 void Rcon::addCommand(std::string command)
 {
-	if (rcon_run_flag)
+	if (*rcon_run_flag)
 	{
 		boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
 		rcon_commands.push_back(std::move(command));
@@ -375,7 +375,7 @@ void Rcon::run()
 void Rcon::connect()
 {
 	logged_in = false;
-	rcon_run_flag = true;
+	*rcon_run_flag = true;
 
 	// Connect
 	Poco::Net::SocketAddress sa(rcon_login.address, rcon_login.port);
@@ -396,11 +396,12 @@ void Rcon::connect()
 
 void Rcon::disconnect()
 {
-	rcon_run_flag = false;	
+	*rcon_run_flag = false;	
 }
 
 void Rcon::init(std::shared_ptr<spdlog::logger> console, std::string address, int port, std::string password)
 {
+	rcon_run_flag = new std::atomic<bool>(false);
 	logger_console.swap(console);
 
 	rcon_login.address = address;

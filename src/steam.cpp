@@ -176,21 +176,28 @@ void STEAM::updateSTEAMBans(std::vector<std::string> &steamIDs)
 
 void STEAM::addQuery(const int &unique_id, bool queryFriends, bool queryVacBans, std::vector<std::string> &steamIDs)
 {
-	SteamQuery info;
-	info.unique_id = unique_id;
-	info.queryFriends = queryFriends;
-	info.queryVACBans = queryVacBans;
-	info.steamIDs = steamIDs;
-	boost::lock_guard<boost::mutex> lock(mutex_query_queue);
+	if (*steam_run_flag)
+	{
+		SteamQuery info;
+		info.unique_id = unique_id;
+		info.queryFriends = queryFriends;
+		info.queryVACBans = queryVacBans;
+		info.steamIDs = steamIDs;
+		boost::lock_guard<boost::mutex> lock(mutex_query_queue);
 
-	query_queue.push_back(std::move(info));
+		query_queue.push_back(std::move(info));
+	}
+	else
+	{
+		extension_ptr->saveResult_mutexlock(unique_id, "[0,\"extDB: Steam is not running / disabled\"]");
+	}
 }
 
 
 void STEAM::run()
 {
-	steam_run_flag = true;
-	while (steam_run_flag)
+	*steam_run_flag = true;
+	while (*steam_run_flag)
 	{
 		Poco::Thread::trySleep(60000); // 1 Minute Sleep unless woken up
 		extension_ptr->console->info("Woke up Thread");
@@ -225,7 +232,7 @@ void STEAM::run()
 			std::string result;
 			for (auto &val: query_queue_copy)
 			{
-				if (val.unique_id != 0)
+				if (val.unique_id != -1)
 				{
 					if (val.queryFriends)
 					{
@@ -273,7 +280,7 @@ void STEAM::run()
 
 void STEAM::stop()
 {
-	steam_run_flag = false;
+	*steam_run_flag = false;
 }
 
 
@@ -281,7 +288,9 @@ void STEAM::init(AbstractExt *extension)
 {
 	extension_ptr = extension;
 
-	STEAM_api_key = extension_ptr->pConf->getString("Main.Steam Web API Key", "");
+	steam_run_flag = new std::atomic<bool>(false);
+
+	STEAM_api_key = extension_ptr->pConf->getString("Steam.API Key", "");
 	rconBanSettings.NumberOfVACBans = extension_ptr->pConf->getInt("STEAM.NumberOfVACBans", 1);
 	rconBanSettings.DaysSinceLastBan = extension_ptr->pConf->getInt("STEAM.DaysSinceLastBan", 0);
 	rconBanSettings.BanDuration = extension_ptr->pConf->getString("STEAM.BanDuration", "0");

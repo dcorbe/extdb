@@ -24,6 +24,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <unordered_map>
 
+#include "rcon.h"
 #include "steam.h"
 #include "uniqueid.h"
 
@@ -39,7 +40,7 @@ class Ext: public AbstractExt
 		~Ext();
 		void stop();	
 		void callExtenion(char *output, const int &output_size, const char *function);
-		void rconCommand(std::string &str);
+		void rconCommand(std::string str);
 
 	protected:
 		std::string getExtensionPath();
