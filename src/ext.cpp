@@ -174,6 +174,34 @@ Ext::Ext(std::string dll_path)
 
 
 		logger->info("extDB: Version: {0}", getVersion());
+		#ifdef __GNUC__
+			#ifndef TESTING
+				logger->info("extDB: Linux Version");
+			#else
+				logger->info("extDB: Linux Debug Version");
+				logger->info();
+				logger->info("Message: Arma Linux Servers are using Older Physic Library (than Windows Servers), due to Debian 7 using old version of Glibc");
+				logger->info("Message: If you like extDB consider donating or bug BIS to drop support for Debian 7 thanks, so Linux Servers get same Physic Library Version as Windows");
+				logger->info("Message: Note all Dev Work for extDB is done on Linux Setup");
+				logger->info("Message: Torndeco: 24/01/15");
+				logger->info();
+			#endif
+		#endif
+		#ifdef _MSC_VER
+			#ifndef TESTING
+				logger->info("extDB: Windows Version");
+			#else
+				logger->info("extDB: Windows Debug Version");
+				logger->info();
+				logger->info("Message: Arma Linux Servers are using Older Physic Library (than Windows Servers), due to Debian 7 using old version of Glibc");
+				logger->info("Message: If you like extDB consider donating or bug BIS to drop support for Debian 7 thanks, so Linux Servers get same Physic Library Version as Windows");
+				logger->info("Message: Note all Dev Work for extDB is done on Linux Setup");
+				logger->info("Message: Torndeco: 24/01/15");
+				logger->info();
+			#endif
+		#endif
+
+
 
 		if (!conf_found)
 		{
@@ -966,14 +994,14 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 								{
 									if (unordered_map_protocol.find(protocol) != unordered_map_protocol.end())
 									{
-										std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
-										logger->error("extDB: Unknown Protocol: {0}", protocol);
-									}
-									else
-									{
 										boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
 										unordered_map_wait[unique_id] = true;
 										found_procotol = true;
+									}
+									else
+									{
+										std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
+										logger->error("extDB: Unknown Protocol: {0}", protocol);
 									}
 								}
 								// Only Add Job to Work Queue + Return ID if Protocol Name exists.
@@ -1234,11 +1262,11 @@ int main(int nNumberofArgs, char* pszArgs[])
 	int test_counter = 0;
 	for (;;) {
 		std::getline(std::cin, input_str);
-		if (input_str == "quit")
+		if (boost::iequals(input_str, "quit") == 1)
 		{
 		    break;
 		}
-		else if (input_str == "test")
+		else if (boost::iequals(input_str, "test") == 1)
 		{
 			test = true;
 		}
