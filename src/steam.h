@@ -84,7 +84,8 @@ class STEAM: public Poco::Runnable
 		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamVACBans> > SteamVacBans_Cache; // 1 Hour (3600000)
 		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamFriends> > SteamFriends_Cache; // 1 Hour (3600000)
 
-		void updateSTEAMBans(std::vector<std::string> &steamIDs);
+		void updateSteamBans(std::vector<std::string> &steamIDs);
+		void updateSteamFriends(std::vector<std::string> &steamIDs);
 		std::string convertSteamIDtoBEGUID(const std::string &input_str);
 		std::vector<std::string> generateSteamIDStrings(std::vector<std::string> &steamIDs);
 

@@ -87,24 +87,6 @@ bool VAC::callProtocol(std::string input_str, std::string &result, const int uni
 				else if (boost::iequals(t_arg[0], std::string("VACBanned")) == 1)
 				{
 					extension_ptr->steamQuery(unique_id, false, true, steamIDs, true);
-//					if (VACBans_Cache->get(t_arg[1])->VACBanned)
-//					{
-//						result = "[1,1]";
-//					}
-//					else
-//					{
-//						result = "[1,0]";
-//					}
-				}
-				else if (boost::iequals(t_arg[0], std::string("NumberOfVACBans")) == 1)
-				{
-					result = "[0, \"VAC: NOT WORKING YET\"]";
-					//result = "[1," + Poco::NumberFormatter::format(VACBans_Cache->get(t_arg[1])->NumberOfVACBans) + "]";
-				}
-				else if (boost::iequals(t_arg[0], std::string("DaysSinceLastBan")) == 1)
-				{
-					result = "[0, \"VAC: NOT WORKING YET\"]";
-					//result = "[1," + Poco::NumberFormatter::format(VACBans_Cache->get(t_arg[1])->DaysSinceLastBan) + "]";
 				}
 				else
 				{
