@@ -278,7 +278,7 @@ bool MISC::callProtocol(std::string input_str, std::string &result, const int un
 	}
 	else
 	{
-		result.clear();
+		result = "[0, \"Error Invalid Format\"]";
 	}
 	return true;
 }
