@@ -47,11 +47,11 @@ class STEAM: public Poco::Runnable
 		
 		struct SteamVACBans
 		{
-			std::string steamID;
+			bool extDBBanned=false;
 			bool VACBanned;
 			int NumberOfVACBans;
 			int DaysSinceLastBan;
-			bool extDBBanned;
+			std::string steamID;
 		};
 
 		struct SteamFriends
