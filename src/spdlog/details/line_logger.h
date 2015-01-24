@@ -92,7 +92,6 @@ public:
             _log_msg.raw << what;
     }
 
-
     template<typename T>
     line_logger& operator<<(const T& what)
     {

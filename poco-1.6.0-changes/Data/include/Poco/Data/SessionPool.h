@@ -151,8 +151,7 @@ public:
 	std::string name() const;
 		/// Returns the name for this pool.
 
-	static std::string name(const std::string& connector,
-		const std::string& connectionString);
+	static std::string name(const std::string& connector, const std::string& connectionString);
 	/// Returns the name formatted from supplied arguments as "connector:///connectionString".
 
 	void setFeature(const std::string& name, bool state);

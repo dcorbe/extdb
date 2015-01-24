@@ -18,50 +18,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include <boost/thread/thread.hpp>
-#include <Poco/Data/SessionPool.h>
-#include <Poco/MD5Engine.h>
-#include <Poco/DigestEngine.h>
-
-#include <cstdlib>
-#include <iostream>
-
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
-#include "../rcon.h"
+#include "../bercon.h"
 
 
 class VAC: public AbstractProtocol
 {
 	public:
-		bool init(AbstractExt *extension, const std::string init_str);
-		void callProtocol(std::string input_str, std::string &result);
-		
+		bool init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *database, const std::string init_str);
+		bool callProtocol(std::string input_str, std::string &result, const int unique_id=-1);
+
 	private:
-		struct SteamVacInfo
-		{
-			std::string steamID;
-			std::string VACBanned;
-			std::string NumberOfVACBans;
-			std::string DaysSinceLastBan;
-		};
-		
-		struct VacBanCheck
-		{
-			int NumberOfVACBans;
-			int DaysSinceLastBan;
-			std::string BanDuration;
-			std::string BanMessage;
-		};
-		
-		VacBanCheck vac_ban_check;
-		Poco::SharedPtr<Poco::ExpireCache<std::string, SteamVacInfo> > VAC_Cache; // 1 Hour (3600000)
-
 		bool isNumber(const std::string &input_str);
-		bool updateVAC(std::string steam_web_api_key, std::string &steam_id);
-		std::string convertSteamIDtoBEGUID(const std::string &steamid);
-		
-		Poco::MD5Engine md5;
-
-		boost::mutex VAC_Cache_mutex;
 };

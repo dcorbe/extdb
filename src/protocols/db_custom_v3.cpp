@@ -45,19 +45,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "../sanitize.h"
 
 
-bool DB_CUSTOM_V3::init(AbstractExt *extension, const std::string init_str)
+bool DB_CUSTOM_V3::init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *database, const std::string init_str)
 {
 	extension_ptr = extension;
+	database_ptr = database;
 
 	db_custom_name = init_str;
 	
 	bool status = false;
 	
-	if (extension_ptr->getDBType() == std::string("MySQL"))
+	if (database_ptr->type == std::string("MySQL"))
 	{
 		status = true;
 	}
-	else if (extension_ptr->getDBType() == std::string("SQLite"))
+	else if (database_ptr->type == std::string("SQLite"))
 	{
 		status =  true;
 	}
@@ -320,7 +321,7 @@ void DB_CUSTOM_V3::callCustomProtocol(boost::unordered_map<std::string, Template
 {
 	result.clear();
 	
-	Poco::Data::Session session = extension_ptr->getDBSession_mutexlock();
+	Poco::Data::Session session = extension_ptr->getDBSession_mutexlock(*database_ptr);
 	Poco::Data::Statement sql_current(session);
 
 	for(std::vector< std::list<Poco::DynamicAny> >::const_iterator it_sql_statements_vector = itr->second.sql_statements.begin(); it_sql_statements_vector != itr->second.sql_statements.end(); ++it_sql_statements_vector)
@@ -576,7 +577,7 @@ void DB_CUSTOM_V3::callCustomProtocol(boost::unordered_map<std::string, Template
 }
 
 
-void DB_CUSTOM_V3::callProtocol(std::string input_str, std::string &result)
+bool DB_CUSTOM_V3::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
 	#ifdef TESTING
 		extension_ptr->console->info("extDB: DB_CUSTOM_V3: Trace: Input: {0}", input_str);
@@ -693,4 +694,5 @@ void DB_CUSTOM_V3::callProtocol(std::string input_str, std::string &result)
 			}
 		}
 	}
+	return true;
 }

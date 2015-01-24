@@ -19,42 +19,43 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include <boost/thread/thread.hpp>
-#include <boost/unordered_map.hpp>
 
-#include <Poco/DynamicAny.h>
-#include <Poco/StringTokenizer.h>
-
+#include <Poco/Checksum.h>
+#include <Poco/ClassLibrary.h>
+#include <Poco/MD4Engine.h>
 #include <Poco/MD5Engine.h>
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
 
 
-class DB_CUSTOM_V3: public AbstractProtocol
+class MISC_V2: public AbstractProtocol
 {
 	public:
-		bool init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *database, const std::string init_str);
+		bool init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str);
 		bool callProtocol(std::string input_str, std::string &result, const int unique_id=-1);
-		
+
+		Poco::Checksum checksum_crc32;
+
 	private:
 		Poco::MD5Engine md5;
 		boost::mutex mutex_md5;
 
-		std::string db_custom_name;
-		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
-		
-		struct Template_Calls
-		{
-			int number_of_inputs;
-			bool sanitize_value_check;
-			bool string_datatype_check;
-			std::string bad_chars;
-			std::string bad_chars_action;
-			std::vector< std::list<Poco::DynamicAny> > sql_statements;
-		};
+		Poco::MD4Engine md4;
+		boost::mutex mutex_md4;
 
-		boost::unordered_map<std::string, Template_Calls> custom_protocol;
+		boost::mutex mutex_checksum_crc32;
 
-		void callCustomProtocol(boost::unordered_map<std::string, Template_Calls>::const_iterator itr, std::vector< std::string > &tokens, bool &sanitize_value_check_ok, std::string &result);
+		boost::mutex mutex_RandomString;
+		std::vector < std::string > uniqueRandomVarNames;
+
+		void getDateTime(std::string &result);
+		void getDateTime(int hours, std::string &result);
+
+		void getCrc32(std::string &input_str, std::string &result);
+		void getMD4(std::string &input_str, std::string &result);
+		void getMD5(std::string &input_str, std::string &result);
 		void getBEGUID(std::string &input_str, std::string &result);
+
+		void getRandomString(std::string &input_str, bool uniqueString, std::string &result);
 };

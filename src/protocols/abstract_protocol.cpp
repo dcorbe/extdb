@@ -27,12 +27,14 @@ AbstractProtocol::~AbstractProtocol()
 {
 }
 
-void AbstractProtocol::callProtocol(std::string input_str, std::string &result)
+bool AbstractProtocol::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
+	return true;
 }
 
-bool AbstractProtocol::init(AbstractExt *extension, const std::string init_str)
+bool AbstractProtocol::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str)
 {
 	extension_ptr = extension;
+	database_ptr = database;
 	return true;
 }

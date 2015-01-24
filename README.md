@@ -1,4 +1,4 @@
-## Arma3 Extension DB  C++ (windows / linux)   v32 
+## Arma3 Extension DB  C++ (windows / linux)   v33 
 
 I got bored waiting on 2017 / Epoch for Arma3.  
 So i decided to write up an C++ Extension for Arma3server.
@@ -11,6 +11,8 @@ http://a3wasteland.com/
 
 ### Features
 
+ - Rcon Support
+ - Steam VAC + Friends Queries
  - Multi-Part Messages (i.e if output > outputsize set by arma)
  - Multi-Threading Sync / ASync Commands
  - Unique ID for Messages
@@ -27,6 +29,7 @@ http://a3wasteland.com/
  - DB_RAW_V3 (by raw i mean raw sql commands, no sql escaping etc)
  - MISC (has beguid crc32 md4 md5 time + time offset)
  - LOG (Ability to log info into custom log files)
+ - VAC (Ability to Query Steam for Ban / Friend Info)
 
 
 #### Documentation @  
@@ -49,14 +52,19 @@ extDB is incompatible with https://github.com/fred41/tbbmalloc_arma.
 
 #### Thanks to
 
- - bladez- Using modified gplv3 code from https://github.com/bladez-/bercon for RCON
- - killzonekid for his blog + initial code in arma wiki for linux extensions
- - Everyone else i forgot, including EPOCH dev's for having an public github for mod at least on arma2 ;)
- - rajkosto for his work on DayZ Hive, that i have looked at & and still is over my head most of the time..   Using same method for getting Unique Char ID, also using almost the exact same boost parser for checking input/output to database   https://github.com/rajkosto/hive
- - Fank https://gist.github.com/Fank/11127158 for his code to convert SteamID to BEGUID.
- - Tonic & Atlis RPG Admins for beening literally beening bleeding edge testers. And good sports when i messed up, wasn't out a week and multiple servers were testing out extDB.
- - firefly2442 https://github.com/firefly2442 for the CMake Build System & wiki updates
- - MaHuJa https://github.com/MaHuJa for fixing Test Application Input, no longer hardcoded input limit
+ - bladez- Using modified code from https://github.com/bladez-/bercon for RCON  
+ - Fank for his code to convert SteamID to BEGUID https://gist.github.com/Fank/11127158
+
+ - rajkosto for his work on DayZ Hive, using almost the exact same boost parser for sanitize checks for input/output https://github.com/rajkosto/hive  
+ - firefly2442 for the CMake Build System & wiki updates https://github.com/firefly2442
+ - MaHuJa for fixing Test Application Input, no longer hardcoded input limit https://github.com/MaHuJa
+
+ - killzonekid for his blog http://killzonekid.com/
+  
+ - Tonic & Atlis RPG Admins for beening literally beening bleeding edge testers for extDB. https://github.com/TAWTonic
+
+ - Gabime for Spdlog https://github.com/gabime/spdlog
+
 
 
 ##### Disclaimer

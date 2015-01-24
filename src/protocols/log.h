@@ -27,8 +27,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class LOG: public AbstractProtocol
 {
 	public:
-		bool init(AbstractExt *extension, const std::string init_str);
-		void callProtocol(std::string input_str, std::string &result);
+		bool init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *database, const std::string init_str);
+		bool callProtocol(std::string input_str, std::string &result, const int unique_id=-1);
 		
 	private:
 		std::shared_ptr<spdlog::logger> logger;

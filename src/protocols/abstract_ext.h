@@ -25,30 +25,53 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/thread/thread.hpp>
 
-#include "../rcon.h"
 #include "../spdlog/spdlog.h"
 
 
 class AbstractExt
 {
 	public:
-		virtual Poco::Data::Session getDBSession_mutexlock()=0;
-		virtual Poco::Data::Session getDBSession_mutexlock(Poco::Data::SessionPool::SessionDataPtr &session_data_ptr)=0;
+		struct DBConnectionInfo
+		{
+			std::string type;
+			std::string connection_str;
+			int min_sessions;
+			int max_sessions;
+			int idle_time;
 
-		virtual std::string getAPIKey()=0;
-		
+			// Database Session Pool
+			std::shared_ptr<Poco::Data::SessionPool> pool;
+			boost::mutex mutex_pool;
+		};
+
+		struct extDBConnectors
+		{
+			bool rcon=false;
+			bool mysql=false;
+			bool sqlite=false;
+			DBConnectionInfo database;
+			std::unordered_map<std::string, DBConnectionInfo> database_extra;
+		};
+
+		extDBConnectors extDB_connectors_info;
+
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
 
 		std::shared_ptr<spdlog::logger> console;
 		std::shared_ptr<spdlog::logger> logger;
 		std::shared_ptr<spdlog::logger> belogger;
-		
+	
 		virtual void freeUniqueID_mutexlock(const int &unique_id)=0;
 		virtual int getUniqueID_mutexlock()=0;
+
+		virtual void saveResult_mutexlock(const int &unique_id, const std::string &result)=0;
+
+		virtual Poco::Data::Session getDBSession_mutexlock(DBConnectionInfo &database)=0;
+		virtual Poco::Data::Session getDBSession_mutexlock(DBConnectionInfo &database, Poco::Data::SessionPool::SessionDataPtr &session_data_ptr)=0;
 		
-		virtual std::string getDBType()=0;
 		virtual std::string getExtensionPath()=0;
 		virtual std::string getLogPath()=0;
-		
-		boost::mutex mutex_poco_cached_preparedStatements;  // Using Same Lock for Wait / Results / Plugins
+
+		virtual void rconCommand(std::string str)=0;
+		virtual void steamQuery(const int &unique_id, bool queryFriends, bool queryVacBans, std::vector<std::string> &steamIDs, bool wakeup)=0;
 };

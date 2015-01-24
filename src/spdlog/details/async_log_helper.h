@@ -36,6 +36,7 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
+#include <functional>
 
 #include "../common.h"
 #include "../sinks/sink.h"
@@ -108,7 +109,12 @@ public:
     using clock = std::chrono::steady_clock;
 
 
-    async_log_helper(formatter_ptr formatter, const std::vector<sink_ptr>& sinks, size_t queue_size);
+    async_log_helper(formatter_ptr formatter,
+                     const std::vector<sink_ptr>& sinks,
+                     size_t queue_size,
+                     const async_overflow_policy overflow_policy = async_overflow_policy::block_retry,
+                     const std::function<void()>& worker_warmup_cb = nullptr);
+
     void log(const details::log_msg& msg);
 
     //Stop logging and join the back thread
@@ -119,12 +125,21 @@ public:
 private:
     formatter_ptr _formatter;
     std::vector<std::shared_ptr<sinks::sink>> _sinks;
+
+    // queue of messages to log
     q_type _q;
-    std::thread _worker_thread;
 
     // last exception thrown from the worker thread
     std::shared_ptr<spdlog_ex> _last_workerthread_ex;
 
+    // overflow policy
+    const async_overflow_policy _overflow_policy;
+
+    // worker thread warmup callback - one can set thread priority, affinity, etc
+    const std::function<void()> _worker_warmup_cb;
+
+    // worker thread
+    std::thread _worker_thread;
 
     // throw last worker thread exception or if worker thread is not active
     void throw_if_bad_worker();
@@ -136,7 +151,7 @@ private:
     //return true if a message was available (queue was not empty), will set the last_pop to the pop time
     bool process_next_msg(clock::time_point& last_pop);
 
-    // guess how much to sleep if queue is empty/full using last succesful op time as hint
+    // guess how much to sleep if queue is empty/full using last successful op time as hint
     static void sleep_or_yield(const clock::time_point& last_op_time);
 
 };
@@ -146,10 +161,12 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 // async_sink class implementation
 ///////////////////////////////////////////////////////////////////////////////
-inline spdlog::details::async_log_helper::async_log_helper(formatter_ptr formatter, const std::vector<sink_ptr>& sinks, size_t queue_size):
+inline spdlog::details::async_log_helper::async_log_helper(formatter_ptr formatter, const std::vector<sink_ptr>& sinks, size_t queue_size, const async_overflow_policy overflow_policy, const std::function<void()>& worker_warmup_cb):
     _formatter(formatter),
     _sinks(sinks),
     _q(queue_size),
+    _overflow_policy(overflow_policy),
+    _worker_warmup_cb(worker_warmup_cb),
     _worker_thread(&async_log_helper::worker_loop, this)
 {}
 
@@ -173,7 +190,7 @@ inline void spdlog::details::async_log_helper::log(const details::log_msg& msg)
 {
     throw_if_bad_worker();
     async_msg new_msg(msg);
-    if (!_q.enqueue(std::move(new_msg)))
+    if (!_q.enqueue(std::move(new_msg)) && _overflow_policy != async_overflow_policy::discard_log_msg)
     {
         auto last_op_time = clock::now();
         do
@@ -189,6 +206,7 @@ inline void spdlog::details::async_log_helper::worker_loop()
 {
     try
     {
+        if (_worker_warmup_cb) _worker_warmup_cb();
         clock::time_point last_pop = clock::now();
         while(process_next_msg(last_pop));
     }

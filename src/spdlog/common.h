@@ -24,8 +24,10 @@
 
 #pragma once
 
-#include<initializer_list>
-#include<chrono>
+#include <string>
+#include <initializer_list>
+#include <chrono>
+#include <memory>
 
 //visual studio does not support noexcept yet
 #ifndef _MSC_VER
@@ -74,6 +76,17 @@ inline const char* to_str(spdlog::level::level_enum l)
     return level_names[l];
 }
 } //level
+
+
+//
+// Async overflow policy - block by default.
+//
+enum class async_overflow_policy
+{
+    block_retry, // Block / yield / sleep until message can be enqueued
+    discard_log_msg // Discard the message it enqueue fails
+};
+
 
 //
 // Log exception

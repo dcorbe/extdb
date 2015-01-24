@@ -1,3 +1,14 @@
+33
+	ADDED: DATABASE_EXTRA + ADD_EXTRA System Calls  Used for connecting to Different Databases
+	ADDED: VAC Protocol  Steam Ban / Friend Queries (Note: Known Issue with Steam not always responding to HTTP Requests, need to add code to timeout)
+	ADDED: RCon Protocol  (Will add ability to disable/enable certain RCon Commands in next version)
+
+	UPDATED: New MISC_V2 Protocol  Changed the return Output to match other Protocols  i.e [1,<Result>] instead of <Result>
+
+	FIXED: LOG Protocol Error Handling wont crash server, will report error if there is an issue i.e file permissions etc
+	FIXED: DB_CUSTOM_V5 Removed Leftover Mutex Lock (Improved Performance)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  	
 32
 	ADDED: Better exception handling for when adding Database
 

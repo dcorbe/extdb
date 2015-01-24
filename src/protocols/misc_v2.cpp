@@ -20,6 +20,7 @@ From Frank https://gist.github.com/Fank/11127158
 
 */
 
+
 #include <boost/random/random_device.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/thread/thread.hpp>
@@ -40,58 +41,58 @@ From Frank https://gist.github.com/Fank/11127158
 #include "../sanitize.h"
 
 #include "abstract_ext.h"
-#include "misc.h"
+#include "misc_v2.h"
 
 
-bool MISC::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str)
+bool MISC_V2::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str)
 {
 	extension_ptr = extension;
 	return true;
 }
 
 
-void MISC::getDateTime(std::string &result)
+void MISC_V2::getDateTime(std::string &result)
 {
 	Poco::DateTime now;
-	result = ("[" + Poco::DateTimeFormatter::format(now, "%Y, %n, %d, %H, %M") + "]");
+	result = "[1,[" + Poco::DateTimeFormatter::format(now, "%Y, %n, %d, %H, %M") + "]]";
 }
 
 
-void MISC::getDateTime(int hours, std::string &result)
+void MISC_V2::getDateTime(int hours, std::string &result)
 {
 	Poco::DateTime now;
 	Poco::Timespan span(hours*Poco::Timespan::HOURS);
 	Poco::DateTime newtime = now + span;
 
-	result = ("[" + Poco::DateTimeFormatter::format(newtime, "%Y, %n, %d, %H, %M") + "]");
+	result = "[1,[" + Poco::DateTimeFormatter::format(newtime, "%Y, %n, %d, %H, %M") + "]]";
 }
 
 
-void MISC::getCrc32(std::string &input_str, std::string &result)
+void MISC_V2::getCrc32(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_checksum_crc32);
 	checksum_crc32.update(input_str);
-	result = ("\"" + Poco::NumberFormatter::format(checksum_crc32.checksum()) + "\"");
+	result = "[1,\"" + Poco::NumberFormatter::format(checksum_crc32.checksum()) + "\"]";
 }
 
 
-void MISC::getMD4(std::string &input_str, std::string &result)
+void MISC_V2::getMD4(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_md4);
 	md4.update(input_str);
-	result = ("\"" + Poco::DigestEngine::digestToHex(md4.digest()) + "\"");
+	result = "[1,\"" + Poco::DigestEngine::digestToHex(md4.digest()) + "\"]";
 }
 
 
-void MISC::getMD5(std::string &input_str, std::string &result)
+void MISC_V2::getMD5(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_md5);
 	md5.update(input_str);
-	result = ("\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"");
+	result = "[1,\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"]";
 }
 
 
-void MISC::getBEGUID(std::string &input_str, std::string &result)
+void MISC_V2::getBEGUID(std::string &input_str, std::string &result)
 // From Frank https://gist.github.com/Fank/11127158
 // Modified to use libpoco
 {
@@ -100,7 +101,7 @@ void MISC::getBEGUID(std::string &input_str, std::string &result)
 	if (input_str.empty())
 	{
 		status = false;
-		result = "Invalid SteamID";
+		result = "[0,\"Invalid SteamID\"";
 	}
 	else
 	{
@@ -109,7 +110,7 @@ void MISC::getBEGUID(std::string &input_str, std::string &result)
 			if (!std::isdigit(input_str[index]))
 			{
 				status = false;
-				result = "Invalid SteamID";
+				result = "[0,\"Invalid SteamID\"";
 				break;
 			}
 		}
@@ -133,17 +134,17 @@ void MISC::getBEGUID(std::string &input_str, std::string &result)
 
 		boost::lock_guard<boost::mutex> lock(mutex_md5);
 		md5.update(bestring.str());
-		result = ("\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"");
+		result = "[1,\"" + Poco::DigestEngine::digestToHex(md5.digest()) + "\"]";
 	}
 }
 
 
-void MISC::getRandomString(std::string &input_str, bool uniqueString, std::string &result)
+void MISC_V2::getRandomString(std::string &input_str, bool uniqueString, std::string &result)
 {
 	Poco::StringTokenizer tokens(input_str, ":");
 	if (tokens.count() != 2)
 	{
-		result = "[]";
+		result = "[0,\"Error Syntax\"]";
 	}
 	else
 	{
@@ -151,13 +152,13 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 		int stringLength;
 		if (!((Poco::NumberParser::tryParse(tokens[0], numberOfVariables)) && (Poco::NumberParser::tryParse(tokens[1], stringLength))))
 		{
-			result = "[]";
+			result = "[0,\"Error Invalid Number\"]";
 		}
 		else
 		{
 			if (numberOfVariables <= 0)
 			{
-				result = "[]";
+				result = "[0,\"Error Number of Variable <= 0\"]";
 			}
 			else
 			{
@@ -170,7 +171,7 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 				boost::random::random_device rng;
 				boost::random::uniform_int_distribution<> index_dist(0, chars.size() - 1);
 
-				result = "[1,";
+				result = "[1,[";
 
 				int numOfRetrys;
 
@@ -194,7 +195,7 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 							{
 								if (numberOfVariables == 0)
 								{
-									result = "[";
+									result = "[1,[";
 								}
 								// Break outof Loop if already tried 10 times
 								--i;
@@ -216,14 +217,14 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 						}
 					}
 				}
-				result = result + "]";
+				result = result + "]]";
 			}
 		}
 	}
 }
 
 
-bool MISC::callProtocol(std::string input_str, std::string &result, const int unique_id)
+bool MISC_V2::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
 	// Protocol
 	const std::string sep_char(":");
@@ -283,6 +284,7 @@ bool MISC::callProtocol(std::string input_str, std::string &result, const int un
 	}
 	else
 	{
-		result.clear();
+		result = "[0, \"Error Invalid Format\"]";
 	}
+	return true;
 }

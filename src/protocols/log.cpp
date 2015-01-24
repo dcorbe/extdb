@@ -19,35 +19,50 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "log.h"
 
 
-bool LOG::init(AbstractExt *extension, const std::string init_str)
+bool LOG::init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str) 
 {
+	bool status;
 	extension_ptr = extension;
+	//database_ptr = database;
+
 	if (!(init_str.empty()))
 	{
-		boost::filesystem::path customlog(extension->getLogPath());
-		customlog /= init_str;
-
-		if (customlog.parent_path().make_preferred().string() == extension->getLogPath())
+		try
 		{
-			auto logger_temp = spdlog::daily_logger_mt(init_str, customlog.make_preferred().string(), true);
-			logger.swap(logger_temp);
-			return true;
+			boost::filesystem::path customlog(extension_ptr->getLogPath());
+			customlog /= init_str;
+			if (customlog.parent_path().make_preferred().string() == extension_ptr->getLogPath())
+			{
+				auto logger_temp = spdlog::daily_logger_mt(init_str, customlog.make_preferred().string(), true);
+				logger.swap(logger_temp);
+				status = true;
+			}
+			else
+			{
+				status = false;
+			}
 		}
-		else
+		catch (spdlog::spdlog_ex& e)
 		{
-			return false;
+			#ifdef TESTING
+				extension_ptr->console->warn("extDB: LOG: Error: {0}", e.what());
+			#endif
+			extension_ptr->logger->warn("extDB: LOG: Error: {0}", e.what());
+			status = false;
 		}
 	}
 	else
 	{
-		logger = extension->logger;
-		return true;
+		logger = extension_ptr->logger;
+		status = true;
 	}
+	return status;
 }
 
 
-void LOG::callProtocol(std::string input_str, std::string &result)
+bool LOG::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
 	logger->info(input_str.c_str());
 	result = "[1]";
+	return true;
 }
