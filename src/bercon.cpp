@@ -55,10 +55,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <unordered_map>
 
-#include "rcon.h"
+#include "bercon.h"
 
 
-void Rcon::makePacket(RconPacket &rcon)
+void BERcon::makePacket(RconPacket &rcon)
 {
 	Poco::Checksum checksum_crc32;
 
@@ -115,7 +115,7 @@ void Rcon::makePacket(RconPacket &rcon)
 }
 
 
-void Rcon::extractData(int pos, std::string &result)
+void BERcon::extractData(int pos, std::string &result)
 {
 	std::stringstream ss;
 	for(size_t i = pos; i < buffer_size; ++i)
@@ -126,7 +126,7 @@ void Rcon::extractData(int pos, std::string &result)
 }
 
 
-void Rcon::mainLoop()
+void BERcon::mainLoop()
 {
 	int elapsed_seconds;
 	logged_in = false;
@@ -355,7 +355,7 @@ void Rcon::checkForSteamID(std::string &steamID)
 }
 */
 
-void Rcon::addCommand(std::string command)
+void BERcon::addCommand(std::string command)
 {
 	if (*rcon_run_flag)
 	{
@@ -365,14 +365,14 @@ void Rcon::addCommand(std::string command)
 }
 
 
-void Rcon::run()
+void BERcon::run()
 {
 	connect();
 	mainLoop();
 }
 
 
-void Rcon::connect()
+void BERcon::connect()
 {
 	logged_in = false;
 	*rcon_run_flag = true;
@@ -394,12 +394,12 @@ void Rcon::connect()
 }
 
 
-void Rcon::disconnect()
+void BERcon::disconnect()
 {
 	*rcon_run_flag = false;	
 }
 
-void Rcon::init(std::shared_ptr<spdlog::logger> console, std::string address, int port, std::string password)
+void BERcon::init(std::shared_ptr<spdlog::logger> console, std::string address, int port, std::string password)
 {
 	rcon_run_flag = new std::atomic<bool>(false);
 	logger_console.swap(console);
@@ -413,7 +413,7 @@ void Rcon::init(std::shared_ptr<spdlog::logger> console, std::string address, in
 }
 
 
-#ifdef RCON_APP
+#ifdef BERCON_APP
 
 	int main(int nNumberofArgs, char* pszArgs[])
 	{

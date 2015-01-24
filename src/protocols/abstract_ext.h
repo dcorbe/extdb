@@ -44,6 +44,17 @@ class AbstractExt
 			boost::mutex mutex_pool;
 		};
 
+		struct extDBConnectors
+		{
+			bool rcon=false;
+			bool mysql=false;
+			bool sqlite=false;
+			DBConnectionInfo database;
+			std::unordered_map<std::string, DBConnectionInfo> database_extra;
+		};
+
+		extDBConnectors extDB_connectors_info;
+
 		Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf;
 
 		std::shared_ptr<spdlog::logger> console;

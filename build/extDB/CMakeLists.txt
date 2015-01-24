@@ -31,15 +31,18 @@ SET(SOURCES
 	../../src/memory_allocator.cpp
 	../../src/ext.cpp
 	../../src/uniqueid.cpp
-	../../src/rcon.cpp
 	../../src/sanitize.cpp
+	../../src/bercon.cpp
+	../../src/steam.cpp
 	../../src/protocols/abstract_protocol.cpp
 	../../src/protocols/db_custom_v3.cpp
 	../../src/protocols/db_custom_v5.cpp
 	../../src/protocols/db_raw_v3.cpp
 	../../src/protocols/db_procedure_v2.cpp
-	../../src/protocols/misc.cpp
 	../../src/protocols/log.cpp
+	../../src/protocols/misc.cpp
+	../../src/protocols/misc_v2.cpp
+	../../src/protocols/rcon.cpp
 	../../src/protocols/vac.cpp
 )
 

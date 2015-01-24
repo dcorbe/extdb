@@ -20,15 +20,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "abstract_ext.h"
 #include "abstract_protocol.h"
-#include "../bercon.h"
 
 
-class VAC: public AbstractProtocol
+class RCON: public AbstractProtocol
 {
 	public:
 		bool init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *database, const std::string init_str);
 		bool callProtocol(std::string input_str, std::string &result, const int unique_id=-1);
-
-	private:
-		bool isNumber(const std::string &input_str);
 };

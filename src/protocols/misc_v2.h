@@ -29,12 +29,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "abstract_protocol.h"
 
 
-class MISC: public AbstractProtocol
+class MISC_V2: public AbstractProtocol
 {
 	public:
 		bool init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str);
 		bool callProtocol(std::string input_str, std::string &result, const int unique_id=-1);
-		
+
 		Poco::Checksum checksum_crc32;
 
 	private:

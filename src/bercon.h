@@ -39,7 +39,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <atomic>
 
-class Rcon: public Poco::Runnable
+class BERcon: public Poco::Runnable
 {
 	public:
 		void init(std::shared_ptr<spdlog::logger> console, std::string address, int port, std::string password);

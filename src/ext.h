@@ -24,7 +24,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <unordered_map>
 
-#include "rcon.h"
+#include "bercon.h"
 #include "steam.h"
 #include "uniqueid.h"
 
@@ -60,16 +60,6 @@ class Ext: public AbstractExt
 		void steamQuery(const int &unique_id, bool queryFriends, bool queryVacBans, std::vector<std::string> &steamIDs, bool wakeup);
 
 	private:
-		// extDBInfo + Connectors
-		struct extDBConnectors
-		{
-			bool rcon=false;
-			bool mysql=false;
-			bool sqlite=false;
-			DBConnectionInfo database;
-			std::unordered_map<std::string, DBConnectionInfo> database_extra;
-		};
-
 		struct extDBInfo
 		{
 			bool extDB_lock=false;
@@ -79,11 +69,10 @@ class Ext: public AbstractExt
 			std::string log_path;
 		};
 
-		extDBConnectors extDB_connectors_info;
 		extDBInfo extDB_info;
 
 		// RCon
-		Rcon rcon;
+		BERcon rcon;
 
 		// Steam
 		STEAM steam;
