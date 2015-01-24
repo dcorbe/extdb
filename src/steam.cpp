@@ -126,7 +126,7 @@ void STEAM::updateSteamBans(std::vector<std::string> &steamIDs)
 		Poco::Net::HTTPClientSession session("api.steampowered.com", 80);
 		Poco::Net::HTTPRequest req(Poco::Net::HTTPRequest::HTTP_GET, query, Poco::Net::HTTPMessage::HTTP_1_1);
 		session.setKeepAlive(false);
-		session.setTimeout(Poco::Timespan(30,0));
+		session.setKeepAliveTimeout(Poco::Timespan(30,0));
 		session.sendRequest(req);
 		Poco::Net::HTTPResponse res;
 		extension_ptr->console->info("STEAM: Response Status {0}", res.getReason());

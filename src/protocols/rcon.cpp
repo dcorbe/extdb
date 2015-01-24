@@ -46,6 +46,7 @@ bool RCON::callProtocol(std::string input_str, std::string &result, const int un
 	#ifdef DEBUG_LOGGING
 		extension_ptr->logger->info("extDB: RCON: Trace: Input: {0}", input_str);
 	#endif
+
 	/*
 	Poco::StringTokenizer tokens(input_str, ":");
 	if (tokens.count() < 2)
@@ -85,8 +86,9 @@ bool RCON::callProtocol(std::string input_str, std::string &result, const int un
 	}
 
 	tokens[0];
+	*/
+
 	extension_ptr->rconCommand(input_str);
 	result = "[1]"; 
-	*/
 	return true;
 }

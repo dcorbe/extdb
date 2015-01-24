@@ -59,10 +59,10 @@ bool VAC::isNumber(const std::string &input_str)
 bool VAC::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
 	#ifdef TESTING
-		extension_ptr->console->info("extDB: RCON: Trace: Input: {0}", input_str);
+		extension_ptr->console->info("extDB: VAC: Trace: Input: {0}", input_str);
 	#endif
 	#ifdef DEBUG_LOGGING
-		extension_ptr->logger->info("extDB: RCON: Trace: Input: {0}", input_str);
+		extension_ptr->logger->info("extDB: VAC: Trace: Input: {0}", input_str);
 	#endif
 
 	if (unique_id == -1)

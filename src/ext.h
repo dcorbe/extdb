@@ -51,7 +51,7 @@ class Ext: public AbstractExt
 
 		void saveResult_mutexlock(const int &unique_id, const std::string &result);
 
-		Poco::Thread rcon_thread;
+		Poco::Thread bercon_thread;
 		Poco::Thread steam_thread;
 
 		Poco::Data::Session getDBSession_mutexlock(AbstractExt::DBConnectionInfo &database);
@@ -72,7 +72,7 @@ class Ext: public AbstractExt
 		extDBInfo extDB_info;
 
 		// RCon
-		BERcon rcon;
+		BERcon bercon;
 
 		// Steam
 		STEAM steam;

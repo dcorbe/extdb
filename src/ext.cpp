@@ -274,14 +274,14 @@ Ext::Ext(std::string dll_path)
 			}
 
  			// Initialize so have atomic setup correctly
-			rcon.init(logger, std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password"));
+			bercon.init(logger, std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password"));
 			if (pConf->getBool("Rcon.Enable", false))
 			{
 				auto belogger_temp = spdlog::daily_logger_mt("extDB BE File Logger", belog_relative_path.make_preferred().string(), true);
 				belogger.swap(belogger_temp);
 				extDB_connectors_info.rcon = true;
-				rcon_thread.start(rcon);
-				rcon.run();
+				bercon_thread.start(bercon);
+				//bercon.run();
 			}
 
 			// Initialize so have atomic setup correctly
@@ -343,8 +343,8 @@ void Ext::stop()
 	}
 	if (extDB_connectors_info.rcon)
 	{
-		rcon.disconnect();
-		rcon_thread.join();
+		bercon.disconnect();
+		bercon_thread.join();
 	}
 	unordered_map_protocol.clear();
 	unordered_map_wait.clear();
@@ -415,7 +415,7 @@ void Ext::rconCommand(std::string str)
 {
 	if (extDB_connectors_info.rcon)
 	{
-		rcon.addCommand(str);
+		bercon.addCommand(str);
 	}
 }
 
