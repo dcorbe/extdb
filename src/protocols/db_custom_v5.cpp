@@ -51,11 +51,8 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *
 {
 	extension_ptr = extension;
 	database_ptr = database;
-
-	db_custom_name = init_str;
 	
 	bool status = false;
-	
 	if (database_ptr->type == std::string("MySQL"))
 	{
 		status = true;

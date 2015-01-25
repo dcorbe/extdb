@@ -37,11 +37,10 @@ class DB_CUSTOM_V3: public AbstractProtocol
 		bool callProtocol(std::string input_str, std::string &result, const int unique_id=-1);
 		
 	private:
+		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
+		
 		Poco::MD5Engine md5;
 		boost::mutex mutex_md5;
-
-		std::string db_custom_name;
-		Poco::AutoPtr<Poco::Util::IniFileConfiguration> template_ini;
 		
 		struct Template_Calls
 		{
