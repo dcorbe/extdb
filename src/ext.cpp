@@ -1025,19 +1025,19 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 
 								// Check for Protocol Name Exists...
 								// Do this so if someone manages to get server, the error message wont get stored in the result unordered map
+								if (unordered_map_protocol.find(protocol) != unordered_map_protocol.end())
 								{
-									if (unordered_map_protocol.find(protocol) != unordered_map_protocol.end())
-									{
-										boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
-										unordered_map_wait[unique_id] = true;
-										found_procotol = true;
-									}
-									else
-									{
-										std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
-										logger->error("extDB: Unknown Protocol: {0}", protocol);
-									}
+									boost::lock_guard<boost::mutex> lock(mutex_unordered_map_results);
+									unordered_map_wait[unique_id] = true;
+									found_procotol = true;
 								}
+								else
+								{
+									freeUniqueID_mutexlock(unique_id);
+									std::strcpy(output, ("[0,\"Error Unknown Protocol\"]"));
+									logger->error("extDB: Unknown Protocol: {0}", protocol);
+								}
+
 								// Only Add Job to Work Queue + Return ID if Protocol Name exists.
 								if (found_procotol)
 								{
@@ -1287,7 +1287,7 @@ int main(int nNumberofArgs, char* pszArgs[])
 	std::string current_path;
 	extension = (new Ext(current_path));
 
-	extension->console->info("Welcome to extDB Test Application : ");
+	extension->console->info("Welcome to extDB Test Application : v{0}", extension->getVersion());
 	extension->console->info("OutputSize is set to 80 for Test Application, just so it is readable ");
 	extension->console->info("OutputSize for Arma3 is more like 10k in size ");
 	extension->console->info("To exit type 'quit'");

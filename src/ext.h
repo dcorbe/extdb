@@ -42,6 +42,9 @@ class Ext: public AbstractExt
 		void callExtenion(char *output, const int &output_size, const char *function);
 		void rconCommand(std::string str);
 
+		// Version Info
+		std::string getVersion() const;
+
 	protected:
 		std::string getExtensionPath();
 		std::string getLogPath();
@@ -109,7 +112,4 @@ class Ext: public AbstractExt
 		void syncCallProtocol(char *output, const int &output_size, const std::string &protocol, const std::string &data);
 		void onewayCallProtocol(const std::string protocol, const std::string data);
 		void asyncCallProtocol(const std::string protocol, const std::string data, const int unique_id);
-
-		// Version Info
-		std::string getVersion() const;
 };
