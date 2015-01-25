@@ -172,7 +172,7 @@ void MISC::getRandomString(std::string &input_str, bool uniqueString, std::strin
 
 				result = "[1,";
 
-				int numOfRetrys;
+				int numOfRetrys = 0;
 
 				for(int i = 0; i < numberOfVariables; ++i)
 				{
