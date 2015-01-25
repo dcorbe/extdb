@@ -57,14 +57,25 @@ void STEAMGET::init(AbstractExt *extension)
 }
 
 
-void STEAMGET::update(std::string &input_str)
+void STEAMGET::update(std::string &input_str, boost::property_tree::ptree &ptree)
 {
 	path = input_str;
+	pt = &ptree;
 }
 
 
-int STEAMGET::getResponse(boost::property_tree::ptree &pt)
+int STEAMGET::getResponse()
 {
+	return response;
+}
+
+
+void STEAMGET::run()
+{
+	response = 0;
+	Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_GET, path, Poco::Net::HTTPMessage::HTTP_1_1);
+	session.sendRequest(request);
+
 	#ifdef TESTING
 		extension_ptr->console->info("{0}", path);
 	#endif
@@ -72,35 +83,24 @@ int STEAMGET::getResponse(boost::property_tree::ptree &pt)
 		extension_ptr->logger->info("{0}", path);
 	#endif
 
-	Poco::Net::HTTPResponse response;
-	if (response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK)
+	Poco::Net::HTTPResponse res;
+	if (res.getStatus() == Poco::Net::HTTPResponse::HTTP_OK)
 	{
 		try
 		{
-			std::istream &is = session.receiveResponse(response);
-			boost::property_tree::read_json(is, pt);
-			return 1;
+			std::istream &is = session.receiveResponse(res);
+			boost::property_tree::read_json(is, *pt);
+			response = 1;
 		}
 		catch (boost::property_tree::json_parser::json_parser_error &e)
 		{
 			#ifdef TESTING
-				extension_ptr->console->error("Steam WEB API Error: Parsing Error Message: {0}, URI: {1}", e.message(), path);
+				extension_ptr->console->error("extDB: Steam: Parsing Error Message: {0}, URI: {1}", e.message(), path);
 			#endif
-			extension_ptr->logger->error("Steam WEB API Error: Parsing Error Message: {0}, URI: {1}", e.message(), path);
-			return -1;
+			extension_ptr->logger->error("extDB: Steam: Parsing Error Message: {0}, URI: {1}", e.message(), path);
+			response = -1;
 		}
 	}
-	else
-	{
-		return 0;
-	}
-}
-
-
-void STEAMGET::run()
-{
-	Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_GET, path, Poco::Net::HTTPMessage::HTTP_1_1);
-	session.sendRequest(request);
 }
 
 
@@ -108,6 +108,7 @@ void STEAMGET::abort()
 {
 	session.abort();
 }
+
 
 void STEAMGET::stop()
 {
@@ -219,51 +220,56 @@ void STEAM::updateSteamBans(std::vector<std::string> &steamIDs)
 	{
 		std::string query = "/ISteamUser/GetPlayerBans/v1/?key=" + STEAM_api_key + "&format=json&steamids=" + steamIDString;	
 
-		steam_get.update(query);
+		boost::property_tree::ptree pt;
+		steam_get.update(query, pt);
 		steam_thread.start(steam_get);
 		try
 		{
-			steam_thread.join(360000);
-			boost::property_tree::ptree pt;
-			int response = steam_get.getResponse(pt);
-			if (response == 1)
+			steam_thread.join(10000); // 10 Seconds
+			switch (steam_get.getResponse())
 			{
-				// SUCCESS STEAM QUERY
-				for (const auto &val : pt.get_child("players"))
-				{
-					SteamVACBans steam_info;
-					steam_info.steamID = val.second.get<std::string>("SteamId", "");
-					steam_info.NumberOfVACBans = val.second.get<int>("NumberOfVACBans", 0);
-					steam_info.VACBanned = val.second.get<bool>("VACBanned", false);
-					steam_info.DaysSinceLastBan = val.second.get<int>("DaysSinceLastBan", 0);
-					SteamVacBans_Cache->add(steam_info.steamID, steam_info);
-
-					extension_ptr->console->info();
-					extension_ptr->console->info("VAC Info: steamID {0}", steam_info.steamID);
-					extension_ptr->console->info("VAC Info: NumberOfVACBans {0}", steam_info.NumberOfVACBans);
-					extension_ptr->console->info("VAC Info: VACBanned {0}", steam_info.VACBanned);
-					extension_ptr->console->info("VAC Info: DaysSinceLastBan {0}", steam_info.DaysSinceLastBan);
-
-					if ((steam_info.NumberOfVACBans >= rconBanSettings.NumberOfVACBans) && (steam_info.DaysSinceLastBan <= rconBanSettings.DaysSinceLastBan))
+				case 1:
+					// SUCCESS STEAM QUERY
+					for (const auto &val : pt.get_child("players"))
 					{
-						steam_info.extDBBanned = true;
-						extension_ptr->rconCommand("ban " + convertSteamIDtoBEGUID(steam_info.steamID) + " " + rconBanSettings.BanDuration + " " + rconBanSettings.BanMessage);
+						SteamVACBans steam_info;
+						steam_info.steamID = val.second.get<std::string>("SteamId", "");
+						steam_info.NumberOfVACBans = val.second.get<int>("NumberOfVACBans", 0);
+						steam_info.VACBanned = val.second.get<bool>("VACBanned", false);
+						steam_info.DaysSinceLastBan = val.second.get<int>("DaysSinceLastBan", 0);
+
+						#ifdef TESTING
+							extension_ptr->console->info();
+							extension_ptr->console->info("VAC Bans Info: steamID {0}", steam_info.steamID);
+							extension_ptr->console->info("VAC Bans Info: NumberOfVACBans {0}", steam_info.NumberOfVACBans);
+							extension_ptr->console->info("VAC Bans Info: VACBanned {0}", steam_info.VACBanned);
+							extension_ptr->console->info("VAC Bans Info: DaysSinceLastBan {0}", steam_info.DaysSinceLastBan);
+						#endif
+
+						if (steam_info.NumberOfVACBans >= rconBanSettings.NumberOfVACBans)
+						{
+							steam_info.extDBBanned = true;
+							extension_ptr->rconCommand("ban " + convertSteamIDtoBEGUID(steam_info.steamID) + " " + rconBanSettings.BanDuration + " " + rconBanSettings.BanMessage);
+						}
+						SteamVacBans_Cache->add(steam_info.steamID, steam_info);
 					}
-				}
-			}
-			else if (response == 0)
-			{
-				// HTTP ERROR
-			}
-			else if (response == -1)
-			{
-				// ERROR STEAM QUERY
+					break;
+				case 0:
+					// HTTP ERROR
+					break;
+				case -1:
+					// ERROR STEAM QUERY
+					break;
 			}
 		}
 		catch (Poco::TimeoutException&)
 		{
 			steam_get.abort();
 			steam_thread.join();
+			#ifdef TESTING
+				extension_ptr->console->error("extDB: Steam: Request Timed Out");
+			#endif
+			extension_ptr->logger->error("extDB: Steam: Request Timed Out");
 		}
 	}
 }
@@ -289,35 +295,35 @@ void STEAM::updateSteamFriends(std::vector<std::string> &steamIDs)
 	{
 		std::string query = "/ISteamUser/GetFriendList/v0001/?key=" + STEAM_api_key + "&relationship=friend&format=json&steamid=" + steamID;	
 
-		steam_get.update(query);
+		boost::property_tree::ptree pt;
+		steam_get.update(query, pt);
 		steam_thread.start(steam_get);
 		try
 		{
-			steam_thread.join(360000); // 6 Minutes
-			boost::property_tree::ptree pt;
-			int response = steam_get.getResponse(pt);
-			if (response == 1)
+			steam_thread.join(10000); // 10 Seconds
+			switch (steam_get.getResponse())
 			{
-				// SUCCESS STEAM QUERY
-				SteamFriends steam_info;
-				steam_info.friends.clear();
-				for (const auto &val : pt.get_child("friendslist.friends"))
-				{
-					steam_info.steamID = val.second.get<std::string>("steamid", "");
-					if (steam_info.steamID.empty())
+				case 1:
 					{
-						steam_info.friends.push_back(steam_info.steamID);
+						// SUCCESS STEAM QUERY
+						SteamFriends steam_info;
+						for (const auto &val : pt.get_child("friendslist.friends"))
+						{
+							std::string friendsteamID = val.second.get<std::string>("steamid", "");
+							if (!friendsteamID.empty())
+							{
+								steam_info.friends.push_back(friendsteamID);
+							}
+						}
+						SteamFriends_Cache->add(steamID, steam_info);
 					}
-				}
-				SteamFriends_Cache->add(steam_info.steamID, steam_info);
-			}
-			else if (response == 0)
-			{
-				// HTTP ERROR
-			}
-			else if (response == -1)
-			{
-				// ERROR STEAM QUERY
+					break;
+				case 0:
+					// HTTP ERROR
+					break;
+				case -1:
+					// ERROR STEAM QUERY
+					break;
 			}
 		}
 		catch (Poco::TimeoutException&)
@@ -379,10 +385,6 @@ void STEAM::run()
 
 		if (!query_queue_copy.empty())
 		{
-			//bercon_thread.start(bercon);
-
-			extension_ptr->console->info("Not Empty Queue");
-
 			std::vector<std::string> steamIDs_friends;
 			std::vector<std::string> steamIDs_bans;
 
@@ -390,12 +392,10 @@ void STEAM::run()
 			{
 				if (val.queryFriends)
 				{
-					extension_ptr->console->info("Query Friends: Size {0}", val.steamIDs.size());
 					steamIDs_friends.insert(steamIDs_friends.end(), val.steamIDs.begin(), val.steamIDs.end());
 				}
 				if (val.queryVACBans)
 				{
-					extension_ptr->console->info("Query Bans: Size {0}", val.steamIDs.size());
 					steamIDs_bans.insert(steamIDs_bans.end(), val.steamIDs.begin(), val.steamIDs.end());
 				}
 			}
@@ -417,7 +417,13 @@ void STEAM::run()
 							info = SteamFriends_Cache->get(steamID);
 							if (info.isNull())
 							{
-								result =+ "[],";
+								result += "[],";
+								#ifdef TESTING
+									extension_ptr->logger->error("extDB: Steam: No Friends Entry for: {0}", steamID);
+								#endif
+								#ifdef DEBUG_LOGGING
+									extension_ptr->logger->warn("extDB: Steam: No Friends Entry for: {0}", steamID);
+								#endif
 							}
 							else
 							{
@@ -425,11 +431,6 @@ void STEAM::run()
 								{
 									result = result +  ("\"" + friendSteamID + "\",");
 								}
-								if (result.empty())
-								{
-									result.pop_back();
-								}
-								result =+ "[" + result + "],";
 							}
 						}
 					}
@@ -441,17 +442,23 @@ void STEAM::run()
 							info = SteamVacBans_Cache->get(steamID);
 							if (info.isNull()) // Incase entry expired
 							{
-								result =+ "false,";
+								result += "false,";
+								#ifdef TESTING
+									extension_ptr->logger->error("extDB: Steam: No Bans Entry for: {0}", steamID);
+								#endif
+								#ifdef DEBUG_LOGGING
+									extension_ptr->logger->warn("extDB: Steam: No Bans Entry for: {0}", steamID);
+								#endif
 							}
 							else
 							{
 								if (info->extDBBanned)
 								{
-									result =+ "true,";
+									result += "true,";
 								}
 								else
 								{
-									result =+ "false,";
+									result += "false,";
 								}
 							}
 						}

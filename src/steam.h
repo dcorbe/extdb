@@ -49,8 +49,8 @@ class STEAMGET: public Poco::Runnable
 
 		void abort();
 
-		void update(std::string &input_str);
-		int getResponse(boost::property_tree::ptree &pt);
+		void update(std::string &input_str, boost::property_tree::ptree &ptree);
+		int getResponse();
 
 	private:
 		AbstractExt *extension_ptr;
@@ -59,6 +59,10 @@ class STEAMGET: public Poco::Runnable
 		std::string steam_api_key;
 
 		Poco::Net::HTTPClientSession session;
+
+		boost::property_tree::ptree *pt;
+
+		int response=-1;
 };
 
 
