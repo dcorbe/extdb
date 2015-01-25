@@ -36,7 +36,7 @@ namespace {
 
 #elif _MSC_VER
 	// Code for MSVC compiler
-	#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+	//#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers   // Now Defined VIA CMake Build System
 	#include <windows.h>
 
 	EXTERN_C IMAGE_DOS_HEADER __ImageBase;
