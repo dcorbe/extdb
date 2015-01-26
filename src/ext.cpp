@@ -139,7 +139,7 @@ Ext::Ext(std::string dll_path)
 			#endif
 		}
 
-		// Initialize Logger
+		// Initialize Loggers
 		Poco::DateTime now;
 		std::string log_filename = Poco::DateTimeFormatter::format(now, "%H-%M-%S.log");
 
@@ -178,32 +178,29 @@ Ext::Ext(std::string dll_path)
 
 		logger->info("extDB: Version: {0}", getVersion());
 		#ifdef __GNUC__
-			#ifndef TESTING
+			#ifndef DEBUG_TESTING
 				logger->info("extDB: Linux Version");
 			#else
 				logger->info("extDB: Linux Debug Version");
-				logger->info();
-				logger->info("Message: Arma Linux Servers are using Older Physic Library (than Windows Servers), due to Debian 7 using old version of Glibc");
-				logger->info("Message: If you like extDB consider donating or bug BIS to drop support for Debian 7 thanks, so Linux Servers get same Physic Library Version as Windows");
-				logger->info("Message: Note all Dev Work for extDB is done on Linux Setup");
-				logger->info("Message: Torndeco: 24/01/15");
-				logger->info();
 			#endif
 		#endif
+
 		#ifdef _MSC_VER
-			#ifndef TESTING
+			#ifndef DEBUG_TESTING
 				logger->info("extDB: Windows Version");
 			#else
 				logger->info("extDB: Windows Debug Version");
 				logger->info();
-				logger->info("Message: Arma Linux Servers are using Older Physic Library (than Windows Servers), due to Debian 7 using old version of Glibc");
-				logger->info("Message: If you like extDB consider donating or bug BIS to drop support for Debian 7 thanks, so Linux Servers get same Physic Library Version as Windows");
-				logger->info("Message: Note all Dev Work for extDB is done on Linux Setup");
-				logger->info("Message: Torndeco: 24/01/15");
-				logger->info();
 			#endif
 		#endif
 
+		#ifndef TESTING
+			logger->info("Message: Arma Linux Servers are using Older Physic Library (than Windows Servers), due to Debian 7 using old version of Glibc");
+			logger->info("Message: If you like extDB consider donating or bug BIS to drop support for Debian 7 thanks, so Linux Servers get same Physic Library Version as Windows");
+			logger->info("Message: Note currently most/all development for extDB is done on a Linux Server");
+			logger->info("Message: Torndeco: 24/01/15");
+			logger->info();
+		#endif
 
 
 		if (!conf_found)
@@ -215,6 +212,7 @@ Ext::Ext(std::string dll_path)
 		}
 		else
 		{
+			// Load extdb config
 			pConf = (new Poco::Util::IniFileConfiguration(extDB_config_path.make_preferred().string()));
 			#ifdef TESTING
 				console->info("extDB: Found extdb-conf.ini");
@@ -226,9 +224,25 @@ Ext::Ext(std::string dll_path)
 			int detected_cpu_cores = boost::thread::hardware_concurrency();
 			if (extDB_info.max_threads <= 0)
 			{
+				// Auto-Detect
 				if (detected_cpu_cores > 6)
 				{
+					#ifdef TESTING
+						console->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads", detected_cpu_cores, 6);
+					#endif
+					logger->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads", detected_cpu_cores, 6);
 					extDB_info.max_threads = 6;
+				}
+				else if (detected_cpu_cores <= 2)
+				{
+					#ifdef TESTING
+						console->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads", detected_cpu_cores, 2);
+					#endif
+					logger->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads", detected_cpu_cores, 2);
+					extDB_info.max_threads = 2;
+				}
+				else
+				{
 					#ifdef TESTING
 						console->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads", detected_cpu_cores, extDB_info.max_threads);
 					#endif
@@ -237,31 +251,26 @@ Ext::Ext(std::string dll_path)
 			}
 			else
 			{
-				if (detected_cpu_cores > 6)
+				if (extDB_info.max_threads > 8)  // Sanity Check
 				{
-					extDB_info.max_threads = 6;
+					// Manual Config
 					#ifdef TESTING
-						console->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads", detected_cpu_cores, extDB_info.max_threads);
+						console->info("extDB: Sanity Check, Setting up {0} Worker Threads (config settings {1})", 8, extDB_info.max_threads);
 					#endif
-					logger->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads", detected_cpu_cores, extDB_info.max_threads);
-				}
-				else if (detected_cpu_cores < 0)
-				{
-					extDB_info.max_threads = 2;
-					#ifdef TESTING
-						console->info("extDB: Unable to Detect Cores, Setting up {1} Worker Threads", detected_cpu_cores, extDB_info.max_threads);
-					#endif
-					logger->info("extDB: Unable to Detect Cores, Setting up {1} Worker Threads", detected_cpu_cores, extDB_info.max_threads);
+					logger->info("extDB: Sanity Check, Setting up {0} Worker Threads (config settings {1})", 8, extDB_info.max_threads);
+					extDB_info.max_threads = 8;
 				}
 				else
 				{
+					// Manual Config
 					#ifdef TESTING
-						console->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads (config settings)", extDB_info.max_threads, 6);
+						console->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads (config settings)", detected_cpu_cores, extDB_info.max_threads);
 					#endif
-					logger->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads (config settings)", extDB_info.max_threads, 6);
+					logger->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads (config settings)", detected_cpu_cores, extDB_info.max_threads);
 				}
 			}
-			
+
+			// Setup ASIO Worker Pool
 			io_work_ptr.reset(new boost::asio::io_service::work(io_service));
 			for (int i = 0; i < extDB_info.max_threads; ++i)
 			{
@@ -347,9 +356,6 @@ void Ext::stop()
 		bercon.disconnect();
 		bercon_thread.join();
 	}
-	unordered_map_protocol.clear();
-	unordered_map_wait.clear();
-	unordered_map_results.clear();
 }
 
 
@@ -373,6 +379,7 @@ std::string Ext::getLogPath()
 
 
 int Ext::getUniqueID_mutexlock()
+// Gets Unique ID
 {
 	boost::lock_guard<boost::mutex> lock(mutex_unique_id);
 	return mgr.get()->AllocateId();
@@ -380,6 +387,7 @@ int Ext::getUniqueID_mutexlock()
 
 
 void Ext::freeUniqueID_mutexlock(const int &unique_id)
+// Recycle Unique ID
 {
 	boost::lock_guard<boost::mutex> lock(mutex_unique_id);
 	mgr.get()->FreeId(unique_id);
@@ -403,6 +411,7 @@ Poco::Data::Session Ext::getDBSession_mutexlock(AbstractExt::DBConnectionInfo &d
 
 
 void Ext::steamQuery(const int &unique_id, bool queryFriends, bool queryVacBans, std::vector<std::string> &steamIDs, bool wakeup)
+// Adds Query to Steam Protocol, wakeup option is to wakeup steam thread. Note: Steam thread periodically checks every minute anyway.
 {
 	steam.addQuery(unique_id, queryFriends, queryVacBans, steamIDs);
 	if (wakeup)
@@ -413,8 +422,9 @@ void Ext::steamQuery(const int &unique_id, bool queryFriends, bool queryVacBans,
 
 
 void Ext::rconCommand(std::string str)
+// Adds RCon Command to be sent to Server.
 {
-	if (extDB_connectors_info.rcon)
+	if (extDB_connectors_info.rcon) // Check if Rcon enabled
 	{
 		bercon.addCommand(str);
 	}
@@ -422,6 +432,7 @@ void Ext::rconCommand(std::string str)
 
 
 void Ext::connectDatabase(char *output, const int &output_size, const std::string &database_id, const std::string &database_conf)
+// Connection to Database, database_id used when connecting to multiple different database.
 {
 	DBConnectionInfo *database;
 	if (database_id.empty())
@@ -616,12 +627,14 @@ void Ext::connectDatabase(char *output, const int &output_size, const std::strin
 	{
 		if (database_id.empty())
 		{
+			// Default Database
 			database->type.clear();
 			database->connection_str.clear();
 			database->pool.reset();
 		}
 		else
 		{
+			// Extra Database
 			extDB_connectors_info.database_extra.erase(database_id);
 		}
 	}
@@ -633,10 +646,12 @@ void Ext::addProtocol(char *output, const int &output_size, const std::string &d
 	DBConnectionInfo *database;
 	if (database_id.empty())
 	{
+		// Default Database
 		database = &extDB_connectors_info.database;
 	}
 	else
 	{
+		// Extra Database
 		database = &extDB_connectors_info.database_extra[database_id];
 	}
 
@@ -949,7 +964,7 @@ void Ext::onewayCallProtocol(const std::string protocol, const std::string data)
 	{
 		std::string result;
 		result.reserve(2000);
-		itr->second->callProtocol(data, result);
+		itr->second->callProtocol(data, result, 0);
 	}
 }
 
@@ -968,6 +983,7 @@ void Ext::asyncCallProtocol(const std::string protocol, const std::string data, 
 
 
 void Ext::callExtenion(char *output, const int &output_size, const char *function)
+// Arma CallExtension
 {
 	try
 	{
@@ -982,20 +998,16 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 		if (input_str_length <= 2)
 		{
 			std::strcpy(output, ("[0,\"Error Invalid Message\"]"));
-			
-				logger->info("extDB: Invalid Message: {0}", input_str);
+			logger->info("extDB: Invalid Message: {0}", input_str);
 		}
 		else
 		{
-			const std::string sep_char(":");
-
 			// Async / Sync
 			int async;
-			
 			if (Poco::NumberParser::tryParse(input_str.substr(0,1), async))
 			{
-
-				switch (async)  // TODO Profile using Numberparser versus comparsion of char[0] + if statement checking length of *function
+				const std::string sep_char(":");
+				switch (async)
 				{
 					case 2: //ASYNC + SAVE
 					{
@@ -1115,7 +1127,7 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 						}
 						break;
 					}
-					case 9:
+					case 9: // SYSTEM CALLS / SETUP
 					{
 						Poco::StringTokenizer tokens(input_str, ":");
 						if (extDB_info.extDB_lock)
@@ -1294,7 +1306,8 @@ int main(int nNumberofArgs, char* pszArgs[])
 
 	bool test = false;
 	int test_counter = 0;
-	for (;;) {
+	for (;;)
+	{
 		std::getline(std::cin, input_str);
 		if (boost::iequals(input_str, "quit") == 1)
 		{
@@ -1318,7 +1331,6 @@ int main(int nNumberofArgs, char* pszArgs[])
 				break;
 			}
 			test_counter = test_counter + 1;
-			//extension->callExtenion(result, 80, std::string("1:SQL:SELECT * FROM PlayerData").c_str());
 			extension->callExtenion(result, 80, std::string("1:SQL:TEST:testing").c_str());
 			extension->console->info("extDB: {0}", result);			
 		}

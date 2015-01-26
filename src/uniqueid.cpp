@@ -1,6 +1,6 @@
 //http://stackoverflow.com/questions/2620218/fastest-container-or-algorithm-for-unique-reusable-ids-in-c
 
-//	NOTE Unique ID cant be -1 or less, due to extDB code 
+//	NOTE Unique ID cant be -1,0 or less, due to extDB code 
 
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>

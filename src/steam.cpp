@@ -201,6 +201,7 @@ std::vector<std::string> STEAM::generateSteamIDStrings(std::vector<std::string> 
 
 void STEAM::updateSteamBans(std::vector<std::string> &steamIDs)
 {
+	// Lose Duplicate steamIDs for Steam WEB API Query
 	std::sort(steamIDs.begin(), steamIDs.end());
 	auto last = std::unique(steamIDs.begin(), steamIDs.end());
 	steamIDs.erase(last, steamIDs.end());
@@ -277,6 +278,7 @@ void STEAM::updateSteamBans(std::vector<std::string> &steamIDs)
 
 void STEAM::updateSteamFriends(std::vector<std::string> &steamIDs)
 {
+	// Lose Duplicate steamIDs for Steam WEB API Query
 	std::sort(steamIDs.begin(), steamIDs.end());
 	auto last = std::unique(steamIDs.begin(), steamIDs.end());
 	steamIDs.erase(last, steamIDs.end());
@@ -406,7 +408,7 @@ void STEAM::run()
 			std::string result;
 			for (auto &val: query_queue_copy)
 			{
-				if (val.unique_id != -1)
+				if (val.unique_id > 0)
 				{
 					result.clear();
 					if (val.queryFriends)
