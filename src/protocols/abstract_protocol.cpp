@@ -29,6 +29,8 @@ AbstractProtocol::~AbstractProtocol()
 
 bool AbstractProtocol::callProtocol(std::string input_str, std::string &result, const int unique_id)
 {
+	// Returning False disables saveResult from extDB, used in VAC Protocol
+	//  i.e return False when you are offloading work to another thread that will manage Result itself
 	return true;
 }
 
@@ -36,5 +38,7 @@ bool AbstractProtocol::init(AbstractExt *extension, AbstractExt::DBConnectionInf
 {
 	extension_ptr = extension;
 	database_ptr = database;
+
+	// Returning False indicates init Failed + Protocol Didn't load correctly
 	return true;
 }

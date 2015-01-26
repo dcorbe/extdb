@@ -104,44 +104,44 @@ bool DB_CUSTOM_V5::init(AbstractExt *extension,  AbstractExt::DBConnectionInfo *
 
 		if (template_ini->hasOption("Default.Version"))
 		{
-			int default_number_of_inputs = template_ini->getInt("Default.Number of Inputs", 0);
-
-			bool default_input_sanitize_value_check = template_ini->getBool("Default.Sanitize Input Value Check", true);
-			bool default_output_sanitize_value_check = template_ini->getBool("Default.Sanitize Output Value Check", true);
-			bool default_string_datatype_check = template_ini->getBool("Default.String Datatype Check", true);
-			bool default_preparedStatement_cache = template_ini->getBool("Default.Prepared Statement Cache", true);
-
-			bool default_strip = template_ini->getBool("Default.Strip", true);
-			std::string default_strip_chars = template_ini->getString("Default.Strip Chars", "");
-			int default_strip_chars_action = 0;
-
-			std::string strip_chars_action_str = template_ini->getString("Default.Strip Chars Action", "Strip");
-			if	(boost::iequals(strip_chars_action_str, std::string("Strip")) == 1)
-			{
-				default_strip_chars_action = 1;
-			}
-			else if	(boost::iequals(strip_chars_action_str, std::string("Strip+Log")) == 1)
-			{
-				default_strip_chars_action = 2;
-			}
-			else if	(boost::iequals(strip_chars_action_str, std::string("Strip+Error")) == 1)
-			{
-				default_strip_chars_action = 3;
-			}
-			else if (boost::iequals(strip_chars_action_str, std::string("None")) == 1)
-			{
-				default_strip_chars_action = 0;
-			}
-			else
-			{
-				#ifdef TESTING
-					extension_ptr->console->warn("extDB: DB_CUSTOM_V5: Invalid Default Strip Chars Action: {0}", strip_chars_action_str);
-				#endif
-				extension_ptr->logger->warn("extDB: DB_CUSTOM_V5: Invalid Default Strip Chars Action: {0}", strip_chars_action_str);
-			}
-
 			if ((template_ini->getInt("Default.Version", 1)) == 7)
 			{
+				int default_number_of_inputs = template_ini->getInt("Default.Number of Inputs", 0);
+
+				bool default_input_sanitize_value_check = template_ini->getBool("Default.Sanitize Input Value Check", true);
+				bool default_output_sanitize_value_check = template_ini->getBool("Default.Sanitize Output Value Check", true);
+				bool default_string_datatype_check = template_ini->getBool("Default.String Datatype Check", true);
+				bool default_preparedStatement_cache = template_ini->getBool("Default.Prepared Statement Cache", true);
+
+				bool default_strip = template_ini->getBool("Default.Strip", true);
+				std::string default_strip_chars = template_ini->getString("Default.Strip Chars", "");
+				int default_strip_chars_action = 0;
+
+				std::string strip_chars_action_str = template_ini->getString("Default.Strip Chars Action", "Strip");
+				if	(boost::iequals(strip_chars_action_str, std::string("Strip")) == 1)
+				{
+					default_strip_chars_action = 1;
+				}
+				else if	(boost::iequals(strip_chars_action_str, std::string("Strip+Log")) == 1)
+				{
+					default_strip_chars_action = 2;
+				}
+				else if	(boost::iequals(strip_chars_action_str, std::string("Strip+Error")) == 1)
+				{
+					default_strip_chars_action = 3;
+				}
+				else if (boost::iequals(strip_chars_action_str, std::string("None")) == 1)
+				{
+					default_strip_chars_action = 0;
+				}
+				else
+				{
+					#ifdef TESTING
+						extension_ptr->console->warn("extDB: DB_CUSTOM_V5: Invalid Default Strip Chars Action: {0}", strip_chars_action_str);
+					#endif
+					extension_ptr->logger->warn("extDB: DB_CUSTOM_V5: Invalid Default Strip Chars Action: {0}", strip_chars_action_str);
+				}
+
 				for(std::vector<std::string>::iterator it = custom_calls_list.begin(); it != custom_calls_list.end(); ++it) 
 				{
 					int sql_line_num = 0;
