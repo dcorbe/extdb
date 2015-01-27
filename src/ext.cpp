@@ -243,6 +243,7 @@ Ext::Ext(std::string dll_path)
 				}
 				else
 				{
+					extDB_info.max_threads = detected_cpu_cores;
 					#ifdef TESTING
 						console->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads", detected_cpu_cores, extDB_info.max_threads);
 					#endif
