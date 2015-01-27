@@ -122,34 +122,44 @@ bool DB_RAW_V3::callProtocol(std::string input_str, std::string &result, const i
 					{
 						temp_str = rs[col].convert<std::string>();
 					}
-					
-					if (stringDataTypeCheck)
-						if (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING)
+				
+					auto datatype = rs.columnType(col);
+					if ((datatype == Poco::Data::MetaColumn::FDT_DATE) || (datatype == Poco::Data::MetaColumn::FDT_TIME) || (datatype == Poco::Data::MetaColumn::FDT_TIMESTAMP))
+					{
+						if (temp_str.empty())
 						{
-							if (temp_str.empty())
-							{
-								result += ("\"\"");
-							}
-							else
-							{
-								result += "\"" + temp_str + "\"";
-							}
+							result += ("\"\"");
 						}
 						else
 						{
-							if (temp_str.empty())
-							{
-								result += ("\"\"");
-							}
-							else
-							{
-								result += temp_str;
-							}
+							boost::erase_all(temp_str, "\"");
+							result += "\"" + temp_str + "\"";
 						}
+					}
+					else if ((stringDataTypeCheck) && (rs.columnType(col) == Poco::Data::MetaColumn::FDT_STRING))
+					{
+						if (temp_str.empty())
+						{
+							result += ("\"\"");
+						}
+						else
+						{
+							boost::erase_all(temp_str, "\"");
+							result += "\"" + temp_str + "\"";
+						}
+					}
 					else
 					{
-						result += temp_str;
+						if (temp_str.empty())
+						{
+							result += ("\"\"");
+						}
+						else
+						{
+							result += temp_str;
+						}
 					}
+
 					if (col < (cols - 1))
 					{
 						result += ",";
