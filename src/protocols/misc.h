@@ -35,8 +35,6 @@ class MISC: public AbstractProtocol
 		bool init(AbstractExt *extension, AbstractExt::DBConnectionInfo *database, const std::string init_str);
 		bool callProtocol(std::string input_str, std::string &result, const int unique_id=-1);
 		
-		Poco::Checksum checksum_crc32;
-
 	private:
 		Poco::MD5Engine md5;
 		boost::mutex mutex_md5;
@@ -44,6 +42,7 @@ class MISC: public AbstractProtocol
 		Poco::MD4Engine md4;
 		boost::mutex mutex_md4;
 
+		Poco::Checksum checksum_crc32;
 		boost::mutex mutex_checksum_crc32;
 
 		boost::mutex mutex_RandomString;

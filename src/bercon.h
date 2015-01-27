@@ -26,6 +26,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/unordered_map.hpp>
 
+#include <Poco/Checksum.h>
+
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketAddress.h>
 #include <Poco/Net/NetException.h>
@@ -42,11 +44,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class BERcon: public Poco::Runnable
 {
 	public:
-		void init(std::shared_ptr<spdlog::logger> console, std::string address, int port, std::string password);
+		void init(std::shared_ptr<spdlog::logger> console);
+		void updateLogin(std::string address, int port, std::string password);
+		
 		void run();
 		void disconnect();
 		
 		void addCommand(std::string command);
+
 
 	private:
 		typedef std::pair< int, std::unordered_map < int, std::string > > RconMultiPartMsg;
@@ -56,10 +61,10 @@ class BERcon: public Poco::Runnable
 			char cmd_char_workaround;
 			char *cmd;
 			unsigned char packetCode;
-			std::string packet;
 		};
 		
-		struct RconLogin {
+		struct RconLogin
+		{
 			std::string address;
 			int port;
 			char *password;
@@ -69,13 +74,11 @@ class BERcon: public Poco::Runnable
 		RconPacket rcon_packet;
 		RconLogin rcon_login;
 
-		Poco::Net::SocketAddress sa;
 		Poco::Net::DatagramSocket dgs;
 
 		Poco::Stopwatch rcon_timer;
 
-		std::shared_ptr<spdlog::logger> logger_console;
-		std::shared_ptr<spdlog::logger> logger_file;
+		std::shared_ptr<spdlog::logger> logger;
 		
 		char buffer[4096];
 		int buffer_size;
@@ -91,6 +94,7 @@ class BERcon: public Poco::Runnable
 		void connect();
 		void mainLoop();
 
-		void makePacket(RconPacket &rcon);
+		void keepAlive();
+		void sendPacket();
 		void extractData(int pos, std::string &result);
 };

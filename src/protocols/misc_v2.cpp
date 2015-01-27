@@ -173,7 +173,7 @@ void MISC_V2::getRandomString(std::string &input_str, bool uniqueString, std::st
 
 				result = "[1,[";
 
-				int numOfRetrys;
+				int numOfRetrys = 0;
 
 				for(int i = 0; i < numberOfVariables; ++i)
 				{
@@ -284,7 +284,7 @@ bool MISC_V2::callProtocol(std::string input_str, std::string &result, const int
 	}
 	else
 	{
-		result = "[0, \"Error Invalid Format\"]";
+		result = "[0,\"Error Invalid Format\"]";
 	}
 	return true;
 }

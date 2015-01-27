@@ -58,42 +58,41 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "bercon.h"
 
 
-void BERcon::makePacket(RconPacket &rcon)
+void BERcon::sendPacket()
 {
-	Poco::Checksum checksum_crc32;
+	Poco::Checksum checksum_crc32; // Broken if use static variable + mutex lock == very confusing // i.e Server Doesnt accept the checksum......
 
 	std::ostringstream cmdStream;
 	cmdStream.put(0xFFu);
-	cmdStream.put(rcon.packetCode);
-
-	if (rcon.packetCode == 0x01)
+	cmdStream.put(rcon_packet.packetCode);
+	
+	if (rcon_packet.packetCode == 0x01)
 	{
 		cmdStream.put(0x00); // seq number
-		cmdStream << rcon.cmd;
+		cmdStream << rcon_packet.cmd;
 	}
-	else if (rcon.packetCode == 0x02)
+	else if (rcon_packet.packetCode == 0x02)
 	{
-		cmdStream.put(rcon.cmd_char_workaround);
+		cmdStream.put(rcon_packet.cmd_char_workaround);
 	}
-	else
+	else if (rcon_packet.packetCode == 0x00)
 	{
-		cmdStream << rcon.cmd;
+		cmdStream << rcon_packet.cmd;
 	}
 
 	std::string cmd = cmdStream.str();
-
 	checksum_crc32.update(cmd);
 	long int crcVal = checksum_crc32.checksum();
 
 	std::stringstream hexStream;
-	hexStream << std::setfill('0') << std::setw(sizeof(int)*2) << std::hex << crcVal;
+	hexStream << std::setfill('0') << std::setw(sizeof(int)*2);
+	hexStream << std::hex << crcVal;
 	std::string crcAsHex = hexStream.str();
 
 	unsigned char reversedCrc[4];
 	unsigned int x;
 
 	std::stringstream converterStream;
-
 	for (int i = 0; i < 4; i++)
 	{
 		converterStream << std::hex << crcAsHex.substr(6-(2*i),2).c_str();
@@ -102,18 +101,66 @@ void BERcon::makePacket(RconPacket &rcon)
 		reversedCrc[i] = x;
 	}
 
+	// Create Packet
 	std::stringstream cmdPacketStream;
-
-	cmdPacketStream.put(0x42);
-	cmdPacketStream.put(0x45);
-	cmdPacketStream.put(reversedCrc[0]);
+	cmdPacketStream.put(0x42); // B
+	cmdPacketStream.put(0x45); // E
+	cmdPacketStream.put(reversedCrc[0]); // 4-byte Checksum
 	cmdPacketStream.put(reversedCrc[1]);
 	cmdPacketStream.put(reversedCrc[2]);
 	cmdPacketStream.put(reversedCrc[3]);
 	cmdPacketStream << cmd;
-	rcon.packet = cmdPacketStream.str();
+
+	std::string packet = cmdPacketStream.str();
+	dgs.sendBytes(packet.data(), packet.size());
 }
 
+
+void BERcon::keepAlive()
+{
+	Poco::Checksum checksum_crc32;
+
+	std::ostringstream cmdStream;
+	cmdStream.put(0xFFu);
+	cmdStream.put(0x01);
+	cmdStream.put(0x00); // Seq Number
+	cmdStream.put('\0');
+
+	std::string cmd = cmdStream.str();
+	checksum_crc32.update(cmd);
+	long int crcVal = checksum_crc32.checksum();
+
+	std::stringstream hexStream;
+	hexStream << std::setfill('0') << std::setw(sizeof(int)*2);
+	hexStream << std::hex << crcVal;
+	std::string crcAsHex = hexStream.str();
+
+	unsigned char reversedCrc[4];
+	unsigned int x;
+
+	std::stringstream converterStream;
+	for (int i = 0; i < 4; i++)
+	{
+		converterStream << std::hex << crcAsHex.substr(6-(2*i),2).c_str();
+		converterStream >> x;
+		converterStream.clear();
+		reversedCrc[i] = x;
+	}
+
+	// Create Packet
+	std::stringstream cmdPacketStream;
+	cmdPacketStream.put(0x42); // B
+	cmdPacketStream.put(0x45); // E
+	cmdPacketStream.put(reversedCrc[0]); // 4-byte Checksum
+	cmdPacketStream.put(reversedCrc[1]);
+	cmdPacketStream.put(reversedCrc[2]);
+	cmdPacketStream.put(reversedCrc[3]);
+	cmdPacketStream << cmd;
+	cmdPacketStream.str();
+
+	std::string packet = cmdPacketStream.str();
+	dgs.sendBytes(packet.data(), packet.size());
+}
 
 void BERcon::extractData(int pos, std::string &result)
 {
@@ -139,25 +186,21 @@ void BERcon::mainLoop()
 	{
 		try 
 		{
-			buffer_size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
+			buffer_size = dgs.receiveBytes(buffer, sizeof(buffer)-1);
 			buffer[buffer_size] = '\0';
 
 			if (buffer[7] == 0x00)
 			{
 				if (buffer[8] == 0x01)
 				{
-					#if defined(BERCON_APP) || (TESTING)
-						logger_console->warn("Rcon: Logged In");
-					#endif
+					logger->warn("Rcon: Logged In");
 					logged_in = true;
 					rcon_timer.restart();
 				}
 				else
 				{
 					// Login Failed
-					#if defined(BERCON_APP) || (TESTING)
-						logger_console->warn("Rcon: Failed Login... Disconnecting");
-					#endif
+					logger->warn("Rcon: Failed Login... Disconnecting");
 					logged_in = false;
 					disconnect();
 					break;
@@ -179,11 +222,11 @@ void BERcon::mainLoop()
 					#if defined(BERCON_APP) || (TESTING)
 						if (result.empty())
 						{
-							logger_console->info("EMPTY");
+							logger->info("Server Received Command Msg EMPTY");
 						}
 						else
 						{
-							logger_console->info("{0}", result);
+							logger->info("Server Received Command Msg: {0}", result);
 						}
 					#endif
 				}
@@ -222,7 +265,9 @@ void BERcon::mainLoop()
 							{
 								result = result + ptrElem->second[i];
 							}
-							logger_console->info("{0}", result);
+							#if defined(BERCON_APP) || (TESTING)
+								logger->info("Info: {0}", result);
+							#endif
 							rcon_msg_cache.remove(sequenceNum);
 						}
 					}
@@ -243,15 +288,13 @@ void BERcon::mainLoop()
 					std::string result;
 					extractData(9, result);
 					#if defined(BERCON_APP) || (TESTING)
-						logger_console->info("CHAT: {0}", result);
+						logger->info("CHAT: {0}", result);
 					#endif
 					
 					// Respond to Server Msgs i.e chat messages, to prevent timeout
 					rcon_packet.packetCode = 0x02;
 					rcon_packet.cmd_char_workaround = buffer[8];
-					rcon_packet.packet.clear();
-					makePacket(rcon_packet);
-					dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
+					sendPacket();
 					
 					// Reset Timer
 					rcon_timer.restart();
@@ -265,18 +308,14 @@ void BERcon::mainLoop()
 
 				for(std::vector<std::string>::iterator it = rcon_commands.begin(); it != rcon_commands.end(); ++it) 
 				{
-					char *cmd = new char[it->size()+1] ;
+					char *cmd = new char[it->size()+1];
 					std::strcpy(cmd, it->c_str());
 					
-					rcon_packet.packet.clear();
 					delete []rcon_packet.cmd;
 					rcon_packet.cmd = cmd;
 					
 					rcon_packet.packetCode = 0x01;
-					makePacket(rcon_packet);
-					
-					// Send Command
-					dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
+					sendPacket();
 				}
 				// Clear Comands
 				rcon_commands.clear();
@@ -293,7 +332,7 @@ void BERcon::mainLoop()
 		}
 		catch (Poco::TimeoutException&)
 		{
-			if (!rcon_run_flag)  // Checking Run Flag
+			if (!*rcon_run_flag)  // Checking Run Flag
 			{
 				break;
 			}
@@ -302,9 +341,7 @@ void BERcon::mainLoop()
 				elapsed_seconds = rcon_timer.elapsedSeconds();
 				if (elapsed_seconds >= 45)
 				{
-					#if defined(BERCON_APP) || (TESTING)
-						logger_console->warn("Rcon: TIMED OUT...");
-					#endif
+					logger->warn("Rcon: TIMED OUT...");
 					rcon_timer.restart();
 					connect();
 				}
@@ -312,14 +349,15 @@ void BERcon::mainLoop()
 				{
 					// Keep Alive
 					#if defined(BERCON_APP) || (TESTING)
-						logger_console->info("Keep Alive Sending");
+						logger->info("Keep Alive Sending");
 					#endif
-					rcon_packet.packetCode = 0x01;
-					rcon_packet.cmd = '\0';
-					rcon_packet.packet.clear();
-					makePacket(rcon_packet);
-					dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
-					logger_console->info("Keep Alive Sent");
+
+					rcon_timer.restart();
+					keepAlive();
+
+					#if defined(BERCON_APP) || (TESTING)
+						logger->info("Keep Alive Sent");
+					#endif
 				}
 				else if (logged_in)
 				{
@@ -331,15 +369,11 @@ void BERcon::mainLoop()
 						char *cmd = new char[it->size()+1] ;
 						std::strcpy(cmd, it->c_str());
 						
-						rcon_packet.packet.clear();
 						delete []rcon_packet.cmd;
 						rcon_packet.cmd = cmd;
 						
 						rcon_packet.packetCode = 0x01;
-						makePacket(rcon_packet);
-						
-						// Send Command
-						dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
+						sendPacket();
 					}
 					// Clear Comands
 					rcon_commands.clear();
@@ -348,28 +382,17 @@ void BERcon::mainLoop()
 		}
 		catch (Poco::Net::ConnectionRefusedException& e)
 		{
-			#if defined(BERCON_APP) || (TESTING)
-				logger_console->error("Rcon: Error Connect: {0}", e.displayText());
-			#endif
+			logger->error("Rcon: Error Connect: {0}", e.displayText());
 			disconnect();
 		}
 		catch (Poco::Exception& e)
 		{
-			#if defined(BERCON_APP) || (TESTING)
-				logger_console->error("Rcon: Error Rcon: {0}", e.displayText());
-			#endif
+			logger->error("Rcon: Error Rcon: {0}", e.displayText());
 			disconnect();
 		}
 	}
 }
 
-/*
-void Rcon::checkForSteamID(std::string &steamID)
-{
-	boost::lock_guard<boost::recursive_mutex> lock(mutex_rcon_commands);
-	rcon_commands.push_back(std::move(command));
-}
-*/
 
 void BERcon::addCommand(std::string command)
 {
@@ -383,6 +406,9 @@ void BERcon::addCommand(std::string command)
 
 void BERcon::run()
 {
+	Poco::Net::SocketAddress sa(rcon_login.address, rcon_login.port);
+	dgs.connect(sa);
+
 	connect();
 	mainLoop();
 }
@@ -393,19 +419,11 @@ void BERcon::connect()
 	logged_in = false;
 	*rcon_run_flag = true;
 
-	// Connect
-	Poco::Net::SocketAddress sa(rcon_login.address, rcon_login.port);
-	dgs.connect(sa);
-
 	// Login Packet
 	rcon_packet.cmd = rcon_login.password;
 	rcon_packet.packetCode = 0x00;
-	rcon_packet.packet.clear();
-	makePacket(rcon_packet);
-	dgs.sendBytes(rcon_packet.packet.data(), rcon_packet.packet.size());
-	#if defined(BERCON_APP) || (TESTING)
-		logger_console->info("Rcon: Sent Login Info");
-	#endif
+	sendPacket();
+	logger->info("Rcon: Sent Login Info");
 	
 	// Reset Timer
 	rcon_timer.start();
@@ -417,15 +435,19 @@ void BERcon::disconnect()
 	*rcon_run_flag = false;	
 }
 
-void BERcon::init(std::shared_ptr<spdlog::logger> console, std::string address, int port, std::string password)
+
+void BERcon::init(std::shared_ptr<spdlog::logger> ext_logger)
 {
 	rcon_run_flag = new std::atomic<bool>(false);
-	logger_console.swap(console);
+	logger.swap(ext_logger);
+}
 
+
+void BERcon::updateLogin(std::string address, int port, std::string password)
+{
 	rcon_login.address = address;
 	rcon_login.port = port;
-		
-	char *passwd = new char[password.size()+1] ;
+	char *passwd = new char[password.size() + 1];
 	std::strcpy(passwd, password.c_str());
 	rcon_login.password = passwd;	
 }
@@ -476,7 +498,8 @@ void BERcon::init(std::shared_ptr<spdlog::logger> console, std::string address, 
 		}
 
 		BERcon rcon;
-		rcon.init(console, options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>());	
+		rcon.init(console);
+		rcon.updateLogin(options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>());
 		Poco::Thread thread;
 		thread.start(rcon);
 		

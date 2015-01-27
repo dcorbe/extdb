@@ -1,3 +1,24 @@
+34
+	ADDED: Version Output to Test Application @ startup
+
+	FIXED: Logic for auto creating Worker Threads was broken in v33.
+
+	FIXED: RCon now works correctly in Windows + Linux
+
+	FIXED: VAC Protocol Now works correctly. Returns empty Bans / FriendList if Steam Server doesn't answer in time.
+	FIXED: VAC Protocol 1:   Now works correctly, instead of reporting back SYNC NOT SUPPORTED
+
+	FIXED: Unique ID Leakage, only happens in certain scenario (bad sqf code/ logic)
+
+	FIXED: MISC Error Message
+	FIXED: MISC Random String + Uninitialized variable thanks Marius Huse Jacobsen
+
+	UPDATED: DB_RAW_V3 now adds strings to DATE + TIME Datatypes
+	
+	UPDATED: Backported some minor fixes for Poco Library
+	UPDATED: Windows Builds now built with VS2013 Community Edition (was previously Express Edition)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 33
 	ADDED: DATABASE_EXTRA + ADD_EXTRA System Calls  Used for connecting to Different Databases
 	ADDED: VAC Protocol  Steam Ban / Friend Queries (Note: Known Issue with Steam not always responding to HTTP Requests, need to add code to timeout)
@@ -8,7 +29,7 @@
 	FIXED: LOG Protocol Error Handling wont crash server, will report error if there is an issue i.e file permissions etc
 	FIXED: DB_CUSTOM_V5 Removed Leftover Mutex Lock (Improved Performance)
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------  	
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 32
 	ADDED: Better exception handling for when adding Database
 
@@ -49,7 +70,7 @@
 
 	FIXED: Sanitize Test App Input Limit
 	
-	FIXED : extDB2 Linux Builds
+	FIXED: extDB2 Linux Builds
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------  
 28
