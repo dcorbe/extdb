@@ -499,7 +499,7 @@ void BERcon::updateLogin(std::string address, int port, std::string password)
 
 		BERcon rcon;
 		rcon.init(console);
-		rcon.updateLogin(options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>())
+		rcon.updateLogin(options["ip"].as<std::string>(), options["port"].as<int>(), options["password"].as<std::string>());
 		Poco::Thread thread;
 		thread.start(rcon);
 		
