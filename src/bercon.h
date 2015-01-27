@@ -26,6 +26,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/unordered_map.hpp>
 
+#include <Poco/Checksum.h>
+
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketAddress.h>
 #include <Poco/Net/NetException.h>
@@ -48,6 +50,7 @@ class BERcon: public Poco::Runnable
 		
 		void addCommand(std::string command);
 
+
 	private:
 		typedef std::pair< int, std::unordered_map < int, std::string > > RconMultiPartMsg;
 
@@ -56,10 +59,10 @@ class BERcon: public Poco::Runnable
 			char cmd_char_workaround;
 			char *cmd;
 			unsigned char packetCode;
-			std::string packet;
 		};
 		
-		struct RconLogin {
+		struct RconLogin
+		{
 			std::string address;
 			int port;
 			char *password;
@@ -90,6 +93,7 @@ class BERcon: public Poco::Runnable
 		void connect();
 		void mainLoop();
 
+		void keepAlive(RconPacket &rcon);
 		void makePacket(RconPacket &rcon);
 		void extractData(int pos, std::string &result);
 };

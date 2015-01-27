@@ -46,6 +46,7 @@ class AbstractExt
 
 		struct extDBConnectors
 		{
+			bool steam=false;
 			bool rcon=false;
 			bool mysql=false;
 			bool sqlite=false;

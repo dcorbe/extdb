@@ -1152,15 +1152,30 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 								case 2:
 									// LOCK / VERSION
 									if (tokens[1] == "START_RCON")
-									{			
-										extDB_connectors_info.rcon = true;
-										bercon_thread.start(bercon);
-										std::strcpy(output, ("[1]"));
+									{
+										if (!extDB_connectors_info.rcon)
+										{
+											extDB_connectors_info.rcon = true;
+											bercon_thread.start(bercon);
+											std::strcpy(output, ("[1]"));
+										}
+										else
+										{
+											std::strcpy(output, ("[0,\"RCON ALREADY STARTED\"]"));
+										}
 									}
 									else if (tokens[1] == "START_VAC")
 									{
-										steam_thread.start(steam);
-										std::strcpy(output, ("[1]"));
+										if (!extDB_connectors_info.steam)
+										{
+											extDB_connectors_info.steam = true;
+											steam_thread.start(steam);
+											std::strcpy(output, ("[1]"));											
+										}
+										else
+										{
+											std::strcpy(output, ("[0,\"STEAM ALREADY STARTED\"]"));	
+										}
 									}
 									else if (tokens[1] == "VERSION")
 									{
