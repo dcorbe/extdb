@@ -69,7 +69,6 @@ class BERcon: public Poco::Runnable
 		RconPacket rcon_packet;
 		RconLogin rcon_login;
 
-		Poco::Net::SocketAddress sa;
 		Poco::Net::DatagramSocket dgs;
 
 		Poco::Stopwatch rcon_timer;

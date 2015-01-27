@@ -58,7 +58,7 @@ class STEAMGET: public Poco::Runnable
 		std::string path;
 		std::string steam_api_key;
 
-		Poco::Net::HTTPClientSession session;
+		Poco::SharedPtr<Poco::Net::HTTPClientSession> session;
 
 		boost::property_tree::ptree *pt;
 
@@ -103,6 +103,7 @@ class STEAM: public Poco::Runnable
 
 		struct RConBan
 		{
+			bool autoBan;
 			int NumberOfVACBans;
 			int DaysSinceLastBan;
 			std::string BanDuration;

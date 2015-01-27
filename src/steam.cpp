@@ -50,10 +50,7 @@ From Frank https://gist.github.com/Fank/11127158
 void STEAMGET::init(AbstractExt *extension)
 {
 	extension_ptr = extension;
-
-	session.setHost("api.steampowered.com");
-	session.setPort(80);
-	session.setTimeout(Poco::Timespan(30,0));
+	session = new Poco::Net::HTTPClientSession("api.steampowered.com", 80);
 }
 
 
@@ -74,7 +71,7 @@ void STEAMGET::run()
 {
 	response = 0;
 	Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_GET, path, Poco::Net::HTTPMessage::HTTP_1_1);
-	session.sendRequest(request);
+	session->sendRequest(request);
 
 	#ifdef TESTING
 		extension_ptr->console->info("{0}", path);
@@ -88,7 +85,7 @@ void STEAMGET::run()
 	{
 		try
 		{
-			std::istream &is = session.receiveResponse(res);
+			std::istream &is = session->receiveResponse(res);
 			boost::property_tree::read_json(is, *pt);
 			response = 1;
 		}
@@ -106,13 +103,13 @@ void STEAMGET::run()
 
 void STEAMGET::abort()
 {
-	session.abort();
+	session->abort();
 }
 
 
 void STEAMGET::stop()
 {
-	session.reset();
+	session->reset();
 }
 
 
@@ -123,15 +120,15 @@ void STEAMGET::stop()
 void STEAM::init(AbstractExt *extension)
 {
 	extension_ptr = extension;
-	steam_get.init(extension);
 
 	steam_run_flag = new std::atomic<bool>(false);
 
 	STEAM_api_key = extension_ptr->pConf->getString("Steam.API Key", "");
-	rconBanSettings.NumberOfVACBans = extension_ptr->pConf->getInt("STEAM.NumberOfVACBans", 1);
-	rconBanSettings.DaysSinceLastBan = extension_ptr->pConf->getInt("STEAM.DaysSinceLastBan", 0);
-	rconBanSettings.BanDuration = extension_ptr->pConf->getString("STEAM.BanDuration", "0");
-	rconBanSettings.BanMessage = extension_ptr->pConf->getString("STEAM.BanMessage", "VAC Banned");
+	rconBanSettings.autoBan = extension_ptr->pConf->getBool("VAC.Auto Ban", false);
+	rconBanSettings.NumberOfVACBans = extension_ptr->pConf->getInt("VAC.NumberOfVACBans", 1);
+	rconBanSettings.DaysSinceLastBan = extension_ptr->pConf->getInt("VAC.DaysSinceLastBan", 0);
+	rconBanSettings.BanDuration = extension_ptr->pConf->getString("VAC.BanDuration", "0");
+	rconBanSettings.BanMessage = extension_ptr->pConf->getString("VAC.BanMessage", "VAC Ban");
 
 	SteamVacBans_Cache = new Poco::ExpireCache<std::string, SteamVACBans>(extension_ptr->pConf->getInt("STEAM.BanCacheTime", 3600000));
 	SteamFriends_Cache = new Poco::ExpireCache<std::string, SteamFriends>(extension_ptr->pConf->getInt("STEAM.FriendsCacheTime", 3600000));
@@ -247,10 +244,15 @@ void STEAM::updateSteamBans(std::vector<std::string> &steamIDs)
 							extension_ptr->console->info("VAC Bans Info: DaysSinceLastBan {0}", steam_info.DaysSinceLastBan);
 						#endif
 
-						if (steam_info.NumberOfVACBans >= rconBanSettings.NumberOfVACBans)
+						if ((steam_info.NumberOfVACBans >= rconBanSettings.NumberOfVACBans) && (steam_info.DaysSinceLastBan <= rconBanSettings.DaysSinceLastBan))
 						{
 							steam_info.extDBBanned = true;
-							extension_ptr->rconCommand("ban " + convertSteamIDtoBEGUID(steam_info.steamID) + " " + rconBanSettings.BanDuration + " " + rconBanSettings.BanMessage);
+							if ((extension_ptr->extDB_connectors_info.rcon) && rconBanSettings.autoBan)
+							{
+								std::string beguid =  convertSteamIDtoBEGUID(steam_info.steamID);
+								extension_ptr->rconCommand("ban " + beguid + " " + rconBanSettings.BanDuration + " " + rconBanSettings.BanMessage);
+								extension_ptr->vacBans_logger->warn("Banned: {0}, BEGUID: {1}, Duration: {2}, Ban Message: {3}", steam_info.steamID, beguid, rconBanSettings.BanDuration, rconBanSettings.BanMessage);
+							}
 						}
 						SteamVacBans_Cache->add(steam_info.steamID, steam_info);
 					}
@@ -359,6 +361,7 @@ void STEAM::addQuery(const int &unique_id, bool queryFriends, bool queryVacBans,
 
 void STEAM::run()
 {
+	steam_get.init(extension_ptr);
 	*steam_run_flag = true;
 	while (*steam_run_flag)
 	{

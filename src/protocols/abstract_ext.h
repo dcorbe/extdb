@@ -59,7 +59,7 @@ class AbstractExt
 
 		std::shared_ptr<spdlog::logger> console;
 		std::shared_ptr<spdlog::logger> logger;
-		std::shared_ptr<spdlog::logger> belogger;
+		std::shared_ptr<spdlog::logger> vacBans_logger;
 	
 		virtual void freeUniqueID_mutexlock(const int &unique_id)=0;
 		virtual int getUniqueID_mutexlock()=0;

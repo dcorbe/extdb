@@ -139,7 +139,7 @@ void BERcon::mainLoop()
 	{
 		try 
 		{
-			buffer_size = dgs.receiveFrom(buffer, sizeof(buffer)-1, sa);
+			buffer_size = dgs.receiveBytes(buffer, sizeof(buffer)-1);
 			buffer[buffer_size] = '\0';
 
 			if (buffer[7] == 0x00)
@@ -383,6 +383,9 @@ void BERcon::addCommand(std::string command)
 
 void BERcon::run()
 {
+	Poco::Net::SocketAddress sa(rcon_login.address, rcon_login.port);
+	dgs.connect(sa);
+
 	connect();
 	mainLoop();
 }
@@ -392,10 +395,6 @@ void BERcon::connect()
 {
 	logged_in = false;
 	*rcon_run_flag = true;
-
-	// Connect
-	Poco::Net::SocketAddress sa(rcon_login.address, rcon_login.port);
-	dgs.connect(sa);
 
 	// Login Packet
 	rcon_packet.cmd = rcon_login.password;

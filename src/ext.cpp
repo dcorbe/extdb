@@ -154,23 +154,23 @@ Ext::Ext(std::string dll_path)
 		boost::filesystem::create_directories(log_relative_path);
 		log_relative_path /= log_filename;
 
-		std::string extDB_belog_path;
-		boost::filesystem::path belog_relative_path;
-		belog_relative_path = boost::filesystem::path(extDB_info.path);
-		belog_relative_path /= "extDB";
-		belog_relative_path /= "logs";
-		belog_relative_path /= Poco::DateTimeFormatter::format(now, "%Y");
-		belog_relative_path /= Poco::DateTimeFormatter::format(now, "%n");
-		belog_relative_path /= Poco::DateTimeFormatter::format(now, "%d");
-		extDB_belog_path = belog_relative_path.make_preferred().string();
-		boost::filesystem::create_directories(belog_relative_path);
-		belog_relative_path /= log_filename;
+		boost::filesystem::path vacBans_log_relative_path;
+		vacBans_log_relative_path = boost::filesystem::path(extDB_info.path);
+		vacBans_log_relative_path /= "extDB";
+		vacBans_log_relative_path /= "vacban_logs";
+		vacBans_log_relative_path /= Poco::DateTimeFormatter::format(now, "%Y");
+		vacBans_log_relative_path /= Poco::DateTimeFormatter::format(now, "%n");
+		vacBans_log_relative_path /= Poco::DateTimeFormatter::format(now, "%d");
+		boost::filesystem::create_directories(vacBans_log_relative_path);
+		vacBans_log_relative_path /= log_filename;
 
 		auto console_temp = spdlog::stdout_logger_mt("extDB Console logger");
 		auto logger_temp = spdlog::daily_logger_mt("extDB File Logger", log_relative_path.make_preferred().string(), true);
+		auto vacBans_logger_temp = spdlog::daily_logger_mt("extDB vacBans Logger", vacBans_log_relative_path.make_preferred().string(), true);
 
 		console.swap(console_temp);
 		logger.swap(logger_temp);
+		vacBans_logger.swap(vacBans_logger_temp);
 
 		spdlog::set_level(spdlog::level::info);
 		spdlog::set_pattern("[%H:%M:%S %z] [Thread %t] %v");
@@ -285,21 +285,9 @@ Ext::Ext(std::string dll_path)
 
  			// Initialize so have atomic setup correctly
 			bercon.init(logger, std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password"));
-			if (pConf->getBool("Rcon.Enable", false))
-			{
-				auto belogger_temp = spdlog::daily_logger_mt("extDB BE File Logger", belog_relative_path.make_preferred().string(), true);
-				belogger.swap(belogger_temp);
-				extDB_connectors_info.rcon = true;
-				bercon_thread.start(bercon);
-				//bercon.run();
-			}
 
 			// Initialize so have atomic setup correctly
 			steam.init(this);
-			if (pConf->getBool("Steam.Enable", false))
-			{	
-				steam_thread.start(steam);
-			}
 
 			#ifdef _WIN32
 				if ((pConf->getBool("Main.Randomize Config File", false)) && (!conf_randomized))
@@ -362,7 +350,7 @@ void Ext::stop()
 
 std::string Ext::getVersion() const
 {
-	return "33";
+	return "34";
 }
 
 
@@ -424,6 +412,7 @@ void Ext::steamQuery(const int &unique_id, bool queryFriends, bool queryVacBans,
 void Ext::rconCommand(std::string str)
 // Adds RCon Command to be sent to Server.
 {
+	console->warn("extDB: running {0}, rconCommand {1}", extDB_connectors_info.rcon, str);
 	if (extDB_connectors_info.rcon) // Check if Rcon enabled
 	{
 		bercon.addCommand(str);
@@ -1162,7 +1151,18 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 							{
 								case 2:
 									// LOCK / VERSION
-									if (tokens[1] == "VERSION")
+									if (tokens[1] == "START_RCON")
+									{			
+										extDB_connectors_info.rcon = true;
+										bercon_thread.start(bercon);
+										std::strcpy(output, ("[1]"));
+									}
+									else if (tokens[1] == "START_VAC")
+									{
+										steam_thread.start(steam);
+										std::strcpy(output, ("[1]"));
+									}
+									else if (tokens[1] == "VERSION")
 									{
 										std::strcpy(output, getVersion().c_str());
 									}
