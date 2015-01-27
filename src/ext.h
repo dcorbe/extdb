@@ -99,6 +99,9 @@ class Ext: public AbstractExt
 		std::shared_ptr<IdManager> mgr;
 		boost::mutex mutex_unique_id;
 
+		// RCon
+		void connectRCon(char *output, const int &output_size, const std::string &rcon_conf);
+		
 		// Database
 		void connectDatabase(char *output, const int &output_size, const std::string &database_id, const std::string &database_conf);
 

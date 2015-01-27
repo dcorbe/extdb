@@ -44,7 +44,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class BERcon: public Poco::Runnable
 {
 	public:
-		void init(std::shared_ptr<spdlog::logger> console, std::string address, int port, std::string password);
+		void init(std::shared_ptr<spdlog::logger> console);
+		void updateLogin(std::string address, int port, std::string password);
+		
 		void run();
 		void disconnect();
 		
@@ -76,8 +78,7 @@ class BERcon: public Poco::Runnable
 
 		Poco::Stopwatch rcon_timer;
 
-		std::shared_ptr<spdlog::logger> logger_console;
-		std::shared_ptr<spdlog::logger> logger_file;
+		std::shared_ptr<spdlog::logger> logger;
 		
 		char buffer[4096];
 		int buffer_size;
@@ -93,7 +94,7 @@ class BERcon: public Poco::Runnable
 		void connect();
 		void mainLoop();
 
-		void keepAlive(RconPacket &rcon);
-		void makePacket(RconPacket &rcon);
+		void keepAlive();
+		void sendPacket();
 		void extractData(int pos, std::string &result);
 };

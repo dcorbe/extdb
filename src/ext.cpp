@@ -284,7 +284,7 @@ Ext::Ext(std::string dll_path)
 			}
 
  			// Initialize so have atomic setup correctly
-			bercon.init(logger, std::string("127.0.0.1"), pConf->getInt("Rcon.Port", 2302), pConf->getString("Rcon.Password", "password"));
+			bercon.init(logger);
 
 			// Initialize so have atomic setup correctly
 			steam.init(this);
@@ -405,6 +405,30 @@ void Ext::steamQuery(const int &unique_id, bool queryFriends, bool queryVacBans,
 	if (wakeup)
 	{
 		steam_thread.wakeUp();
+	}
+}
+
+
+void Ext::connectRCon(char *output, const int &output_size, const std::string &rcon_conf)
+// Start RCon
+{
+	if (pConf->hasOption(rcon_conf + ".Port"))
+	{
+		if (!extDB_connectors_info.rcon)
+		{
+			bercon.updateLogin("127.0.0.1", pConf->getInt((rcon_conf + ".Port"), 2302), pConf->getString((rcon_conf + ".Password"), "password"));
+			extDB_connectors_info.rcon = true;
+			bercon_thread.start(bercon);
+			std::strcpy(output, ("[1]"));
+		}
+		else
+		{
+			std::strcpy(output, ("[0,\"RCon Already Started\"]"));
+		}
+	}
+	else
+	{
+		std::strcpy(output, ("[0,\"No Config Option Found\"]"));
 	}
 }
 
@@ -1150,21 +1174,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 							switch (tokens.count())
 							{
 								case 2:
-									// LOCK / VERSION
-									if (tokens[1] == "START_RCON")
-									{
-										if (!extDB_connectors_info.rcon)
-										{
-											extDB_connectors_info.rcon = true;
-											bercon_thread.start(bercon);
-											std::strcpy(output, ("[1]"));
-										}
-										else
-										{
-											std::strcpy(output, ("[0,\"RCON ALREADY STARTED\"]"));
-										}
-									}
-									else if (tokens[1] == "START_VAC")
+									// VAC
+									if (tokens[1] == "START_VAC")
 									{
 										if (!extDB_connectors_info.steam)
 										{
@@ -1177,7 +1188,8 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 											std::strcpy(output, ("[0,\"STEAM ALREADY STARTED\"]"));	
 										}
 									}
-									else if (tokens[1] == "VERSION")
+									// LOCK / VERSION
+									else  if (tokens[1] == "VERSION")
 									{
 										std::strcpy(output, getVersion().c_str());
 									}
@@ -1203,8 +1215,13 @@ void Ext::callExtenion(char *output, const int &output_size, const char *functio
 									}
 									break;
 								case 3:
+									// RCON
+									if (tokens[1] == "START_RCON")
+									{
+										connectRCon(output, output_size, tokens[2]);
+									}
 									// DATABASE
-									if (tokens[1] == "DATABASE")
+									else if (tokens[1] == "DATABASE")
 									{
 										connectDatabase(output, output_size, "", tokens[2]);
 									}
