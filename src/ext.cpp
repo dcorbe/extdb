@@ -330,7 +330,8 @@ void Ext::stop()
 {
 	console->info("extDB: Stopping ...");
 	logger->info("extDB: Stopping ...");
-	io_service.stop();
+	io_work_ptr->reset();
+	//io_service.stop();
 	threads.join_all();
 	if (extDB_connectors_info.mysql)
 	{
