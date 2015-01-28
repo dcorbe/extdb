@@ -1,6 +1,6 @@
 /*
-Copyright (C) 2014 Declan Ireland <http://github.com/torndeco/extDB>
 Copyright (C) 2012 Prithu "bladez" Parker <https://github.com/bladez-/bercon>
+Copyright (C) 2014 Declan Ireland <http://github.com/torndeco/extDB>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
