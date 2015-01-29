@@ -250,7 +250,7 @@ void STEAM::updateSteamBans(std::vector<std::string> &steamIDs)
 							if ((extension_ptr->extDB_connectors_info.rcon) && rconBanSettings.autoBan)
 							{
 								std::string beguid =  convertSteamIDtoBEGUID(steam_info.steamID);
-								extension_ptr->rconCommand("ban " + beguid + " " + rconBanSettings.BanDuration + " " + rconBanSettings.BanMessage);
+								extension_ptr->rconCommand("addBan " + beguid + " " + rconBanSettings.BanDuration + " " + rconBanSettings.BanMessage);
 								extension_ptr->vacBans_logger->warn("Banned: {0}, BEGUID: {1}, Duration: {2}, Ban Message: {3}", steam_info.steamID, beguid, rconBanSettings.BanDuration, rconBanSettings.BanMessage);
 							}
 						}
