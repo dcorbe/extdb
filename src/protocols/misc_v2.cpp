@@ -20,12 +20,11 @@ From Frank https://gist.github.com/Fank/11127158
 
 */
 
-
+#include <boost/crc.hpp>
 #include <boost/random/random_device.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/thread/thread.hpp>
 
-#include <Poco/Checksum.h>
 #include <Poco/DateTime.h>
 #include <Poco/DateTimeFormatter.h>
 #include <Poco/DigestEngine.h>
@@ -70,9 +69,9 @@ void MISC_V2::getDateTime(int hours, std::string &result)
 
 void MISC_V2::getCrc32(std::string &input_str, std::string &result)
 {
-	boost::lock_guard<boost::mutex> lock(mutex_checksum_crc32);
-	checksum_crc32.update(input_str);
-	result = "[1,\"" + Poco::NumberFormatter::format(checksum_crc32.checksum()) + "\"]";
+	boost::lock_guard<boost::mutex> lock(mutex_crc32);
+	crc32.process_bytes(input_str.data(), input_str.length());
+	result = "[1,\"" + Poco::NumberFormatter::format(crc32.checksum()) + "\"]";
 }
 
 
