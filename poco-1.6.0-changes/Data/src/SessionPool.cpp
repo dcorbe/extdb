@@ -255,44 +255,6 @@ void SessionPool::applySettings(SessionImpl* pImpl)
 	for (; pmIt != pmEnd; ++pmIt) pImpl->setProperty(pmIt->first, pmIt->second);
 }
 
-/*
-void SessionPool::putBack(SessionPool::SessionDataPtr pSessionData)
-{
-	Poco::Mutex::ScopedLock lock(_mutex);
-	if (_shutdown) return;
-
-	for (SessionList::iterator it = _activeSessions.begin(); it != _activeSessions.end(); ++it)
-	{
-		if ((*it)->session == pSessionData->session)
-		{
-			if (pSessionData->session->session()->isConnected())
-			{
-				// reverse settings applied at acquisition time, if any
-				AddPropertyMap::iterator pIt = _addPropertyMap.find(pSessionData->session->session());
-				if (pIt != _addPropertyMap.end())
-					pSessionData->session->session()->setProperty(pIt->second.first, pIt->second.second);
-
-				AddFeatureMap::iterator fIt = _addFeatureMap.find(pSessionData->session->session());
-				if (fIt != _addFeatureMap.end())
-					pSessionData->session->session()->setFeature(fIt->second.first, fIt->second.second);
-
-				// re-apply the default pool settings
-				applySettings(pSessionData->session->session());
-			
-				pSessionData->session->access();
-				_idleSessions.push_front(std::move(*it));
-			}
-			else
-			{
-				--_nSessions;
-			};
-			_activeSessions.erase(it);
-			break;
-		}
-	}
-}
-*/
-
 
 void SessionPool::putBack(PooledSessionHolderPtr pHolder)
 {
