@@ -8,14 +8,12 @@
 #include <stack>
 
 #include "redisvalue.h"
-#include "config.h"
 
- #include "impl/redisparser.cpp"
 
 class RedisParser
 {
 public:
-    inline RedisParser();
+    RedisParser();
 
     enum ParseResult {
         Completed,
@@ -23,20 +21,20 @@ public:
         Error,
     };
 
-    inline std::pair<size_t, ParseResult> parse(const char *ptr, size_t size);
+    std::pair<size_t, ParseResult> parse(const char *ptr, size_t size);
 
-    inline RedisValue result();
+    RedisValue result();
 
 protected:
-    inline std::pair<size_t, ParseResult> parseChunk(const char *ptr, size_t size);
-    inline std::pair<size_t, ParseResult> parseArray(const char *ptr, size_t size);
+    std::pair<size_t, ParseResult> parseChunk(const char *ptr, size_t size);
+    std::pair<size_t, ParseResult> parseArray(const char *ptr, size_t size);
 
-    static inline bool isChar(int c)
+    static bool isChar(int c)
     {
         return c >= 0 && c <= 127;
     }
 
-    static inline bool isControl(int c)
+    static bool isControl(int c)
     {
         return (c >= 0 && c <= 31) || (c == 127);
     }

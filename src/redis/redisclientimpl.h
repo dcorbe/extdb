@@ -18,45 +18,45 @@
 #include <queue>
 #include <map>
 
-#include "../redisclient.h"
-#include "../redisparser.h"
-#include "../config.h"
+#include "redisclient.h"
+#include "redisparser.h"
 
-#include "redisclientimpl.cpp"
 
 class RedisClientImpl : public boost::enable_shared_from_this<RedisClientImpl> {
 public:
-    inline RedisClientImpl(boost::asio::io_service &ioService);
-    inline ~RedisClientImpl();
+    RedisClientImpl(boost::asio::io_service &ioService);
+    ~RedisClientImpl();
 
-    inline void handleAsyncConnect(
+    void handleAsyncConnect(
             const boost::system::error_code &ec,
             const boost::function<void(bool, const std::string &)> &handler);
 
-    inline void close();
+    void close();
 
-    inline void doCommand(
+    void doCommand(
             const std::vector<std::string> &command,
             const boost::function<void(const RedisValue &)> &handler);
 
-    inline void sendNextCommand();
-    inline void processMessage();
-    inline void doProcessMessage(const RedisValue &v);
-    inline void asyncWrite(const boost::system::error_code &ec, const size_t);
-    inline void asyncRead(const boost::system::error_code &ec, const size_t);
+    void sendNextCommand();
+    void processMessage();
+    void doProcessMessage(const RedisValue &v);
+    void asyncWrite(const boost::system::error_code &ec, const size_t);
+    void asyncRead(const boost::system::error_code &ec, const size_t);
 
-    inline void onRedisError(const RedisValue &);
-    inline void onError(const std::string &s);
-    inline void defaulErrorHandler(const std::string &s);
+    void onRedisError(const RedisValue &);
+    void onError(const std::string &s);
+    void defaulErrorHandler(const std::string &s);
 
-    inline static void append(std::vector<char> &vec, const std::string &s);
-    inline static void append(std::vector<char> &vec, const char *s);
-    inline static void append(std::vector<char> &vec, char c);
+    static void append(std::vector<char> &vec, const std::string &s);
+    static void append(std::vector<char> &vec, const char *s);
+    static void append(std::vector<char> &vec, char c);
     template<size_t size>
-    inline static void append(std::vector<char> &vec, const char s[size]);
+    static void append(std::vector<char> &vec, const char s[size]);
 
-    template<typename Handler>
-    inline void post(const Handler &handler);
+    template<typename Handler> void post(const Handler &handler)
+    {
+        strand.post(handler);
+    };
 
     enum {
         NotConnected,

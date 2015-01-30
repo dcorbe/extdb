@@ -7,7 +7,7 @@
 #pragma once
 
 #include <boost/lexical_cast.hpp>
-#include "../redisvalue.h"
+#include "redisvalue.h"
 
 
 RedisValue::RedisValue()

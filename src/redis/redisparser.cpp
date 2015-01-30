@@ -8,7 +8,8 @@
 
 #include <sstream>
 
-#include "../redisparser.h"
+#include "redisparser.h"
+
 
 RedisParser::RedisParser()
     : state(Start), bulkSize(0)

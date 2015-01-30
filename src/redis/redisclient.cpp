@@ -3,14 +3,18 @@
  * License: MIT
  */
 
+class RedisPool;
 
 #pragma once
 
+#include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
-#include "../redisclient.h"
+#include "redisclient.h"
 
-RedisClient::RedisClient(boost::asio::io_service &ioService)
-    : pimpl(boost::make_shared<RedisClientImpl>(boost::ref(ioService)))
+
+RedisClient::RedisClient(boost::asio::io_service &ioService, RedisPool *pool)
+    : pimpl(boost::make_shared<RedisClientImpl>(boost::ref(ioService))),
+    _pool(pool)
 {
     pimpl->errorHandler = boost::bind(&RedisClientImpl::defaulErrorHandler,
                                       pimpl, _1);

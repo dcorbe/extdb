@@ -14,6 +14,7 @@
 
 #include "redisclientimpl.h"
 
+
 RedisClientImpl::RedisClientImpl(boost::asio::io_service &ioService)
     : state(NotConnected), strand(ioService), socket(ioService), subscribeSeq(0)
 {
@@ -272,10 +273,4 @@ void RedisClientImpl::append(std::vector<char> &vec, char c)
 {
     vec.resize(vec.size() + 1);
     vec[vec.size() - 1] = c;
-}
-
-template<typename Handler>
-void RedisClientImpl::post(const Handler &handler)
-{
-    strand.post(handler);
 }
