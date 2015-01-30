@@ -20,6 +20,7 @@ From Frank https://gist.github.com/Fank/11127158
 
 */
 
+#include <boost/crc.hpp>
 #include <boost/random/random_device.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/thread/thread.hpp>
@@ -69,6 +70,7 @@ void MISC::getDateTime(int hours, std::string &result)
 void MISC::getCrc32(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_crc32);
+	crc32.reset();
 	crc32.process_bytes(input_str.data(), input_str.length());
 	result = "[1,\"" + Poco::NumberFormatter::format(crc32.checksum()) + "\"]";
 }

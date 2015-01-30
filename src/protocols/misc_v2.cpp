@@ -70,6 +70,7 @@ void MISC_V2::getDateTime(int hours, std::string &result)
 void MISC_V2::getCrc32(std::string &input_str, std::string &result)
 {
 	boost::lock_guard<boost::mutex> lock(mutex_crc32);
+	crc32.reset();
 	crc32.process_bytes(input_str.data(), input_str.length());
 	result = "[1,\"" + Poco::NumberFormatter::format(crc32.checksum()) + "\"]";
 }

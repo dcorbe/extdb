@@ -79,6 +79,7 @@ void BERcon::sendPacket()
 	}
 
 	std::string cmd = cmdStream.str();
+	crc32.reset();
 	crc32.process_bytes(cmd.data(), cmd.length());
 	long int crcVal = crc32.checksum();
 
@@ -123,6 +124,7 @@ void BERcon::keepAlive()
 	cmdStream.put('\0');
 
 	std::string cmd = cmdStream.str();
+	crc32.reset();
 	crc32.process_bytes(cmd.data(), cmd.length());
 	long int crcVal = crc32.checksum();
 
