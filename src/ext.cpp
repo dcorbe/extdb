@@ -243,6 +243,7 @@ Ext::Ext(std::string dll_path)
 				}
 				else
 				{
+					extDB_info.max_threads = detected_cpu_cores;
 					#ifdef TESTING
 						console->info("extDB: Detected {0} Cores, Setting up {1} Worker Threads", detected_cpu_cores, extDB_info.max_threads);
 					#endif
@@ -329,7 +330,8 @@ void Ext::stop()
 {
 	console->info("extDB: Stopping ...");
 	logger->info("extDB: Stopping ...");
-	io_service.stop();
+	io_work_ptr.reset();
+	//io_service.stop();
 	threads.join_all();
 	if (extDB_connectors_info.mysql)
 	{
@@ -350,7 +352,7 @@ void Ext::stop()
 
 std::string Ext::getVersion() const
 {
-	return "34";
+	return "35";
 }
 
 

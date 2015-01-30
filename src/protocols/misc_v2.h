@@ -18,9 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include <boost/crc.hpp>
 #include <boost/thread/thread.hpp>
 
-#include <Poco/Checksum.h>
 #include <Poco/ClassLibrary.h>
 #include <Poco/MD4Engine.h>
 #include <Poco/MD5Engine.h>
@@ -42,8 +42,8 @@ class MISC_V2: public AbstractProtocol
 		Poco::MD4Engine md4;
 		boost::mutex mutex_md4;
 
-		Poco::Checksum checksum_crc32;
-		boost::mutex mutex_checksum_crc32;
+	    boost::crc_32_type crc32;
+		boost::mutex mutex_crc32;
 
 		boost::mutex mutex_RandomString;
 		std::vector < std::string > uniqueRandomVarNames;

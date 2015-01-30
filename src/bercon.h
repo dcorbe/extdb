@@ -1,6 +1,6 @@
 /*
-Copyright (C) 2014 Declan Ireland <http://github.com/torndeco/extDB>
 Copyright (C) 2012 Prithu "bladez" Parker <https://github.com/bladez-/bercon>
+Copyright (C) 2014 Declan Ireland <http://github.com/torndeco/extDB>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,11 +22,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include <boost/crc.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/unordered_map.hpp>
-
-#include <Poco/Checksum.h>
 
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketAddress.h>
@@ -82,6 +81,8 @@ class BERcon: public Poco::Runnable
 		
 		char buffer[4096];
 		int buffer_size;
+
+		boost::crc_32_type crc32;
 		
 		// Mutex Locks
 		std::atomic<bool> *rcon_run_flag;

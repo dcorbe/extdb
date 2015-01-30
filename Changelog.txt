@@ -1,3 +1,13 @@
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
+35	FIXED: VAC Bans was using the wrong RCon Command  thanks: killerty69
+
+	FIXED: MISC CRC32
+	FIXED: Worker Thread Detection Again
+
+	UPDATED: Slightly Cleaner Shutdown, allow worker threads to finish up.
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------  
 34
 	ADDED: Version Output to Test Application @ startup
 

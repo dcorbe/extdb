@@ -26,11 +26,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 	#include "protocols/abstract_ext.h"
 #endif
 
+#include <boost/crc.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <Poco/Checksum.h>
 #include <Poco/Net/DatagramSocket.h>
 #include <Poco/Net/SocketAddress.h>
 #include <Poco/Net/NetException.h>
@@ -60,8 +60,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 void BERcon::sendPacket()
 {
-	Poco::Checksum checksum_crc32; // Broken if use static variable + mutex lock == very confusing // i.e Server Doesnt accept the checksum......
-
 	std::ostringstream cmdStream;
 	cmdStream.put(0xFFu);
 	cmdStream.put(rcon_packet.packetCode);
@@ -81,8 +79,9 @@ void BERcon::sendPacket()
 	}
 
 	std::string cmd = cmdStream.str();
-	checksum_crc32.update(cmd);
-	long int crcVal = checksum_crc32.checksum();
+	crc32.reset();
+	crc32.process_bytes(cmd.data(), cmd.length());
+	long int crcVal = crc32.checksum();
 
 	std::stringstream hexStream;
 	hexStream << std::setfill('0') << std::setw(sizeof(int)*2);
@@ -118,8 +117,6 @@ void BERcon::sendPacket()
 
 void BERcon::keepAlive()
 {
-	Poco::Checksum checksum_crc32;
-
 	std::ostringstream cmdStream;
 	cmdStream.put(0xFFu);
 	cmdStream.put(0x01);
@@ -127,8 +124,9 @@ void BERcon::keepAlive()
 	cmdStream.put('\0');
 
 	std::string cmd = cmdStream.str();
-	checksum_crc32.update(cmd);
-	long int crcVal = checksum_crc32.checksum();
+	crc32.reset();
+	crc32.process_bytes(cmd.data(), cmd.length());
+	long int crcVal = crc32.checksum();
 
 	std::stringstream hexStream;
 	hexStream << std::setfill('0') << std::setw(sizeof(int)*2);
