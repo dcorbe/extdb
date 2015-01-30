@@ -352,7 +352,7 @@ void Ext::stop()
 
 std::string Ext::getVersion() const
 {
-	return "34";
+	return "35";
 }
 
 
