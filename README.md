@@ -54,19 +54,15 @@ extDB is incompatible with https://github.com/fred41/tbbmalloc_arma.
 
  - bladez- Using modified code from https://github.com/bladez-/bercon for RCON  
  - Fank for his code to convert SteamID to BEGUID https://gist.github.com/Fank/11127158
-
  - rajkosto for his work on DayZ Hive, using almost the exact same boost parser for sanitize checks for input/output https://github.com/rajkosto/hive  
  - firefly2442 for the CMake Build System & wiki updates https://github.com/firefly2442
  - MaHuJa for fixing Test Application Input, no longer hardcoded input limit https://github.com/MaHuJa
-
  - killzonekid for his blog http://killzonekid.com/
-  
  - Tonic & Atlis RPG Admins for beening literally beening bleeding edge testers for extDB. https://github.com/TAWTonic
-
  - Gabime for Spdlog https://github.com/gabime/spdlog
 
 
 
-##### Disclaimer
-This is basically my first time using C++  
-My main code experience is Python (pygtk + twisted), this is basically a hobby.
+##### Donate
+[PayPal Donate Link](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=2SUEFTGABTAM2)
+If you like to donate, all development is done on a Dedicated Linux Server. Server cost is currently 50 Euro a month
