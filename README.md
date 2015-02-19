@@ -1,3 +1,9 @@
+## No Longer Maintained...  
+Offical Development is now on https://github.com/Torndeco/extdb2  
+Note extDB2 is very similiar but not back compatiable extDB.  
+It will require changes to SQF Code + DB_CUSTOM File.  
+
+
 ## Arma3 Extension DB  C++ (windows / linux)   v35 
 
 I got bored waiting on 2017 / Epoch for Arma3.  
