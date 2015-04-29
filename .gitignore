@@ -1,2 +1,7 @@
 compile/
 release/
+*.vcxproj*
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+extDB.sln

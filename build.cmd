@@ -1,0 +1,1 @@
+cmake -DBOOST_ROOT:STRING=C:\local\boost_1_57_0 -DBOOST_LIBRARYDIR:STRING=C:\local\boost_1_57_0\lib32-msvc-12.0 -DPOCO_ROOT:STRING=C:\local\poco-1.6.0-all -DTBB_ROOT=C:\local\tbb43_20141204oss C:\local\extDB\build\extDB -DMYSQL_INCLUDE_DIR=C:\local\mysql-5.5.43\include -DMYSQL_LIBRARY=C:\local\mysql-5.5.43\bld\libmysql\RelWithDebInfo\mysqlclient.lib
